@@ -1,0 +1,289 @@
+@use '../variables/colors' as color;
+
+
+// ----- ----- CAROUSEL ----- ----- //
+
+nz-carousel {
+    .slick-slider {
+        .slick-list {
+            .slick-track {
+                .slick-slide {
+                    .card {
+                        .footer {}
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+// ----- ----- STEPS ----- ----- //
+
+nz-steps {
+    &.ant-steps {
+        nz-step {
+            &.ant-steps-item {
+                min-width: 0;
+
+                &.ant-steps-item-finish {
+                    .ant-steps-item-container {
+                        .ant-steps-item-icon {
+                            .ant-steps-icon {
+                                color: color.$mid-opacity-black-color;
+                            }
+                        }
+
+                        .ant-steps-item-content {
+                            .ant-steps-item-title {
+                                color: color.$mid-opacity-black-color;
+
+                                &:after {
+                                    background-color: color.$light-grey-color;
+                                }
+                            }
+                        }
+                    }
+                }
+
+
+
+                &.ant-steps-item-active {
+                    .ant-steps-item-container {
+                        .ant-steps-item-content {
+                            .ant-steps-item-title {
+                                font-weight: bold;
+                            }
+                        }
+                    }
+                }
+
+                &:not(.no-ant-steps-item-icon) {
+                    .ant-steps-item-container {
+                        .ant-steps-item-icon {
+                            .ant-steps-icon {
+                                display: flex;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    &.ant-steps-navigation {
+        padding-top: 0;
+
+        nz-step {
+            &.ant-steps-item {
+                &.ant-steps-item-active {
+                    &::before {
+                        content: none !important;
+                    }
+
+                    .ant-steps-item-container {
+                        .ant-steps-item-icon {
+                            .ant-steps-icon {
+                                display: flex;
+                            }
+                        }
+
+                        .ant-steps-item-content {
+                            .ant-steps-item-title {
+                                font-weight: normal;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+}
+
+// ----- ----- TIMELINE ----- ----- // 
+
+nz-timeline {
+    ul.ant-timeline {
+        li.ant-timeline-item {
+            .ant-timeline-item-head {
+                background: transparent;
+            }
+
+            .ant-timeline-item-label {}
+        }
+    }
+
+    &.label-aligned-left {
+        &.wide-label {
+            ul.ant-timeline {
+                li.ant-timeline-item {
+                    .ant-timeline-item-head {
+                        left: 25%;
+                    }
+
+                    .ant-timeline-item-tail {
+                        left: 25%;
+                    }
+
+                    .ant-timeline-item-content {
+                        left: calc(25% + 10px);
+                        width: calc(60% + 35px);
+                    }
+                }
+            }
+        }
+
+        ul.ant-timeline {
+            li.ant-timeline-item {
+                .ant-timeline-item-label {
+                    width: unset;
+                }
+
+                .ant-timeline-item-head {
+                    left: 15%;
+                }
+
+                .ant-timeline-item-tail {
+                    left: 15%;
+                }
+
+                .ant-timeline-item-content {
+                    left: calc(15% + 10px);
+                    width: calc(70% + 35px);
+                }
+            }
+        }
+    }
+}
+
+// ----- ----- TABS ----- ----- // 
+
+nz-tabset {
+    &.scrollable-content {
+        nz-tabs-nav.ant-tabs-nav {
+            position: relative;
+            justify-content: space-between;
+            margin-bottom: 0;
+            z-index: 1;
+
+            &:after {
+                content: '';
+                position: absolute;
+                bottom: -20px;
+                left: 0;
+                right: 0;
+                height: 20px;
+                background: linear-gradient(180deg, white, transparent);
+            }
+
+            .ant-tabs-nav-wrap {
+                // flex: unset;
+                // width: max-content;
+                justify-content: flex-end;
+            }
+        }
+
+        .ant-tabs-content-holder {
+            overflow: auto;
+            padding-top: 20px;
+        }
+    }
+}
+
+// ----- ----- BADGE ----- ----- // 
+
+$badge-colors: (
+    info: color.$info-color,
+    warning: color.$warning-color,
+    error: color.$error-color,
+    success: color.$success-color
+);
+
+nz-badge {
+    &.status-badge {
+        @each $status, $color in $badge-colors {
+            &.#{$status}>span {
+                color: if($status ==warning, color.$black-color, color.$white-color);
+                background-color: $color;
+            }
+        }
+
+        nz-badge-sup {
+            background-color: color.$low-opacity-black-color;
+            color: color.$white-color;
+            font-weight: bold;
+            box-shadow: 0px 0px 5px 0px color.$low-opacity-black-color;
+        }
+    }
+
+    >span {
+        padding: 8px;
+        border-radius: 5px;
+        background: color.$light-grey-color;
+        display: inline-block;
+        vertical-align: middle;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    &.small {
+        >span {
+            padding: 4px;
+            font-weight: normal;
+        }
+    }
+}
+
+// ----- ----- COLLAPSE ----- ----- //
+
+nz-collapse-panel {
+    .ant-collapse-header {
+        align-items: center !important;
+
+        .anticon {
+            margin-right: 4px !important;
+        }
+
+        .ant-collapse-header-text {
+            margin-right: 22px;
+            flex: 1 !important;
+
+            .post-button {
+                position: absolute;
+                right: 0;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 40px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 12px;
+                border-radius: 50%;
+                box-shadow: inset 0px 0px 15px 0px color.$light-grey-color, 0px 0px 10px 0px color.$light-grey-color;
+                transition: box-shadow .3s;
+
+                &:hover {
+                    box-shadow: inset 0px 0px 15px 0px color.$mid-opacity-black-color, 0px 0px 10px 0px color.$mid-opacity-black-color;
+                    transition: box-shadow .3s;
+                }
+            }
+        }
+
+    }
+}
+
+// ----- ----- MODAL ----- ----- //
+
+nz-modal-container {
+    .ant-modal {
+        .ant-modal-content {
+            border-radius: 5px;
+
+            .ant-modal-header {
+                border-radius: 5px;
+            }
+        }
+    }
+}

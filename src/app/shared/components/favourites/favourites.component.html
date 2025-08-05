@@ -1,0 +1,82 @@
+<div class="flex flex-col h-full max-h-[calc(100vh_-_32px)] rounded-lg overflow-hidden"
+    [ngClass]="data.rowSelection ? 'max-h-[calc(100vh_-_64px)]' : 'max-h-[calc(100vh_-_32px)]'">
+    <!-- Header -->
+    <div class="relative has-after-gradient shrink-0 p-4">
+        <div class="flex items-center gap-1">
+            <div class="text-xl font-semibold">Favourites</div>
+            <nz-badge [nzCount]="favouriteRoutes.length"
+                [nzStyle]="{ backgroundColor: 'var(--color-success)', color: 'white' }">
+                <nz-avatar nzShape="circle" class="!bg-white">
+                    <i class="fa-solid fa-star text-black text-xl"></i>
+                </nz-avatar>
+            </nz-badge>
+        </div>
+    </div>
+    <!-- Content -->
+    <div class="grow overflow-y-auto p-4">
+        <nz-list [nzLoading]="false">
+            @for (fav of favouriteRoutes; track fav; let index = $index) {
+            <nz-list-item>
+                <div class="w-full grid gap-x-2 items-center"
+                    [class]="data.rowSelection ? 'grid-cols-[auto_1fr_auto]' : 'grid-cols-[1fr_auto]'">
+                    @if (data.rowSelection) {
+                    <div>
+                        <label nz-checkbox [(ngModel)]="selectedRows[index]"
+                            (ngModelChange)="rowSelectionChange(index)"></label>
+                    </div>
+                    }
+                    <small class="grid grid-cols-[1fr_auto_auto_auto_1fr] gap-x-2 items-center">
+                        <div class="flex items-center gap-x-1">
+                            <i [ngClass]="fav.originPlace.mode | transportMode:'icon'"></i>
+                            <span>{{fav.originPlace.name}}</span>
+                        </div>
+                        <i class="fa-solid fa-arrow-right"></i>
+                        <i class="fa-solid fa-arrow-right"></i>
+                        <i class="fa-solid fa-arrow-right"></i>
+                        <div class="flex items-center justify-self-end gap-x-1">
+                            <span class="text-right">{{fav.destinationPlace.name}}</span>
+                            <i [ngClass]="fav.destinationPlace.mode | transportMode:'icon'"></i>
+                        </div>
+                    </small>
+                    @if (data.favouriteSelection) {
+                    <div>
+                        <button nz-button nzType="primary" nzSize="large" nzShape="circle"
+                            (click)="selectFavourite(index)">
+                            <i class="fa-solid fa-star"
+                                [ngClass]="{ 'text-[var(--color-warning)]': currentFavourite === index }"></i>
+                        </button>
+                    </div>
+                    }
+                </div>
+            </nz-list-item>
+            }
+            @if (favouriteRoutes.length === 0) {
+            <nz-list-empty [nzNoResult]="'No favourites yet'"></nz-list-empty>
+            }
+        </nz-list>
+    </div>
+    <!-- Footer -->
+    <div class="relative has-before-gradient grid grid-cols-[1fr_auto] items-center shrink-0 px-4 py-2 min-h-[65px]">
+        @if (data.rowSelection && !!favouriteRoutes.length) {
+        <div>
+
+            <label nz-checkbox [(ngModel)]="allFavouriteRoutesIsSelected"
+                (ngModelChange)="toggleSelectAllFavouriteRoutes()"></label>
+
+        </div>
+        <div>
+            @if (hasSelectedRow) {
+            <button nz-button nzType="primary" nzSize="large" nzShape="circle" nzDanger
+                class="relative text-2xl text-[var(--color-mid-opacity-black)] cursor-pointer" longPress
+                (longPressed)="clearFavourites()" [longPressDisabled]="clearFavouritesDisabled"
+                (timeCollapseWhilePressing)="onClearFavouritesLoading($event)" (click)="deleteSelectedFavourites()">
+                <i class="fa-solid fa-trash text-white"></i>
+                <i class="fa-solid fa-trash absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[var(--color-mid-opacity-black)] transition-[clip-path] duration-300 ease-in-out"
+                    fillProgress [fillPercent]="favouriteFillStep" fillDirection="top-to-bottom" [invertFill]="true"
+                    [disableClipPath]="false"></i>
+            </button>
+            }
+        </div>
+        }
+    </div>
+</div>

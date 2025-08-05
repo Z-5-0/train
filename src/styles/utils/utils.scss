@@ -1,0 +1,36 @@
+@use '../variables/colors' as color;
+
+.transport-number-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 35px;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.has-after-gradient {
+    &:after {
+        content: "";
+        position: absolute;
+        bottom: -20px;
+        left: 0;
+        right: 0;
+        height: 20px;
+        background: linear-gradient(180deg, color.$white-color, transparent);
+        z-index: 1;
+    }
+}
+
+.has-before-gradient {
+    &:before {
+        content: "";
+        position: absolute;
+        top: -20px;
+        left: 0;
+        right: 0;
+        height: 20px;
+        background: linear-gradient(0, color.$white-color, transparent);
+        z-index: 1;
+    }
+}

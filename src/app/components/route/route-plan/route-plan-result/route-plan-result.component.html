@@ -1,0 +1,201 @@
+<nz-collapse [nzExpandIconPosition]="'start'">
+    @for (route of routeOptions; track route; let routeIndex = $index) {
+    <ng-template #headerTemplate let-index=index>
+        <div
+            class="absolute text-[20px] top-0 bottom-0 flex items-center text-[var(--color-mid-opacity-black)] blur-[1px]">
+            {{routeIndex+1}}
+        </div>
+
+        <div class="flex gap-x-2 items-center justify-between ml-[32px]">
+            <div class="flex gap-x-4 items-center">
+                <div
+                    class="flex gap-x-1 items-center px-1 text-white rounded-[5px] bg-[var(--color-mid-opacity-black)]">
+                    <i class="fa-solid fa-clock"></i>
+                    <span>{{route.duration}}</span>
+                </div>
+                <div class="flex flex-wrap gap-y-4">
+                    @for (sequence of route.sequences; track sequence; let index = $index; let last = $last) {
+                    <span class="relative">
+                        <i [ngClass]="transportMode[sequence.mode].icon"></i>
+                        <small class="absolute top-[-10%] left-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap">
+                            {{ sequence.transportInfo?.shortName}}
+                        </small>
+                    </span>
+                    @if (!last) {
+                    <span class="text-[var(--color-mid-opacity-black)]">.....</span>
+                    }
+                    }
+                </div>
+            </div>
+            <div class="post-button" [ngClass]="selectedRoute?.index === routeIndex
+                    ? 'text-[var(--color-success)]'
+                    : 'text-[var(--color-mid-opacity-black)]'" (click)="onSelectRoute($event, route)">
+                <i class="fa-solid"
+                    [ngClass]="selectedRoute?.index === routeIndex ? 'fa-circle-check' : 'fa-circle'"></i>
+            </div>
+        </div>
+    </ng-template>
+
+    <nz-collapse-panel [nzHeader]="headerTemplate" [nzShowArrow]="true">
+        @if (route.sequences.length === 1) {
+        <nz-timeline [nzMode]="'left'" [ngClass]="'label-aligned-left wide-label'">
+            <nz-timeline-item [nzDot]="dotTemplate2" [nzLabel]="route.startTime + ' - ' + route.endTime"
+                [ngClass]="'test'">
+                <div class="flex gap-x-1 items-start justify-between">
+                    <div>
+                        <div>{{route.sequences[0].destination.name}}</div>
+                        @if ((route.sequences[0].transportInfo?.longName?.length ?? 0) > 5) {
+                        <div class="absolute -left-[42px] -bottom-[3px]">
+                            <span [ngClass]="'text-[var(--color-timeline-tail-color)]'">┗━━</span>
+                            <i [ngClass]="transportMode[route.sequences[0].mode].icon"></i>
+                            <span>
+                                {{route.sequences[0].transportInfo?.longName}}
+                            </span>
+                        </div>
+                        <div class="h-5"> </div>
+                        }
+                    </div>
+                    @if (route.sequences[0].origin.status) {
+                    <nz-badge class="status-badge small p-2" [ngStyle]="{'margin-right': '8px'}" [ngClass]="{
+                        'success': route.sequences[0].origin.status === 'on time',
+                        'error': route.sequences[0].origin.status === 'late',
+                        'warning': route.sequences[0].origin.status === 'early'
+                        }" [nzCount]="route.sequences[0].origin.departureDelay">
+                        <span>{{route.sequences[0].origin.status}}</span>
+                    </nz-badge>
+                    }
+                </div>
+            </nz-timeline-item>
+        </nz-timeline>
+        }
+        @if (route.sequences.length > 1) {
+
+        <nz-timeline [nzMode]="'left'" [ngClass]="'label-aligned-left'">
+            @for (sequence of route.sequences; track sequence; let first = $first; let last = $last) {
+            @if (first) {
+            <nz-timeline-item [nzDot]="dotTemplate" [nzLabel]="route.startTime">
+                <div class="flex gap-x-1 items-start justify-between">
+                    <div>
+                        <div>{{sequence.destination.name}}</div>
+                        @if ((sequence?.transportInfo?.longName?.length ?? 0) > 5) {
+                        <div class="absolute -left-[42px] -bottom-[3px]">
+                            <span>└──</span>
+                            <i [ngClass]="transportMode[sequence.mode].icon"></i>
+                            <span>
+                                {{sequence.transportInfo?.longName}}
+                            </span>
+                        </div>
+                        <div class="h-5"> </div>
+                        }
+                    </div>
+                    @if (sequence.origin.status) {
+                    <nz-badge class="status-badge small p-2" [ngStyle]="{'margin-right': '8px'}" [ngClass]="{
+                        'success': sequence.origin.status === 'on time',
+                        'error': sequence.origin.status === 'late',
+                        'warning': sequence.origin.status === 'early'
+                        }" [nzCount]="sequence.origin.departureDelay">
+                        <span>{{sequence.origin.status}}</span>
+                    </nz-badge>
+                    }
+                    @if (last === first) {
+                    HELLO
+                    }
+                </div>
+
+            </nz-timeline-item>
+            }
+
+            @if (last) {
+            <nz-timeline-item [nzDot]="dotTemplate" [nzLabel]="route.endTime">
+                <div class="flex gap-x-1 items-sart justify-between">
+                    <div>
+                        <div>{{sequence.destination.name}}</div>
+                        @if ((sequence?.transportInfo?.longName?.length ?? 0) > 5) {
+                        <div class="absolute -left-[42px] -bottom-[3px]">
+                            <span>└──</span>
+                            <i [ngClass]="transportMode[sequence.mode].icon"></i>
+                            <span>
+                                {{sequence.transportInfo?.longName}}
+                            </span>
+                        </div>
+                        <div class="h-5"> </div>
+                        }
+                    </div>
+                    @if (sequence.origin.status) {
+                    <nz-badge class="status-badge small p-2" [ngStyle]="{'margin-right': '8px'}" [ngClass]="{
+                        'success': sequence.origin.status === 'on time',
+                        'error': sequence.origin.status === 'late',
+                        'warning': sequence.origin.status === 'early'
+                        }" [nzCount]="sequence.origin.departureDelay">
+                        <span>{{sequence.origin.status}}</span>
+                    </nz-badge>
+                    }
+                </div>
+            </nz-timeline-item>
+            }
+
+            @if (!first && !last) {
+            <nz-timeline-item [nzDot]="dotTemplate">
+                <div class="flex gap-x-1 items-start justify-between">
+                    <div>
+                        <div>{{sequence.destination.name}}</div>
+                        @if ((sequence?.transportInfo?.longName?.length ?? 0) > 5) {
+                        <div class="absolute -left-[42px] -bottom-[3px]">
+                            <span [ngClass]="'text-[var(--color-timeline-tail-color)]'">┗━━</span>
+                            <i [ngClass]="transportMode[sequence.mode].icon"></i>
+                            <span>
+                                {{sequence.transportInfo?.longName}}
+                            </span>
+                        </div>
+                        <div class="h-5"> </div>
+                        }
+                    </div>
+                    @if (sequence.origin.status) {
+                    <nz-badge class="status-badge small p-2" [ngStyle]="{'margin-right': '8px'}" [ngClass]="{
+                        'success': sequence.origin.status === 'on time',
+                        'error': sequence.origin.status === 'late',
+                        'warning': sequence.origin.status === 'early'
+                        }" [nzCount]="sequence.origin.departureDelay">
+                        <span>{{sequence.origin.status}}</span>
+                    </nz-badge>
+                    }
+                </div>
+            </nz-timeline-item>
+            }
+
+            <ng-template #dotTemplate>
+                @if (!sequence.transportInfo?.shortName && !sequence.transportInfo?.name) {
+                <i [ngClass]="transportMode[sequence.mode].icon"></i>
+                }
+                @else {
+                <div class="transport-number-badge border border-[var(--color-black)]" [ngStyle]="{
+                        'color': sequence.transportInfo?.textColor,
+                        'background-color': sequence.transportInfo?.backgroundColor
+                    }">
+                    {{sequence.transportInfo?.shortName || sequence.transportInfo?.name}}
+                </div>
+                }
+            </ng-template>
+            }
+        </nz-timeline>
+        }
+    </nz-collapse-panel>
+
+    <ng-template #dotTemplate2>
+        @if (!route.sequences[0].transportInfo?.shortName &&
+        !route.sequences[0].transportInfo?.name) {
+        <i [ngClass]="transportMode[route.sequences[0].mode].icon"></i>
+        }
+        @else {
+        <div class="transport-number-badge border border-[var(--color-black)]" [ngStyle]="{
+                        'color': route.sequences[0].transportInfo?.textColor,
+                        'background-color': route.sequences[0].transportInfo?.backgroundColor
+                    }">
+            {{route.sequences[0].transportInfo?.shortName ||
+            route.sequences[0].transportInfo?.name}}
+        </div>
+        }
+    </ng-template>
+
+    }
+</nz-collapse>

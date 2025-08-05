@@ -1,0 +1,56 @@
+<div class="grid grid-cols-[1fr_auto] items-center">
+    <div class="p-2">
+        <nz-input-group nzSize="large" [nzSuffix]="suffixIcon" [nzPrefix]="inputPrefix" class="!rounded-md">
+            <input #input nz-input [placeholder]="placeholder" [(ngModel)]="inputValue"
+                (ngModelChange)="onInputChange($event)" [nzAutocomplete]="auto" [disabled]="disabled"
+                (keyup)="selectionSubject.next(input.value)" (blur)="onSelectionCheck(input.value, input)" />
+        </nz-input-group>
+    </div>
+
+    @if (postButton) {
+    <button nz-button nzType="default" nzShape="circle" class="!border-0 !bg-transparent !shadow-none"
+        [disabled]="postButton.disabled || !postButton.action" (click)="postButton.action && postButton.action()">
+        <i class="fa-fw fa-solid" [class]="postButton.icon"></i>
+    </button>
+    }
+
+</div>
+
+<nz-autocomplete #auto [nzBackfill]="true">
+    @for (place of innerCollection | keyvalue; track place.key) {
+    <nz-auto-optgroup [nzLabel]="groupTitle">
+        <ng-template #groupTitle>
+            <div class="flex items-center gap-x-[10px] text-lg font-bold">
+                <i [class]="transportMode[place.key].icon"></i>
+                <span>{{ place.key }}</span>
+            </div>
+        </ng-template>
+        @for (p of place.value; track p.id) {
+        <nz-auto-option [nzLabel]="p.name" [nzValue]="p.id" (click)="onSelectPlace(p)">
+            <div [ngClass]="{'font-bold': p.uniqueKey == selectedValue?.uniqueKey}">
+                {{ p.name }}
+            </div>
+        </nz-auto-option>
+        }
+    </nz-auto-optgroup>
+    }
+</nz-autocomplete>
+
+<ng-template #suffixIcon>
+    @if (input.value && !waitingForResponse) {
+    <nz-icon class="ant-input-clear-icon hover:!text-error" nzTheme="fill" nzType="close-circle"
+        (click)="clearInput()" />
+    }
+    @if (waitingForResponse) {
+    <nz-icon nzType="loading" nzTheme="outline" />
+    }
+    @if (!input.value && !waitingForResponse) {
+    <nz-icon nzType="search" />
+    }
+</ng-template>
+
+<ng-template #inputPrefix>
+    <ng-container *ngIf="selectedValue">
+        <i [ngClass]="transportMode[selectedValue.mode].icon"></i>
+    </ng-container>
+</ng-template>

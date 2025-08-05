@@ -1,0 +1,19 @@
+<div class="relative p-2 has-after-gradient">
+        <route-plan-search (routeOptionsChange)="onRouteOptionsChange($event)"
+                (routeIsLoadingChange)="onRouteIsLoadingChange($event)"></route-plan-search>
+</div>
+
+<!--div #planLoadingSpinner class="h-full px-4" [ngClass]="{'overflow-auto': !routeIsLoading}">
+        <nz-spin [nzSpinning]="routeIsLoading"></nz-spin>
+        <route-plan-result [routeOptions]="routeOptions"></route-plan-result>
+</!--div-->
+
+<div class="relative h-full px-4 overflow-hidden">
+        @if (routeIsLoading && routeOptions.length) {
+        <nz-spin [nzSpinning]="routeIsLoading"
+                class="!absolute inset-0 flex items-center justify-center z-10 bg-white/70"></nz-spin>
+        }
+        <div #routePlanResultContainer class="h-full overflow-auto relative pt-5 pb-5 z-0">
+                <route-plan-result [routeOptions]="routeOptions"></route-plan-result>
+        </div>
+</div>

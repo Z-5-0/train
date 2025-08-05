@@ -1,0 +1,28 @@
+<div class="p-4">
+    <div class="grid grid-cols-[1fr_1fr] gap-4 p-4">
+        <div class="self-center">Welcome card</div>
+        <nz-segmented [nzOptions]="['Visible', 'Hidden']" [nzBlock]="true"></nz-segmented>
+
+        <div class="self-center">Language</div>
+        <nz-segmented [nzOptions]="['HU', 'EN']" [nzBlock]="true"></nz-segmented>
+
+        <div class="self-center">Theme</div>
+        <nz-segmented [nzOptions]="['Light', 'Dark', 'Auto']" [nzBlock]="true"></nz-segmented>
+
+        <div class="self-center">Continuous update</div>
+        <nz-segmented [nzOptions]="['Yes', 'No']" [nzBlock]="true"></nz-segmented>
+
+        <div class="self-center">Debounce time (ms)</div>
+        <nz-slider [nzDots]="false" [nzMin]="0" [nzMax]="1000" [nzStep]="100"
+            [nzMarks]="debounceSliderMarks"></nz-slider>
+
+        <div class="self-center">Walk speed (km/h)</div>
+        <nz-slider [nzDots]="false" [nzMin]="2" [nzMax]="6" [nzStep]="1" [nzMarks]="walkSliderMarks"></nz-slider>
+
+        <div class="self-center">Alternative routes (qty)</div>
+        <nz-slider [nzDots]="false" [nzMin]="2" [nzMax]="16" [nzStep]="1" [nzMarks]="routesSliderMarks"></nz-slider>
+
+        <div>Favourites</div>
+        <button nz-button nzType="primary" (click)="openFavouritesModal()">Edit</button>
+    </div>
+</div>

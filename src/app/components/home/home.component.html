@@ -1,0 +1,64 @@
+<div class="app h-screen">
+    <nz-carousel [nzDotPosition]="dotPosition" [nzEnableSwipe]="false">
+        @for (card of homeCards; track card) {
+        <div nz-carousel-content>
+            <div class="card mx-auto max-w-xl h-screen p-4 pt-8">
+                <div class="grid grid-rows-[auto_auto_1fr_auto] max-h-full overflow-hidden rounded-md bg-white shadow-md"
+                    (mousedown)="onContentPress($event)" (mouseup)="onContentRelease($event)"
+                    (touchstart)="onContentPress($event)" (touchend)="onContentRelease($event)">
+                    @if (card.header) {
+                    <div class="header p-4">
+                        <div class="text-xl font-semibold tracking-wide uppercase">{{card.header}}</div>
+                    </div>
+                    }
+                    @if (card.details) {
+                    <div class="p-4">
+                        <small class="grid grid-cols-[1fr_auto_auto_auto_1fr] gap-x-2 items-center">
+                            <div class="flex items-center gap-x-1">
+                                <i [ngClass]="selectedRoute.origin.mode | transportMode:'icon'"></i>
+                                <span>{{selectedRoute.origin.name || 'Origin'}}</span>
+                            </div>
+                            <i class="fa-solid fa-arrow-right"></i>
+                            <i class="fa-solid fa-arrow-right"></i>
+                            <i class="fa-solid fa-arrow-right"></i>
+                            <div class="flex items-center justify-self-end gap-x-1">
+                                <span class="text-right">{{selectedRoute.destination.name || 'Destination'}}</span>
+                                <i [ngClass]="selectedRoute.destination.mode | transportMode:'icon'"></i>
+                            </div>
+                        </small>
+                        <small class="flex items-center justify-center gap-x-2 h-[18px]">
+                            @if (latestSearchTime) {
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            {{latestSearchTime}}
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            }
+                        </small>
+                    </div>
+                    }
+                    <div class="content h-full overflow-hidden">
+                        @switch (card.index) {
+                        @case (4) {
+                        <welcome></welcome>
+                        }
+                        @case (1) {
+                        <route></route>
+                        }
+                        @case (2) {
+                        <map></map>
+                        }
+                        @case (3) {
+                        <settings></settings>
+                        }
+                        }
+                    </div>
+                    @if (card.footer) {
+                    <div class="footer relative p-4 has-before-gradient">
+                        <div class="text-sm tracking-wide">{{card.footer}}</div>
+                    </div>
+                    }
+                </div>
+            </div>
+        </div>
+        }
+    </nz-carousel>
+</div>

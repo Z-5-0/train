@@ -1,0 +1,17 @@
+<place-field [name]="'originPlaces'" [placeholder]="'Origin'" [collection]="originPlaces"
+    [selectedPlace]="originPlace()" [disabled]="routeIsLoading || originIsCurrentLocation"
+    [postButton]="originPlaceFieldPostButton" (inputChanged)="getPlaces($event)"
+    (selectionChanged)="onPlaceSelect($event)"></place-field>
+
+<place-field [name]="'destinationPlaces'" [placeholder]="'Destination'" [collection]="destinationPlaces"
+    [selectedPlace]="destinationPlace()" [disabled]="routeIsLoading" [postButton]="destinationPlaceFieldPostButton"
+    (inputChanged)="getPlaces($event)" (selectionChanged)="onPlaceSelect($event)"></place-field>
+
+<div class="flex items-center justify-between px-2 py-4">
+    <favourite-toggler [originPlace]="originPlace" [destinationPlace]="destinationPlace"
+        [fillPercent]="favouriteFillStep" [routeIsFavourite]="routeIsFavourite"></favourite-toggler>
+    <search-button [originPlace]="originPlace" [destinationPlace]="destinationPlace"
+        [currentLocation]="currentLocation" [loading]="routeIsLoading"
+        (optionsChange)="routeOptionsChange.emit($event)"
+        (loadingChange)="routeIsLoadingChange.emit($event)"></search-button>
+</div>

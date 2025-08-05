@@ -1,0 +1,4 @@
+<button nz-button nzType="primary" [nzSize]="'large'" nzShape="round" [nzLoading]="loading"
+    [disabled]="!(originPlace() | keyvalue)?.length || !(destinationPlace() | keyvalue)?.length" (click)="getRoute()">
+    Search
+</button>

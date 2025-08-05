@@ -22,14 +22,12 @@
     </div>
 </div>
 
-isFinished: {{currentTrip.transportInfo?.isFinished}}
-
 <!--button nzButton type="button" (click)="this.destroy$.next()">CLICK</!--button-->
 
-<div
+<!--div
     style="position: absolute; left: 0; top: 0; bottom: 0; overflow: auto; width: 250px; background: black; color: white;">
     <pre>{{currentSequences | json}}</pre>
-</div>
+</!--div-->
 
 <nz-tabset class="scrollable-content h-[calc(100%-110px)] !pb-2 !px-4">
     <div *nzTabBarExtraContent="'start'">
@@ -63,6 +61,8 @@ isFinished: {{currentTrip.transportInfo?.isFinished}}
             </nz-timeline>
         </div>
         }
+
+        @if (!currentTrip.transportInfo?.isFinished) {
         <nz-timeline [nzMode]="'right'">
             @for (segmentStop of currentTrip.allStops; let first = $first; let last = $last; track
             segmentStop?.station?.gtfsId) {
@@ -141,6 +141,7 @@ isFinished: {{currentTrip.transportInfo?.isFinished}}
             }
             }
         </nz-timeline>
+        }
 
     </nz-tab>
     <nz-tab [nzTitle]="(currentTrip && currentTrip.alerts && currentTrip.alerts.length) ? alertTemplate : 'Alert'">

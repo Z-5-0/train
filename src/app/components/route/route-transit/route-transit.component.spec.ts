@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { RouteTransiteComponent } from './route-transite.component';
+import { RouteTransitComponent } from './route-transit.component';
 
-describe('RouteTransiteComponent', () => {
-  let component: RouteTransiteComponent;
-  let fixture: ComponentFixture<RouteTransiteComponent>;
+describe('RouteTransitComponent', () => {
+  let component: RouteTransitComponent;
+  let fixture: ComponentFixture<RouteTransitComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [RouteTransiteComponent]
+      imports: [RouteTransitComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(RouteTransiteComponent);
+    fixture = TestBed.createComponent(RouteTransitComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

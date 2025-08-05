@@ -26,7 +26,7 @@ import { TripService } from '../../../services/trip.service';
 
 
 @Component({
-  selector: 'route-transite',
+  selector: 'route-transit',
   imports: [
     CommonModule,
     FormsModule,
@@ -41,10 +41,10 @@ import { TripService } from '../../../services/trip.service';
     SafeHtmlPipe,
     StopStatusPipe,
   ],
-  templateUrl: './route-transite.component.html',
-  styleUrl: './route-transite.component.scss'
+  templateUrl: './route-transit.component.html',
+  styleUrl: './route-transit.component.scss'
 })
-export class RouteTransiteComponent {
+export class RouteTransitComponent {
   routeOptions: Route[] | null = null;
 
   restApi: RestApiService = inject(RestApiService);
@@ -155,11 +155,7 @@ export class RouteTransiteComponent {
       if (currentStopIndex !== -1) {
         this.currentOriginStop.station.isPassed = currentStopIndex > originStopIndex;
       }
-
-      if (this.currentTrip.transportInfo) {
-        this.currentTrip.transportInfo.isFinished = true;
-      }
-
+      
       this.currentDestinationStop.station.isArrived = currentStopIndex > destinationStopIndex;
       this.currentSequences[this.selectedTransit].sequenceCompleted = true;
     });

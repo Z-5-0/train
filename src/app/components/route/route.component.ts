@@ -11,7 +11,7 @@ import { NzTimelineModule } from 'ng-zorro-antd/timeline';
 import { NzTabsModule } from 'ng-zorro-antd/tabs';
 import { NzBadgeModule } from 'ng-zorro-antd/badge';
 import { RoutePlanComponent } from './route-plan/route-plan.component';
-import { RouteTransiteComponent } from './route-transite/route-transite.component';
+import { RouteTransitComponent } from './route-transit/route-transit.component';
 import { CurrentTrip } from '../../shared/models/trip';
 import { RouteService } from '../../services/route.service';
 import { timer } from 'rxjs';
@@ -29,7 +29,7 @@ import { timer } from 'rxjs';
     NzTabsModule,
     NzBadgeModule,
     RoutePlanComponent,
-    RouteTransiteComponent,
+    RouteTransitComponent,
   ],
   templateUrl: './route.component.html',
   styleUrl: './route.component.scss'

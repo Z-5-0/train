@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
-import { NzCarouselModule } from 'ng-zorro-antd/carousel';
+import { Component, inject, ViewChild } from '@angular/core';
+import { NzCarouselComponent, NzCarouselModule } from 'ng-zorro-antd/carousel';
 import { RouteComponent } from '../route/route.component';
 import { WelcomeComponent } from '../welcome/welcome.component';
 import { HOME_CARDS } from '../../shared/constants/card'
@@ -9,8 +9,9 @@ import { RouteService } from '../../services/route.service';
 import { TransportModePipe } from '../../shared/pipes/transport-mode.pipe';
 import { TransportMode } from '../../shared/models/common';
 import { DateTime } from 'luxon';
-import { map, Subject, Subscription, takeUntil, tap } from 'rxjs';
+import { filter, map, Subject, Subscription, takeUntil, tap } from 'rxjs';
 import { MapComponent } from '../../shared/components/map/map.component';
+import { AppSettingsService } from '../../services/app-settings.service';
 
 @Component({
   selector: 'app-home',
@@ -28,9 +29,13 @@ import { MapComponent } from '../../shared/components/map/map.component';
   standalone: true
 })
 export class HomeComponent {
+  @ViewChild('carousel') carousel!: NzCarouselComponent;
+
   routeService: RouteService = inject(RouteService);
+  appSettingsService: AppSettingsService = inject(AppSettingsService);
 
   homeCards = HOME_CARDS;
+  currentHomeCards = JSON.parse(JSON.stringify(this.homeCards));
 
   dotPosition: string = 'top';
   latestSearchTime: string = '';
@@ -46,6 +51,8 @@ export class HomeComponent {
     };
 
   private destroy$ = new Subject<void>();
+
+  activeIndex!: number;
 
   ngOnInit() {
     this.routeService.selectedRoute$
@@ -73,6 +80,30 @@ export class HomeComponent {
     this.routeService.routeOptions$
       .pipe(takeUntil(this.destroy$))
       .subscribe(options => options?.length && (this.latestSearchTime = DateTime.now().toFormat('yyyy-LL-dd HH:mm')));
+  }
+
+  ngAfterViewInit() {
+    this.appSettingsService.appSettings$
+      .pipe(
+        takeUntil(this.destroy$),
+      )
+      .subscribe(settings => {
+        console.log(settings);
+        this.activeIndex = this.carousel?.activeIndex ?? 0;
+
+        this.carousel.nzTransitionSpeed = 0;
+        this.carousel.nzEffect = 'fade';
+
+        this.currentHomeCards = settings['welcomeCard']
+          ? [...this.homeCards]
+          : this.homeCards.filter(card => card.index !== 4);
+
+        setTimeout(() => {
+          this.carousel?.goTo(this.activeIndex);
+          this.carousel.nzTransitionSpeed = 500;
+          this.carousel.nzEffect = 'scrollx';
+        });
+      });
   }
 
   onContentPress(event: any) {

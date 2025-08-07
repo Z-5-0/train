@@ -18,7 +18,6 @@ export interface RouteSequence {
   destination: OriginOrDestination;
   transportInfo: TransportInfo | null;
   stops?: IntermediateStop[] | null;
-  sequenceCompleted?: boolean;
 }
 
 interface OriginOrDestination {

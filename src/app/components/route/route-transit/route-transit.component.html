@@ -7,13 +7,7 @@
                 <div class="relative" [style.paddingTop.px]="5">
                     <i [ngClass]="transportMode[sequence?.mode || 'ERROR'].icon"></i>
                     <small class="absolute top-[-25%] left-1/2 -translate-x-1/2 whitespace-nowrap">
-                        <!--ng-container *ngIf="transportMode?.[sequence?.mode || 'ERROR']?.name as modeName">
-                            {{ sequence?.transportInfo?.[modeName] }}
-                        </!--ng-container-->
-                        <!--{{ sequence?.transportInfo[sequence!.mode] }} {{sequence?.mode}}-->
                         {{ getModeName(sequence) }}
-                        <!--{{ sequence?.transportInfo![getModeName(sequence?.mode)] }}-->
-                        <!--{{sequence?.transportInfo?.[transportMode?.[sequence?.mode || 'ERROR']?.name]}}-->
                     </small>
                 </div>
             </label>
@@ -22,12 +16,10 @@
     </div>
 </div>
 
-<!--button nzButton type="button" (click)="this.destroy$.next()">CLICK</!--button-->
-
-<!--div
+<div
     style="position: absolute; left: 0; top: 0; bottom: 0; overflow: auto; width: 250px; background: black; color: white;">
     <pre>{{currentSequences | json}}</pre>
-</!--div-->
+</div>
 
 <nz-tabset class="scrollable-content h-[calc(100%-110px)] !pb-2 !px-4">
     <div *nzTabBarExtraContent="'start'">
@@ -40,7 +32,6 @@
     </div>
     <nz-tab nzTitle="Trip">
         @if (currentTrip.transportInfo?.isFinished) {
-        <!--div class="pb-4 text-center text-bold text-lg">Trip has finished</!--div-->
         <div class="relative">
             <div class="sticky top-[10px] h-[22px] flex justify-end font-bold px-[10px] text-[var(--color-success)]">
                 <span class="pt-1">Trip has finished</span>
@@ -66,13 +57,6 @@
         <nz-timeline [nzMode]="'right'">
             @for (segmentStop of currentTrip.allStops; let first = $first; let last = $last; track
             segmentStop?.station?.gtfsId) {
-            <!-- @if (first && !currentTrip.transportInfo?.transportId) {
-            <nz-timeline-item [nzLabel]="'upcoming'">
-                <div [ngClass]="currentDestinationStop.station.isArrived ? 'text-[var(--color-success)]' : ''">
-                    {{segmentStop.station.name}}
-                </div>
-            </nz-timeline-item>
-            } -->
             @if (segmentStop?.station?.gtfsId !== currentRoute?.sequences?.[selectedTransit]?.origin?.gtfsId &&
             segmentStop?.station?.gtfsId !== currentRoute?.sequences?.[selectedTransit]?.destination?.gtfsId &&
             segmentStop.station.gtfsId !== currentTrip.transportInfo?.station?.gtfsId) {
@@ -198,8 +182,6 @@
         </div>
         }
         @else {
-        <!--span>{{currentRoute?.sequences?.[selectedTransit]?.origin?.scheduledStartTime}}
-            {{!currentTrip.transportInfo?.transportId ? 'upcoming' : ''}}</!--span-->
         <span>{{currentRoute?.sequences?.[selectedTransit]?.origin?.scheduledStartTime}}
             {{currentRoute?.sequences?.[selectedTransit]?.origin?.gtfsId === currentTrip.allStops[0].station.gtfsId
             ? 'upcoming' : ''}}</span>
@@ -295,172 +277,3 @@
 <ng-template #currentOriginStopDotTemplate>
     <i [ngClass]="transportMode[currentTrip.transportInfo?.mode || 'ERROR'].icon"></i>
 </ng-template>
-
-<!--nz-tabset class="scrollable-content h-[calc(100%-110px)] !pb-2 !px-4">
-    <div *nzTabBarExtraContent="'start'">
-        <div class="transport-number-badge border" [ngStyle]="{
-                        'color': currentTrip.transportInfo?.vehicle?.textColor,
-                        'background-color': currentTrip.transportInfo?.vehicle?.backgroundColor
-                    }">
-            {{currentTrip.transportInfo?.vehicle?.name}}
-        </div>
-    </div>
-
-    <nz-tab nzTitle="Trip">
-        <nz-timeline [nzMode]="'right'">
-            @for (tripStop of currentRoute?.sequences?.[selectedTransit]?.stops; let first = $first; let last = $last;
-            track tripStop.id) {
-            @switch (!!first) {
-            @case (true) {
-            <nz-timeline-item [nzLabel]="tripFirstLabelTemplate" [nzDot]="tripFirstDotTemplate">
-                <b [ngClass]="currentOriginStop.station.isPassed ? 'text-[var(--color-error)]' : ''">
-                    {{tripStop?.name}}
-                </b>
-            </nz-timeline-item>
-            }
-            @case (false) {
-            @if (last) {
-            <nz-timeline-item [nzLabel]="currentDestinationStop.station.isArrived ? tripLastLabelTemplate : undefined"
-                [nzDot]="currentDestinationStop.station.isArrived ? tripLastDotTemplate : undefined">
-                <div class="font-bold"
-                    [ngClass]="currentDestinationStop.station.isArrived ? 'text-[var(--color-success)]' : ''">
-                    {{tripStop?.name}}
-                </div>
-            </nz-timeline-item>
-            }
-            @else {
-            <nz-timeline-item>
-                <div>{{tripStop?.name}}</div>
-            </nz-timeline-item>
-            }
-            }
-            }
-            }
-        </nz-timeline>
-    </nz-tab>
-
-    <nz-tab nzTitle="Segment">
-        <nz-timeline [nzMode]="'right'">
-            @for (segmentStop of currentTrip.allStops; let first = $first; let last = $last; track
-            segmentStop?.station?.gtfsId) {
-            @if (segmentStop.station.gtfsId === currentTrip.transportInfo?.station?.gtfsId) {
-            <nz-timeline-item [nzLabel]="segmentLabelTemplate" [nzDot]="segmentDotTemplate">
-                {{segmentStop.station.name}}
-            </nz-timeline-item>
-            }
-            @else if (!currentTrip.transportInfo?.transportId) {
-            <nz-timeline-item [nzLabel]="first ? 'upcoming' : ''">
-                <div [ngClass]="currentDestinationStop.station.isArrived ? 'text-[var(--color-success)]' : ''">
-                    {{segmentStop.station.name}}
-                </div>
-            </nz-timeline-item>
-            }
-            @else {
-            <nz-timeline-item>
-                {{segmentStop.station.name}}
-            </nz-timeline-item>
-            }
-            }
-        </nz-timeline>
-    </nz-tab>
-
-    <nz-tab [nzTitle]="(currentTrip && currentTrip.alerts && currentTrip.alerts.length) ? alertTemplate : 'Alert'">
-        <ng-template #alertTemplate>
-            <nz-icon [nzType]="'eye'" class="!text-[var(--color-error)]" /> Alert
-        </ng-template>
-        @if (currentTrip && currentTrip.alerts && currentTrip.alerts.length) {
-        <div class="grid gap-2">
-            @for (alert of currentTrip.alerts; track alert) {
-            <nz-card>
-                <div class="grid gap-2">
-                    <div class="flex justify-center">
-                        <i class="text-2xl" [ngClass]="tripAlert[alert.severityLevel].icon"
-                            [style.color]="'var(' + tripAlert[alert.severityLevel].color + ')'">
-                        </i>
-                    </div>
-                    <div class="flex justify-center">
-                        <span class="text-center" [innerHTML]="alert.text | safeHtml"></span>
-                    </div>
-                    <div class="flex justify-between">
-                        <div>{{alert.startDate}}</div>
-                        <nz-progress [nzType]="'line'" [nzShowInfo]="false" [nzPercent]="alert.endProgress"
-                            [nzSteps]="10" nzStrokeColor="#1890ff"></nz-progress>
-                        <div>{{alert.endDate}}</div>
-                    </div>
-                    <div class="flex justify-center">
-                        <span class="text-center">{{alert.endProgress}} %</span>
-                    </div>
-                </div>
-            </nz-card>
-            }
-        </div>
-        }
-        @else {
-        <div class="flex gap-1">
-            <nz-icon nzType="check-circle" nzTheme="outline" class="!text-[var(--color-success)]" />
-            <span>No alert, everything's all right.</span>
-        </div>
-        }
-    </nz-tab>
-</!--nz-tabset>
-
-<ng-template #tripFirstDotTemplate>
-    <nz-icon
-        [nzType]="currentOriginStop.station.isPassed ? 'stop' : currentOriginStop.delay?.departureDelay ? 'clock-circle-o' : 'check-circle'"
-        [ngStyle]="{ color: currentOriginStop.station.isPassed ? '#ff4d4f' : (currentOriginStop.delay?.status === 'early' ? '#faad14' : currentOriginStop.delay?.departureDelay ? '#ff4d4f' : '#52c41a') }"
-        style="font-size: 16px;" />
-</ng-template>
-
-<ng-template #tripLastDotTemplate>
-    <nz-icon [nzType]="'check-circle'" [ngStyle]="{ color: '#52c41a' }" style="font-size: 16px;" />
-</ng-template>
-
-<ng-template #tripFirstLabelTemplate>
-    <div class="flex items-center justify-between gap-x-[10px]">
-        @if (currentOriginStop.delay?.departureDelay) {
-        <div class="flex gap-x-[5px] items-center">
-            <span
-                [ngClass]="currentOriginStop.delay?.status === 'early' ? 'text-[var(--color-warning)]' : 'text-[var(--color-error)]'">
-                {{currentOriginStop.delay?.delayedStartTime}}
-            </span>
-            <small><del>{{currentOriginStop.delay?.scheduledStartTime}}</del>
-            </small>
-        </div>
-        }
-        @else {
-        <span>{{currentRoute?.sequences?.[selectedTransit]?.origin?.scheduledStartTime}}</span>
-        }
-        @if (currentOriginStop.station.isPassed) {
-        <span class="mr-1 text-[var(--color-error)] font-bold">PASSED</span>
-        }
-        @else {
-        <nz-badge class="status-badge small p-2" [ngStyle]="{'margin-right': '16px'}" [ngClass]="{
-            'success': currentOriginStop.delay?.status === 'on time',
-            'error': currentOriginStop.delay?.status === 'late',
-            'warning': currentOriginStop.delay?.status === 'early'
-            }" [nzCount]="currentOriginStop.delay?.departureDelay">
-            <span>{{currentOriginStop.delay?.status}}</span>
-        </nz-badge>
-        }
-    </div>
-</ng-template>
-
-<ng-template #tripLastLabelTemplate>
-    <div class="flex items-center justify-end text-[var(--color-success)]">
-        <div class="mr-1 font-bold">ARRIVED</div>
-    </div>
-</ng-template>
-
-<ng-template #segmentLabelTemplate>
-    <div class="grid grid-cols-[auto_1fr] gap-x-1 items-center">
-        <i [ngClass]="currentTrip.transportInfo?.vehicle?.status | stopStatus:'icon'"
-            [ngStyle]="{color: 'var(' + (currentTrip.transportInfo?.vehicle?.status | stopStatus:'color') + ')'}"></i>
-        <span>{{currentTrip.transportInfo?.vehicle?.status | stopStatus:'label'}}</span>
-        <i class="fa-fw fa-solid fa-gauge-high"></i>
-        <span>{{currentTrip.transportInfo?.vehicle?.speed | km}}</span>
-    </div>
-</ng-template>
-
-<ng-template-- #segmentDotTemplate>
-    <i [ngClass]="transportMode[currentTrip.transportInfo?.mode || 'ERROR'].icon"></i>
-</ng-template-->

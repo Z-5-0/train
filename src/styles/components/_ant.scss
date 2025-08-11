@@ -97,7 +97,6 @@ nz-steps {
                 }
             }
         }
-
     }
 }
 
@@ -282,6 +281,23 @@ nz-modal-container {
             border-radius: 5px;
 
             .ant-modal-header {
+                border-radius: 5px;
+            }
+        }
+    }
+}
+
+// ----- ----- MESSAGE ----- ----- // 
+
+nz-notification-container {
+    .ant-notification {
+
+        &.ant-notification-top {
+            top: 2rem !important;
+        }
+
+        nz-notification {
+            .ant-notification-notice {
                 border-radius: 5px;
             }
         }

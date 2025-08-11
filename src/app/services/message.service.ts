@@ -21,8 +21,9 @@ export class MessageService {
                 type,
                 msg,
                 {
+                    nzKey: 'unique-key',
                     nzStyle: { whiteSpace: 'pre-wrap' },
-                    nzDuration: 6000,
+                    nzDuration: 6000, 
                     nzPlacement: 'top'
                 }
             );

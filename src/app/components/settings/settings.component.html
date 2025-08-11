@@ -13,7 +13,7 @@
             @case ('slider') {
             <nz-slider [nzDots]="false" [nzMin]="setting.value.min" [nzMax]="setting.value.max"
                 [nzStep]="setting.value.step" [nzMarks]="setting.value.marks" [ngModel]="settingsModel[setting.key]"
-                [disabled]="true" (ngModelChange)="settingValueChange($event, setting.key)">
+                (ngModelChange)="settingValueChange($event, setting.key)">
             </nz-slider>
             }
             }

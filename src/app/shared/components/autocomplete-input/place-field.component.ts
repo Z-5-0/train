@@ -1,14 +1,15 @@
 import { CommonModule, KeyValue } from '@angular/common';
-import { Component, ElementRef, EventEmitter, Input, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, inject, Input, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NzAutocompleteModule } from 'ng-zorro-antd/auto-complete';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { Place, PlaceGroup } from '../../models/place';
-import { debounceTime, Subject, tap } from 'rxjs';
+import { debounceTime, filter, of, Subject, switchMap, tap, withLatestFrom } from 'rxjs';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { PlaceFieldPostButton } from '../../models/place-field-post-button';
 import { TRANSPORT_MODE } from '../../constants/transport-mode';
+import { AppSettingsService } from '../../../services/app-settings.service';
 
 @Component({
   selector: 'place-field',
@@ -39,6 +40,8 @@ export class PlaceFieldComponent {
 
   public transportMode = TRANSPORT_MODE as Record<string, { name: string; icon: string }>;
 
+  appSettingsService: AppSettingsService = inject(AppSettingsService);
+
   field: string = '';
 
   innerCollection: PlaceGroup | null = null;
@@ -52,9 +55,13 @@ export class PlaceFieldComponent {
   waitingForResponse: boolean = false;
 
   constructor() {
-    this.selectionSubject.pipe(
-      tap(() => this.waitingForResponse = true),
-      debounceTime(this.debounceMs)
+    this.appSettingsService.appSettings$.pipe(
+      switchMap(settings =>
+        this.selectionSubject.pipe(
+          debounceTime(settings['debounceTime']),
+          tap(() => this.waitingForResponse = true)
+        )
+      )
     ).subscribe(value => {
       if (value.trim()) {
         this.inputChanged.emit({ value, name: this.name });

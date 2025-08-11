@@ -146,8 +146,8 @@ export class RoutePlanSearchComponent {
       {
         params: { q: value, limit: '10' },
         streamName: event.name,
-        useDebounce: true,
-        debounceMs: 0,
+        useDebounce: false,
+        // debounceMs: 0,
       }
     ).pipe(
       take(1),

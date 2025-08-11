@@ -12,7 +12,7 @@ import { NzSegmentedModule } from 'ng-zorro-antd/segmented';
 import { RestApiService } from '../../../services/rest-api.service';
 import { FormsModule } from '@angular/forms';
 import { createPlanQuery } from '../../../shared/constants/query/plan-query';
-import { BehaviorSubject, EMPTY, filter, finalize, interval, map, Observable, startWith, Subject, Subscription, switchMap, take, takeUntil, takeWhile, tap } from 'rxjs';
+import { BehaviorSubject, catchError, EMPTY, filter, finalize, interval, map, merge, Observable, startWith, Subject, Subscription, switchMap, take, takeUntil, takeWhile, tap } from 'rxjs';
 import { Trip, TripResponse } from '../../../shared/models/api/response-trip';
 import { CurrentTrip, StopStatus, StopTime } from '../../../shared/models/trip';
 import { DelayStatus, PointGeometry } from '../../../shared/models/common';
@@ -23,6 +23,8 @@ import { TRIP_ALERT } from '../../../shared/constants/trip-alert';
 import { SafeHtmlPipe } from '../../../shared/pipes/safe-html-pipe';
 import { StopStatusPipe } from '../../../shared/pipes/stop-status.pipe';
 import { TripService } from '../../../services/trip.service';
+import { AppSettingsService } from '../../../services/app-settings.service';
+import { NzSpinModule } from 'ng-zorro-antd/spin';
 
 
 @Component({
@@ -40,6 +42,7 @@ import { TripService } from '../../../services/trip.service';
     NzCardModule,
     SafeHtmlPipe,
     StopStatusPipe,
+    NzSpinModule,
   ],
   templateUrl: './route-transit.component.html',
   styleUrl: './route-transit.component.scss'
@@ -50,6 +53,7 @@ export class RouteTransitComponent {
   restApi: RestApiService = inject(RestApiService);
   routeService: RouteService = inject(RouteService);
   tripService: TripService = inject(TripService);
+  appSettingsService: AppSettingsService = inject(AppSettingsService);
 
   public transportMode = TRANSPORT_MODE as Record<string, { name: string; icon: string }>;
   public tripAlert = TRIP_ALERT;
@@ -57,75 +61,34 @@ export class RouteTransitComponent {
   currentRoute: Route | null = null;
   currentSequences: RouteSequence[] = [];
   currentTrip: CurrentTrip = {} as CurrentTrip;
+  public currentTrip$ = new BehaviorSubject<CurrentTrip | null>(null);
   currentOriginStop: StopTime | undefined = { station: { isPassed: false } } as StopTime;
   currentDestinationStop: StopTime = { station: { isArrived: false } } as StopTime;
 
   selectedTransit: number = 0;
 
+  autoUpdate: boolean = true;
+
   selectedTransit$ = new BehaviorSubject<number>(0);
   tripSubscription?: Subscription;
   destroy$ = new Subject<void>();
+  tripStreamDestroy$ = new Subject<void>();
+
+  tripIsLoading: boolean = false;
 
   ngOnInit() {
     this.initCurrentRoute();
     this.initTripStream();
 
-    /* this.selectedTransit$.pipe(
-      switchMap(selectedTransit => {
-        if (!this.currentRoute) return EMPTY;
-
-        const gtfsId = this.currentRoute.sequences[selectedTransit]?.transportInfo?.gtfsId ?? null;
-        if (!gtfsId) return EMPTY;
-
-        return this.tripService.getTripPolling(gtfsId);
-      }),
-      takeWhile(trip => {
-        const { allStops } = trip;
-
-        const currentGtfsId = trip.transportInfo?.station.gtfsId;
-        const destinationGtfsId = this.currentRoute?.sequences[this.selectedTransit]?.destination?.gtfsId;
-
-        const currentStopIndex = this.getStopIndex(allStops, currentGtfsId ?? undefined);
-        const destinationStopIndex = this.getStopIndex(allStops, destinationGtfsId);
-
-        this.currentDestinationStop.station.isArrived = currentStopIndex > destinationStopIndex;
-
-        const lastStop = allStops?.[allStops.length - 1];
-        const lastStopDelayedDateTime = lastStop?.delay?.delayedDateTime;
-        const now = DateTime.now().setZone('Europe/Budapest');
-
-        if (lastStopDelayedDateTime && lastStopDelayedDateTime < now) {
-          this.currentTrip = trip;
-        }
-
-        if (this.currentTrip.transportInfo && lastStopDelayedDateTime && lastStopDelayedDateTime < now) {
-          this.currentTrip.transportInfo.isFinished = true;
-        }
-
-        return lastStopDelayedDateTime ? lastStopDelayedDateTime > now : false;
-      }),
-      takeUntil(this.destroy$)
-    ).subscribe(trip => {
-
-      const { allStops, transportInfo } = trip;
-
-      const currentGtfsId = transportInfo?.station.gtfsId;
-      const originGtfsId = this.currentRoute?.sequences[this.selectedTransit]?.origin?.gtfsId;
-      const destinationGtfsId = this.currentRoute?.sequences[this.selectedTransit]?.destination?.gtfsId;
-
-      const currentStopIndex = this.getStopIndex(allStops, currentGtfsId ?? undefined); // ha -1 jön vissza, ERROR --> Budapest, Újpest-központ M / Budapest, Tél utca / Pozsonyi utca 25-ös busz
-      const originStopIndex = this.getStopIndex(allStops, originGtfsId);
-      const destinationStopIndex = this.getStopIndex(allStops, destinationGtfsId);
-
-      this.currentTrip = trip;
-      this.currentOriginStop = allStops[currentStopIndex];
-
-      if (currentStopIndex !== -1) {
-        this.currentOriginStop.station.isPassed = currentStopIndex > originStopIndex;
-      }
-
-      this.currentDestinationStop.station.isArrived = currentStopIndex > destinationStopIndex;
-    }); */
+    this.appSettingsService.appSettings$
+      .pipe(
+    )
+      .subscribe(settings => {
+        this.autoUpdate = !!settings['autoTripUpdate'];
+        this.tripStreamDestroy$.next();
+        this.tripStreamDestroy$ = new Subject<void>();
+        this.initTripStream();
+      })
   }
 
   private initCurrentRoute() {
@@ -143,11 +106,27 @@ export class RouteTransitComponent {
   }
 
   private initTripStream() {
-    this.selectedTransit$.pipe(
-      switchMap(selectedTransit => this.getTripObservable(selectedTransit)),
-      takeWhile(trip => this.evaluateTripStatus(trip)),
-      takeUntil(this.destroy$)
-    ).subscribe(trip => this.updateStopState(trip));
+    merge(
+      this.selectedTransit$.pipe(
+        tap(() => this.tripIsLoading = true),
+        switchMap(selectedTransit => this.getTripObservable(selectedTransit)),
+        takeWhile(trip => this.evaluateTripStatus(trip)),
+      ),
+      this.restApi.errorNotification$.pipe(
+        tap(() => {
+          this.tripIsLoading = false;
+        })
+      )
+    ).pipe(
+      takeUntil(this.tripStreamDestroy$)
+    ).subscribe({
+      next: trip => {
+        if (trip) {
+          this.updateStopState(trip);
+          this.tripIsLoading = false;
+        }
+      }
+    });
   }
 
   public handleValueChange(e: string | number) {
@@ -167,62 +146,70 @@ export class RouteTransitComponent {
     const gtfsId = this.currentRoute.sequences[selectedTransit]?.transportInfo?.gtfsId ?? null;
     if (!gtfsId) return EMPTY;
 
-    /*  // TODO LOCALSTORAGE
-        if (autoUpdate) {
-          return this.tripService.getTripPolling(gtfsId);
-        } else {
-          return this.tripService.getTrip(gtfsId);
-        }
-    */
-
-    return this.tripService.getTripPolling(gtfsId);
+    return this.autoUpdate
+      ? this.tripService.getTripPolling(gtfsId)
+      : this.tripService.getTrip(gtfsId);
   }
 
   private evaluateTripStatus(trip: CurrentTrip): boolean {
     const { allStops } = trip;
 
-        const currentGtfsId = trip.transportInfo?.station.gtfsId;
-        const destinationGtfsId = this.currentRoute?.sequences[this.selectedTransit]?.destination?.gtfsId;
+    const currentGtfsId = trip.transportInfo?.station.gtfsId;
+    const destinationGtfsId = this.currentRoute?.sequences[this.selectedTransit]?.destination?.gtfsId;
 
-        const currentStopIndex = this.getStopIndex(allStops, currentGtfsId ?? undefined);
-        const destinationStopIndex = this.getStopIndex(allStops, destinationGtfsId);
+    const currentStopIndex = this.getStopIndex(allStops, currentGtfsId ?? undefined);
+    const destinationStopIndex = this.getStopIndex(allStops, destinationGtfsId);
 
-        this.currentDestinationStop.station.isArrived = currentStopIndex > destinationStopIndex;
+    this.currentDestinationStop.station.isArrived = currentStopIndex > destinationStopIndex;
 
-        const lastStop = allStops?.[allStops.length - 1];
-        const lastStopDelayedDateTime = lastStop?.delay?.delayedDateTime;
-        const now = DateTime.now().setZone('Europe/Budapest');
+    const lastStop = allStops?.[allStops.length - 1];
+    const lastStopDelayedDateTime = lastStop?.delay?.delayedDateTime;
+    const now = DateTime.now().setZone('Europe/Budapest');
 
-        if (lastStopDelayedDateTime && lastStopDelayedDateTime < now) {
-          this.currentTrip = trip;
-        }
+    if (lastStopDelayedDateTime && lastStopDelayedDateTime < now) {
+      this.currentTrip = trip;
+      this.currentTrip$.next(trip);
+    }
 
-        if (this.currentTrip.transportInfo && lastStopDelayedDateTime && lastStopDelayedDateTime < now) {
-          this.currentTrip.transportInfo.isFinished = true;
-        }
+    if (this.currentTrip.transportInfo && lastStopDelayedDateTime && lastStopDelayedDateTime < now) {
+      this.currentTrip.transportInfo.isFinished = true;
+    }
 
-        return lastStopDelayedDateTime ? lastStopDelayedDateTime > now : false;
+    this.currentTrip$.pipe(take(1)).subscribe(currentTrip => {
+      if (
+        currentTrip?.transportInfo &&
+        lastStopDelayedDateTime &&
+        lastStopDelayedDateTime < now
+      ) {
+        currentTrip.transportInfo.isFinished = true;
+        this.currentTrip$.next(currentTrip); // frissíted az observable értékét
+      }
+    });
+
+    return lastStopDelayedDateTime ? lastStopDelayedDateTime > now : false;
   }
 
   private updateStopState(trip: CurrentTrip) {
     const { allStops, transportInfo } = trip;
 
-      const currentGtfsId = transportInfo?.station.gtfsId;
-      const originGtfsId = this.currentRoute?.sequences[this.selectedTransit]?.origin?.gtfsId;
-      const destinationGtfsId = this.currentRoute?.sequences[this.selectedTransit]?.destination?.gtfsId;
+    const currentGtfsId = transportInfo?.station.gtfsId;
+    const originGtfsId = this.currentRoute?.sequences[this.selectedTransit]?.origin?.gtfsId;
+    const destinationGtfsId = this.currentRoute?.sequences[this.selectedTransit]?.destination?.gtfsId;
 
-      const currentStopIndex = this.getStopIndex(allStops, currentGtfsId ?? undefined); // ha -1 jön vissza, ERROR --> Budapest, Újpest-központ M / Budapest, Tél utca / Pozsonyi utca 25-ös busz
-      const originStopIndex = this.getStopIndex(allStops, originGtfsId);
-      const destinationStopIndex = this.getStopIndex(allStops, destinationGtfsId);
+    const currentStopIndex = this.getStopIndex(allStops, currentGtfsId ?? undefined); // ha -1 jön vissza, ERROR --> Budapest, Újpest-központ M / Budapest, Tél utca / Pozsonyi utca 25-ös busz
+    const originStopIndex = this.getStopIndex(allStops, originGtfsId);
+    const destinationStopIndex = this.getStopIndex(allStops, destinationGtfsId);
 
-      this.currentTrip = trip;
-      this.currentOriginStop = allStops[currentStopIndex];
+    this.currentTrip = trip;
+    this.currentTrip$.next(trip);
 
-      if (currentStopIndex !== -1) {
-        this.currentOriginStop.station.isPassed = currentStopIndex > originStopIndex;
-      }
+    this.currentOriginStop = allStops[currentStopIndex];
 
-      this.currentDestinationStop.station.isArrived = currentStopIndex > destinationStopIndex;
+    if (currentStopIndex !== -1) {
+      this.currentOriginStop.station.isPassed = currentStopIndex > originStopIndex;
+    }
+
+    this.currentDestinationStop.station.isArrived = currentStopIndex > destinationStopIndex;
   }
 
   private getStopIndex(allStops: StopTime[], gtfsId: string | undefined): number {
@@ -283,10 +270,9 @@ export class RouteTransitComponent {
   }
 
   ngOnDestroy() {
-    console.log('onDestroy');
-    //  this.tripSubscription?.unsubscribe();
     this.destroy$.next();
     this.destroy$.complete();
-    // this.tripSubscription?.unsubscribe();
+    this.tripStreamDestroy$.next();
+    this.tripStreamDestroy$.complete();
   }
 }

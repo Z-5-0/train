@@ -11,6 +11,7 @@ import { finalize, map, take, tap } from 'rxjs';
 import { IntermediateStop, Itinerary, Leg, RouteApiResponse } from '../../../../../shared/models/api/response-route';
 import { PointGeometry } from '../../../../../shared/models/common';
 import { Route, RouteSequence } from '../../../../../shared/models/route';
+import { AppSettingsService } from '../../../../../services/app-settings.service';
 
 @Component({
   selector: 'search-button',
@@ -33,12 +34,19 @@ export class SearchButtonComponent {
 
   private restApi: RestApiService = inject(RestApiService);
   private routeService: RouteService = inject(RouteService);
+  private appSettingsService: AppSettingsService = inject(AppSettingsService);
 
   routeQuery = ROUTE_QUERY;
   transportMode = TRANSPORT_MODE;
 
+  numberOfItineraries!: number;
+  walkSpeed!: number;
+
   ngOnInit() {
-    console.log('search button init');
+    this.appSettingsService.appSettings$.subscribe(settings => {
+      this.numberOfItineraries = settings['alternativeRoutes'];
+      this.walkSpeed = settings['walkSpeed'];
+    });
   }
 
   getRoute() {
@@ -50,7 +58,7 @@ export class SearchButtonComponent {
       body: {
         query: this.routeQuery,
         variables: {
-          numItineraries: 15,    // TODO number of alternative routes + user will set
+          numItineraries: this.numberOfItineraries,
           fromPlace: this.currentLocation() || `${this.originPlace()?.name}::${this.originPlace()?.id}`,
           toPlace: `${this.destinationPlace?.name}::${this.destinationPlace()?.id}`,
           date: DateTime.now().toFormat('yyyy-LL-dd HH:mm').split(' ')[0],
@@ -58,7 +66,7 @@ export class SearchButtonComponent {
           modes: Object.entries(this.transportMode).map(([key]) => ({ mode: key })).slice(0, -2),
           distributionChannel: "ERTEKESITESI_CSATORNA#INTERNET",
           distributionSubChannel: "ERTEKESITESI_ALCSATORNA#EMMA",
-          walkSpeed: 1.11111111111111,    // m/s TODO SETTINGS + user will set
+          walkSpeed: this.walkSpeed / 3.6,
           minTransferTime: 0,
           arriveBy: false,
           transitPassFilter: [],

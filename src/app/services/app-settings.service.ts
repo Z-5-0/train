@@ -50,7 +50,7 @@ export class AppSettingsService {
         return settings;
     }
 
-    updateSettings(key: string, value: string | number): void {      // TODO ANY TYPE
+    updateSettings(key: string, value: string | number): void {
         this.localStorageService.setItem(key, value);
 
         this._appSettings$.next({ ...this._appSettings$.getValue(), [key]: value });

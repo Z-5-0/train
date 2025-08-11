@@ -1,5 +1,5 @@
 import { inject, Injectable } from "@angular/core";
-import { catchError, EMPTY, interval, map, Observable, shareReplay, startWith, switchMap, tap } from "rxjs";
+import { catchError, distinctUntilChanged, EMPTY, interval, map, Observable, of, shareReplay, startWith, switchMap, tap, throwError } from "rxjs";
 import { createPlanQuery } from "../shared/constants/query/plan-query";
 import { Trip, TripResponse } from "../shared/models/api/response-trip";
 import { CurrentTrip, StopStatus } from "../shared/models/trip";
@@ -7,12 +7,14 @@ import { DelayStatus, PointGeometry } from "../shared/models/common";
 import { TRANSPORT_MODE } from "../shared/constants/transport-mode";
 import { DateTime, Duration } from "luxon";
 import { RestApiService } from "./rest-api.service";
+import { AppSettingsService } from "./app-settings.service";
 
 @Injectable({
     providedIn: 'root',
 })
 export class TripService {
     private restApi: RestApiService = inject(RestApiService);
+    private appSettingsService: AppSettingsService = inject(AppSettingsService);
 
     public transportMode = TRANSPORT_MODE as Record<string, { name: string; icon: string }>;
 
@@ -21,18 +23,19 @@ export class TripService {
             return EMPTY;
         }
 
-        // 5 másodpercenként hívja meg a getTrip-et, azonnal is indul az első hívás
-        return interval(5000).pipe(
-            tap(() => console.log('Polling trigger')),
-            startWith(0),
-            switchMap(() => this.getTrip(gtfsId).pipe(
-                catchError(err => {
-                    console.error('getTrip hiba:', err);
-                    return EMPTY; // hibánál se álljon le a polling
-                })
-            )),
-            // Megosztja az előfizetők között az adatfolyamot, hogy ne indítsa el többször a lekérést
-            shareReplay({ bufferSize: 1, refCount: true })
+        return this.appSettingsService.appSettings$.pipe(
+            map(settings => Number(settings['tripUpdateTime'])),
+            // distinctUntilChanged(),
+            tap(ms => console.log('Trip polling / interval (ms): ', ms)),
+
+            switchMap(ms =>
+                interval(ms).pipe(
+                    startWith(0),
+                    switchMap(() => this.getTrip(gtfsId))
+                ),
+            ),
+
+            shareReplay({ bufferSize: 1, refCount: true })      // Shares the stream between subscribers to avoid triggering multiple requests
         );
     }
 
@@ -48,7 +51,11 @@ export class TripService {
                 variables: {}
             }
         }).pipe(
-            map((response: TripResponse) => this.transformTripResponse(response.data.trip))
+            map((response: TripResponse) => this.transformTripResponse(response.data.trip)),
+            catchError(err => {     // does not run due to retry in rest-api service
+                // return EMPTY;
+                return throwError(() => err);       // pushes error towards components
+            })
         );
     }
 

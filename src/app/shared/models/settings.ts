@@ -20,7 +20,7 @@ type SegmentedSetting<T> =       // <T extends string> : value set of T must be 
         step: null;
     };
 
-type SliderSetting = Omit<BaseSetting<string>, 'options'> & {
+type SliderSetting = Omit<BaseSetting<number>, 'options'> & {
     field: 'slider';
     options: null;
     marks: Record<number, string> | null;

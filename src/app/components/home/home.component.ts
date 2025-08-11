@@ -88,7 +88,7 @@ export class HomeComponent {
         takeUntil(this.destroy$),
       )
       .subscribe(settings => {
-        console.log(settings);
+        // console.log(settings);
         this.activeIndex = this.carousel?.activeIndex ?? 0;
 
         this.carousel.nzTransitionSpeed = 0;

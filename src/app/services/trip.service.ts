@@ -1,5 +1,5 @@
 import { inject, Injectable } from "@angular/core";
-import { catchError, distinctUntilChanged, EMPTY, interval, map, Observable, of, shareReplay, startWith, switchMap, tap, throwError } from "rxjs";
+import { catchError, debounceTime, distinctUntilChanged, EMPTY, interval, map, Observable, of, shareReplay, startWith, switchMap, tap, throwError } from "rxjs";
 import { createPlanQuery } from "../shared/constants/query/plan-query";
 import { Trip, TripResponse } from "../shared/models/api/response-trip";
 import { CurrentTrip, StopStatus } from "../shared/models/trip";
@@ -24,7 +24,7 @@ export class TripService {
         }
 
         return this.appSettingsService.appSettings$.pipe(
-            map(settings => Number(settings['tripUpdateTime'])),
+            map(settings => settings['tripUpdateTime']),
             // distinctUntilChanged(),
             tap(ms => console.log('Trip polling / interval (ms): ', ms)),
 
@@ -49,7 +49,8 @@ export class TripService {
             body: {
                 query: createPlanQuery(gtfsId),
                 variables: {}
-            }
+            },
+            debounceTime: false
         }).pipe(
             map((response: TripResponse) => this.transformTripResponse(response.data.trip)),
             catchError(err => {     // does not run due to retry in rest-api service

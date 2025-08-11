@@ -85,6 +85,7 @@ export class RouteTransitComponent {
     )
       .subscribe(settings => {
         this.autoUpdate = !!settings['autoTripUpdate'];
+        console.log('autoTrip: ', this.autoUpdate);
         this.tripStreamDestroy$.next();
         this.tripStreamDestroy$ = new Subject<void>();
         this.initTripStream();

@@ -47,8 +47,6 @@ export class PlaceFieldComponent {
   innerCollection: PlaceGroup | null = null;
   selectionSubject = new Subject<string>();
 
-  debounceMs: number = 500; // TODO: set option for user (localStorage)
-
   inputValue: string = '';
   selectedValue: Place | null = null;
 

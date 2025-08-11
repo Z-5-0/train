@@ -48,8 +48,10 @@ export class RestApiService {
 
             this.subjectMap.set(key, { input, output });
 
+            console.log('options: ', options);
+
             input.pipe(
-                debounceTime(options.useDebounce ? (options.debounceMs || 0) : 0),
+                debounceTime(options?.useDebounce ? options?.debounceMs || 0 : 0),
                 switchMap(opts => this.http.request<T>(method, url, opts)),
                 tap({
                     error: err => {

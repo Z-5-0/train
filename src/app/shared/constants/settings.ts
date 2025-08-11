@@ -55,7 +55,7 @@ export const APP_SETTINGS: AppSettings = {
         index: 5,
         label: 'Trip update time (ms)',
         field: 'slider',
-        defaultValue: 10,
+        defaultValue: 10000,
         options: null,
         marks: { 5000: '5000', 10000: '10000', 15000: '15000' },
         min: 5000,

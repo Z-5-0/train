@@ -75,6 +75,7 @@ export class SearchButtonComponent {
           banned: {}
         }
       },
+      useDebounce: false
     }).pipe(
       take(1),
       map((response: RouteApiResponse) => {

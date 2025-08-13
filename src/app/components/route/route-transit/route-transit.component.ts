@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, ElementRef, inject, NgZone, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { Route, RouteSequence, TransportInfo } from '../../../shared/models/route';
 import { RouteService } from '../../../services/route.service';
 import { TRANSPORT_MODE } from '../../../shared/constants/transport-mode';
@@ -12,7 +12,7 @@ import { NzSegmentedModule } from 'ng-zorro-antd/segmented';
 import { RestApiService } from '../../../services/rest-api.service';
 import { FormsModule } from '@angular/forms';
 import { createPlanQuery } from '../../../shared/constants/query/plan-query';
-import { BehaviorSubject, catchError, EMPTY, filter, finalize, interval, map, merge, Observable, startWith, Subject, Subscription, switchMap, take, takeUntil, takeWhile, tap } from 'rxjs';
+import { BehaviorSubject, catchError, EMPTY, filter, finalize, interval, map, merge, Observable, pairwise, startWith, Subject, Subscription, switchMap, take, takeUntil, takeWhile, tap } from 'rxjs';
 import { Trip, TripResponse } from '../../../shared/models/api/response-trip';
 import { CurrentTrip, StopStatus, StopTime } from '../../../shared/models/trip';
 import { DelayStatus, PointGeometry } from '../../../shared/models/common';
@@ -48,6 +48,11 @@ import { NzSpinModule } from 'ng-zorro-antd/spin';
   styleUrl: './route-transit.component.scss'
 })
 export class RouteTransitComponent {
+  @ViewChild('stopToScroll') stopToScroll!: ElementRef<HTMLDivElement>;
+  // @ViewChildren('stopToScroll') stopToScroll!: QueryList<HTMLDivElement>;
+
+  ngZone: NgZone = inject(NgZone);
+
   routeOptions: Route[] | null = null;
 
   restApi: RestApiService = inject(RestApiService);
@@ -85,11 +90,11 @@ export class RouteTransitComponent {
     )
       .subscribe(settings => {
         this.autoUpdate = !!settings['autoTripUpdate'];
-        console.log('autoTrip: ', this.autoUpdate);
+        // console.log('autoTrip: ', this.autoUpdate);
         this.tripStreamDestroy$.next();
         this.tripStreamDestroy$ = new Subject<void>();
         this.initTripStream();
-      })
+      });
   }
 
   private initCurrentRoute() {
@@ -107,12 +112,31 @@ export class RouteTransitComponent {
   }
 
   private initTripStream() {
+    const trip$ = this.selectedTransit$.pipe(
+      tap(() => this.tripIsLoading = true),
+      switchMap(selectedTransit => this.getTripObservable(selectedTransit)),
+      takeWhile(trip => this.evaluateTripStatus(trip)),
+    );
+
+    trip$.pipe(
+      startWith(null),
+      tap(() => {
+        // console.log('subStream started');
+      }),
+      pairwise(),
+      tap((data) => {
+        // console.log('tap data: ', data);
+      }),
+      filter(([previousTrip, currentTrip]) => previousTrip?.gtfsId !== currentTrip?.gtfsId),
+      switchMap(() => this.ngZone.onStable.pipe(take(1), map(() => true))),
+      takeUntil(this.tripStreamDestroy$),
+    ).subscribe((data) => {
+      // console.log('pairwise: ', data);
+      this.scrollToCurrentStop();
+    });
+
     merge(
-      this.selectedTransit$.pipe(
-        tap(() => this.tripIsLoading = true),
-        switchMap(selectedTransit => this.getTripObservable(selectedTransit)),
-        takeWhile(trip => this.evaluateTripStatus(trip)),
-      ),
+      trip$,
       this.restApi.errorNotification$.pipe(
         tap(() => {
           this.tripIsLoading = false;
@@ -124,13 +148,14 @@ export class RouteTransitComponent {
       next: trip => {
         if (trip) {
           this.updateStopState(trip);
+          this.markTripStops();
           this.tripIsLoading = false;
         }
       }
     });
   }
 
-  public handleValueChange(e: string | number) {
+  public onTransitChange(e: string | number) {
     this.selectedTransit$.next(e as number);
   }
 
@@ -190,6 +215,29 @@ export class RouteTransitComponent {
     return lastStopDelayedDateTime ? lastStopDelayedDateTime > now : false;
   }
 
+  private markTripStops() {
+    const originGtfsId = this.currentRoute?.sequences[this.selectedTransit]?.origin?.gtfsId;
+    const destinationGtfsId = this.currentRoute?.sequences[this.selectedTransit]?.destination?.gtfsId;
+
+    const originStopIndex = this.currentTrip.allStops.findIndex(stop => stop.station.gtfsId === originGtfsId);
+    const destinationStopIndex = this.currentTrip.allStops.findIndex(stop => stop.station.gtfsId === destinationGtfsId);
+
+    if (originStopIndex === -1 || destinationStopIndex === -1) {
+      return;
+    }
+
+    this.currentTrip = {
+      ...this.currentTrip,
+      allStops: this.currentTrip.allStops.map((stop, index) => ({
+        ...stop,
+        station: {
+          ...stop.station,
+          tripStop: index >= originStopIndex && index <= destinationStopIndex
+        }
+      }))
+    };
+  }
+
   private updateStopState(trip: CurrentTrip) {
     const { allStops, transportInfo } = trip;
 
@@ -217,49 +265,6 @@ export class RouteTransitComponent {
     return allStops.findIndex(({ station }) => station.gtfsId === gtfsId);
   }
 
-  /* getTrip() {
-    console.log('currentRoute: ', this.currentRoute);
-    const gtfsId = this.currentRoute?.sequences[this.selectedTransit]?.transportInfo?.gtfsId ?? null;   // TODO ERROR
-
-    this.tripSubscription = this.tripService.getTrip(gtfsId).subscribe((s: any) => {
-      console.log('SUB: ', s);
-      this.currentTrip = s;
-    })
-
-    return;
-
-    this.tripService.getTrip(gtfsId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(trip => {
-        this.currentTrip = trip;
-      });
-
-    this.tripSubscription = this.selectedTransit$.pipe(
-      switchMap(selectedTransitIndex => {
-        const gtfsId = this.currentRoute?.sequences[selectedTransitIndex!]?.transportInfo?.gtfsId;
-
-        if (!gtfsId) {
-          return EMPTY;
-        }
-
-        return interval(5000).pipe(
-          startWith(0),
-          switchMap(() => this.restApi.getTrip({
-            body: {
-              query: createPlanQuery(gtfsId),
-              variables: {}
-            }
-          })),
-          map((response: TripResponse): CurrentTrip => this.transformTripResponse(response.data.trip)),
-          tap(trip => {
-            console.log('currentTrip: ', trip);
-            this.currentTrip = trip;
-          })
-        );
-      })
-    ).subscribe();
-  } */
-
   public getModeName(sequence: any): string | null {
     const mode = sequence?.mode;
     const modeConfig = this.transportMode?.[mode];
@@ -270,7 +275,44 @@ export class RouteTransitComponent {
     return sequence?.transportInfo?.shortName ?? null;
   }
 
+  scrollToCurrentStop() {
+    const target = this.stopToScroll?.nativeElement as HTMLElement;
+    // const scrollableContainer = target?.closest<HTMLElement>('.ant-tabs-content-holder');
+    const scrollableContainer = document.querySelector<HTMLElement>('.ant-tabs-content-holder')
+
+    if (!scrollableContainer) {
+      return;
+    }
+
+    if (target) {
+      const containerRect = scrollableContainer.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
+      const offset = targetRect.top - containerRect.top + scrollableContainer.scrollTop;
+
+      scrollableContainer.scrollTo({
+        top: offset - 10,
+        behavior: 'smooth'
+      });
+    } else {    // handle upcoming trips
+      scrollableContainer.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+  }
+
+  onTabIndexChange(index: number): void {
+    if (index) {
+      this.tripStreamDestroy$.next();
+      this.scrollToCurrentStop();
+    } else {
+      this.tripStreamDestroy$ = new Subject<void>();
+      this.initTripStream();
+    }
+  }
+
   ngOnDestroy() {
+    console.log('DESTROY');
     this.destroy$.next();
     this.destroy$.complete();
     this.tripStreamDestroy$.next();

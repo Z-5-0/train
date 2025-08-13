@@ -26,7 +26,7 @@ export class TripService {
         return this.appSettingsService.appSettings$.pipe(
             map(settings => settings['tripUpdateTime']),
             // distinctUntilChanged(),
-            tap(ms => console.log('Trip polling / interval (ms): ', ms)),
+            // tap(ms => console.log('Trip polling / interval (ms): ', ms)),        // Polling debug
 
             switchMap(ms =>
                 interval(ms).pipe(
@@ -119,6 +119,7 @@ export class TripService {
                         gtfsId: stop.stopId,
                         isPassed: false,
                         isArrived: false,
+                        tripStop: false,
                     },
                     delay: {
                         /* scheduledStartTime: realtime

@@ -1,7 +1,7 @@
 <div class="flex items-center justify-between gap-x-[10px] text-lg px-4 py-2">
     <div class="relative w-full flex items-center gap-x-[10px] overflow-auto">
         <nz-segmented [ngClass]="'w-full'" [nzSize]="'default'" [(ngModel)]="selectedTransit"
-            (nzValueChange)="handleValueChange($event)" [nzDisabled]="currentTrip.gtfsId ? false : false">
+            (nzValueChange)="onTransitChange($event)" [nzDisabled]="currentTrip.gtfsId ? false : false">
             @for (sequence of currentSequences; track sequence; let index = $index) {
             <label nz-segmented-item [ngClass]="'flex-1'" [nzValue]="index" [nzDisabled]="sequence.mode === 'WALK'">
                 <div class="relative" [style.paddingTop.px]="5">
@@ -18,11 +18,12 @@
 
 <!--div
     style="position: absolute; left: 0; top: 0; bottom: 0; overflow: auto; width: 250px; background: black; color: white;">
-    <pre>{{currentSequences | json}}</pre>
+    <pre>{{currentTrip.allStops | json}}</pre>
 </!--div-->
 
 <ng-container *ngIf="currentTrip?.gtfsId; else noTrip">
-    <nz-tabset class="scrollable-content h-[calc(100%-110px)] !pb-2 !px-4">
+    <nz-tabset class="scrollable-content h-[calc(100%-110px)] !pb-2 !px-4"
+        (nzSelectedIndexChange)="onTabIndexChange($event)">
         <div *nzTabBarExtraContent="'start'">
             <div class="transport-number-badge border" [ngStyle]="{
                         'color': currentTrip.transportInfo?.vehicle?.textColor,
@@ -47,14 +48,13 @@
                         'font-bold': segmentStop?.station?.gtfsId === currentRoute?.sequences?.[selectedTransit]?.origin?.gtfsId 
                                     || segmentStop?.station?.gtfsId === currentRoute?.sequences?.[selectedTransit]?.destination?.gtfsId
                         }">
-                            {{segmentStop.station.name}}
+                            <span>{{segmentStop.station.name}}</span>
                         </div>
                     </nz-timeline-item>
                     }
                 </nz-timeline>
             </div>
             }
-
             @if (!currentTrip.transportInfo?.isFinished) {
             <nz-timeline [nzMode]="'right'">
                 @for (segmentStop of currentTrip.allStops; let first = $first; let last = $last; track
@@ -62,31 +62,34 @@
                 @if (segmentStop?.station?.gtfsId !== currentRoute?.sequences?.[selectedTransit]?.origin?.gtfsId &&
                 segmentStop?.station?.gtfsId !== currentRoute?.sequences?.[selectedTransit]?.destination?.gtfsId &&
                 segmentStop.station.gtfsId !== currentTrip.transportInfo?.station?.gtfsId) {
-                <nz-timeline-item [nzLabel]="first && !currentTrip.transportInfo?.transportId ? 'upcoming' : undefined">
+                <nz-timeline-item [nzLabel]="first && !currentTrip.transportInfo?.transportId ? 'upcoming' : undefined"
+                    [nzDot]="segmentStop?.station?.tripStop ? inTripDotTemplate : outTripDotTemplate">
                     <div>
-                        {{segmentStop.station.name}}
+                        <span>{{segmentStop.station.name}}</span>
                     </div>
                 </nz-timeline-item>
                 }
-
                 @if (segmentStop?.station?.gtfsId === currentRoute?.sequences?.[selectedTransit]?.origin?.gtfsId &&
                 segmentStop.station.gtfsId !== currentTrip.transportInfo?.station?.gtfsId) {
-                <nz-timeline-item [nzLabel]="originLabelTemplate" [nzDot]="originDotTemplate">
-                    <div class="font-bold text-[16px]"
+                <!-- [nzDot]="segmentStop?.station?.isPassed ? originDotTemplate : inTripDotTemplate"> -->
+                <nz-timeline-item [nzLabel]="originLabelTemplate"
+                    [nzDot]="currentOriginStop?.station?.isPassed ? originDotTemplate : inTripDotTemplate">
+                    <div class="flex items-baseline justify-between gap-2.5 font-bold text-[16px]"
                         [ngClass]="currentOriginStop?.station?.isPassed ? 'text-[var(--color-error)]' : ''">
-                        {{segmentStop.station.name}}
+                        <i class="fa-solid fa-arrow-down-long"></i>
+                        <span>{{segmentStop.station.name}}</span>
                     </div>
                 </nz-timeline-item>
                 }
-
                 @if (segmentStop?.station?.gtfsId === currentRoute?.sequences?.[selectedTransit]?.destination?.gtfsId &&
                 segmentStop.station.gtfsId !== currentTrip.transportInfo?.station?.gtfsId) {
                 <nz-timeline-item
                     [nzLabel]="currentDestinationStop.station.isArrived ? destinationLabelTemplate : undefined"
-                    [nzDot]="currentDestinationStop.station.isArrived ? destinationDotTemplate: undefined">
-                    <div class="font-bold text-[16px]"
+                    [nzDot]="currentDestinationStop.station.isArrived ? destinationDotTemplate : inTripDotTemplate">
+                    <div class="flex items-baseline justify-between gap-2.5 font-bold text-[16px]"
                         [ngClass]="currentDestinationStop.station.isArrived ? 'text-[var(--color-success)]' : ''">
-                        {{segmentStop.station.name}}
+                        <i class="fa-solid fa-flag"></i>
+                        <span>{{segmentStop.station.name}}</span>
                     </div>
                 </nz-timeline-item>
                 }
@@ -95,15 +98,16 @@
                 this.currentDestinationStop.station.isArrived) {
                 <nz-timeline-item [nzLabel]="destinationLabelTemplate" [nzDot]="destinationDotTemplate">
                     <div class="font-bold text-[16px] text-[var(--color-success)]">
-                        {{segmentStop.station.name}}
+                        <span>{{segmentStop.station.name}}</span>
                     </div>
                 </nz-timeline-item>
                 }
                 @if (segmentStop?.station?.gtfsId === currentRoute?.sequences?.[selectedTransit]?.origin?.gtfsId &&
                 segmentStop.station.gtfsId === currentTrip.transportInfo?.station?.gtfsId) {
                 <nz-timeline-item [nzLabel]="currentOriginStopLabelTemplate" [nzDot]="currentOriginStopDotTemplate">
-                    <div class="font-bold text-[16px]">
-                        {{segmentStop.station.name}}
+                    <div #stopToScroll class="flex items-baseline justify-between gap-2.5 font-bold text-[16px]">
+                        <i class="fa-solid fa-arrow-down-long"></i>
+                        <span>{{segmentStop.station.name}}</span>
                     </div>
                 </nz-timeline-item>
                 }
@@ -111,8 +115,9 @@
                 segmentStop.station.gtfsId === currentTrip.transportInfo?.station?.gtfsId &&
                 !this.currentDestinationStop.station.isArrived) {
                 <nz-timeline-item [nzLabel]="currentStopLabelTemplate" [nzDot]="currentStopDotTemplate">
-                    <div class="font-bold text-[16px]">
-                        {{segmentStop.station.name}}
+                    <div #stopToScroll class="flex items-baseline justify-between gap-2.5 font-bold text-[16px]">
+                        <i class="fa-solid fa-flag"></i>
+                        <span>{{segmentStop.station.name}}</span>
                     </div>
                 </nz-timeline-item>
                 }
@@ -120,8 +125,8 @@
                 segmentStop?.station?.gtfsId !== currentRoute?.sequences?.[selectedTransit]?.destination?.gtfsId &&
                 segmentStop.station.gtfsId === currentTrip.transportInfo?.station?.gtfsId) {
                 <nz-timeline-item [nzLabel]="currentStopLabelTemplate" [nzDot]="currentStopDotTemplate">
-                    <div>
-                        {{segmentStop.station.name}}
+                    <div #stopToScroll>
+                        <span>{{segmentStop.station.name}}</span>
                     </div>
                 </nz-timeline-item>
                 }
@@ -210,11 +215,15 @@
     </div>
 </ng-template>
 
-<ng-template #originDotTemplate>
+<!--ng-template #originDotTemplate>
     <nz-icon
         [nzType]="currentOriginStop?.station?.isPassed ? 'stop' : currentOriginStop?.delay?.departureDelay ? 'clock-circle-o' : 'check-circle'"
         [ngStyle]="{ color: currentOriginStop?.station?.isPassed ? '#ff4d4f' : (currentOriginStop?.delay?.status === 'early' ? '#faad14' : currentOriginStop?.delay?.departureDelay ? '#ff4d4f' : '#52c41a') }"
         style="font-size: 16px;" />
+</!--ng-template-->
+
+<ng-template #originDotTemplate>
+    <nz-icon [nzType]="'stop'" [ngStyle]="{ color: '#ff4d4f' }" style="font-size: 16px;" />
 </ng-template>
 
 <ng-template #destinationDotTemplate>
@@ -233,7 +242,7 @@
 </ng-template>
 
 <ng-template #currentStopDotTemplate>
-    <i [ngClass]="transportMode[currentTrip.transportInfo?.mode || 'ERROR'].icon"></i>
+    <i class="text-xl" [ngClass]="transportMode[currentTrip.transportInfo?.mode || 'ERROR'].icon"></i>
 </ng-template>
 
 <ng-template #currentOriginStopLabelTemplate>
@@ -278,7 +287,31 @@
 </ng-template>
 
 <ng-template #currentOriginStopDotTemplate>
-    <i [ngClass]="transportMode[currentTrip.transportInfo?.mode || 'ERROR'].icon"></i>
+    <i class="text-xl" [ngClass]="transportMode[currentTrip.transportInfo?.mode || 'ERROR'].icon"></i>
+</ng-template>
+
+<ng-template #inTripDotTemplate>
+    <i class="fa-solid fa-circle-dot text-[var(--color-info)]"></i>
+    <!--nz-icon nzType="circle-o" style="font-size: 16px;" /-->
+
+    <!--div style="position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: #fff;
+    border: 2px solid transparent;
+    border-radius: 100px;"></!--div-->
+</ng-template>
+
+<ng-template #outTripDotTemplate>
+    <i class="fa-solid fa-circle-dot text-[var(--color-mid-opacity-black)]"></i>
+    <!--nz-icon nzType="circle-o" style="font-size: 16px;" /-->
+
+    <!--div style="position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: #fff;
+    border: 2px solid transparent;
+    border-radius: 100px;"></!--div-->
 </ng-template>
 
 <ng-template #noTrip>

@@ -50,8 +50,9 @@ export interface StopTime {
         name: string,
         platformCode?: string | null,
         gtfsId: string,
-        isPassed?: boolean;
+        isPassed: boolean;
         isArrived: boolean;
+        tripStop: boolean;
     };
     delay?: {
         scheduledStartTime: string,

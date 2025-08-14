@@ -1,4 +1,4 @@
-<div class="p-4">
+<div class="h-full overflow-auto p-4 grid gap-4">
     <div class="grid grid-cols-[1fr_1fr] gap-4 p-4">
         <ng-container *ngFor="let setting of APP_SETTINGS | keyvalue: orderByIndex; trackBy: trackSetting">
             <div class="self-center">{{setting.value.label}}</div>
@@ -13,45 +13,23 @@
             @case ('slider') {
             <nz-slider [nzDots]="false" [nzMin]="setting.value.min" [nzMax]="setting.value.max"
                 [nzStep]="setting.value.step" [nzMarks]="setting.value.marks" [ngModel]="settingsModel[setting.key]"
-                (ngModelChange)="settingValueChange($event, setting.key)">
+                (nzOnAfterChange)="settingValueChange($event, setting.key)">
             </nz-slider>
             }
             }
         </ng-container>
-
-        <!--div class="self-center">Welcome card</!--div>
-        <nz-segmented [nzOptions]="['Visible', 'Hidden']" [nzBlock]="true" [ngModel]="welcomeCard"
-            (nzValueChange)="settingValueChange($event, 'welcomeCard')"></nz-segmented>
-
-        <div class="self-center">Language</div>
-        <nz-segmented [nzOptions]="['HU', 'EN']" [nzBlock]="true" [ngModel]="language"
-            (nzValueChange)="settingValueChange($event, 'language')"></nz-segmented>
-
-        <div class="self-center">Theme</div>
-        <nz-segmented [nzOptions]="['Light', 'Dark', 'Auto']" [nzBlock]="true" [ngModel]="theme"
-            (nzValueChange)="settingValueChange($event, 'theme')"></nz-segmented>
-
-        <div class="self-center">Continuous update</div>
-        <nz-segmented [nzOptions]="['Yes', 'No']" [nzBlock]="true" [ngModel]="autoTripUpdate"
-            (nzValueChange)="settingValueChange($event, 'autoTripUpdate')"></nz-segmented>
-
-        <div class="self-center">Trip update time (ms)</div>
-        <nz-slider [nzDots]="false" [nzMin]="5" [nzMax]="15" [nzStep]="5" [nzMarks]="tripSliderMarks"
-            [ngModel]="tripUpdateTime" (nzValueChange)="settingValueChange($event, 'tripUpdateTime')"></nz-slider>
-
-        <div class="self-center">Debounce time (ms)</div>
-        <nz-slider [nzDots]="false" [nzMin]="0" [nzMax]="1000" [nzStep]="100" [nzMarks]="debounceSliderMarks"
-            [ngModel]="debounceTime" (nzValueChange)="settingValueChange($event, 'debounceTime')"></nz-slider>
-
-        <div class="self-center">Walk speed (km/h)</div>
-        <nz-slider [nzDots]="false" [nzMin]="2" [nzMax]="6" [nzStep]="1" [nzMarks]="walkSliderMarks"
-            [ngModel]="walkSpeed" (nzValueChange)="settingValueChange($event, 'walkSpeed')"></nz-slider>
-
-        <div class="self-center">Alternative routes (qty)</div>
-        <nz-slider-- [nzDots]="false" [nzMin]="2" [nzMax]="16" [nzStep]="1" [nzMarks]="routesSliderMarks"
-            [ngModel]="alternativeRoutes" (nzValueChange)="settingValueChange($event, 'alternativeRoutes')"></nz-slider-->
-
         <div>Favourites</div>
         <button nz-button nzType="primary" (click)="openFavouritesModal()">Edit</button>
     </div>
+
+    @if (settingsChanged) {
+    <div class="flex gap-1 justify-between">
+        <button nz-button nzDanger nzType="primary" [nzSize]="'large'" [nzShape]="'round'" (click)="cancelChanges()">
+            Cancel
+        </button>
+        <button nz-button nzSuccess nzType="primary" [nzSize]="'large'" [nzShape]="'round'" (click)="saveChanges()">
+            Save
+        </button>
+    </div>
+    }
 </div>

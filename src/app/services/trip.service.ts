@@ -1,5 +1,5 @@
 import { inject, Injectable } from "@angular/core";
-import { catchError, debounceTime, distinctUntilChanged, EMPTY, interval, map, Observable, of, shareReplay, startWith, switchMap, tap, throwError } from "rxjs";
+import { catchError, debounceTime, distinctUntilChanged, EMPTY, interval, map, Observable, of, shareReplay, startWith, switchMap, takeUntil, tap, throwError } from "rxjs";
 import { createPlanQuery } from "../shared/constants/query/plan-query";
 import { Trip, TripResponse } from "../shared/models/api/response-trip";
 import { CurrentTrip, StopStatus } from "../shared/models/trip";
@@ -18,24 +18,15 @@ export class TripService {
 
     public transportMode = TRANSPORT_MODE as Record<string, { name: string; icon: string }>;
 
-    getTripPolling(gtfsId: string | null): Observable<CurrentTrip> {
-        if (!gtfsId) {
-            return EMPTY;
-        }
-
+    getTripPolling(gtfsId: string): Observable<CurrentTrip> {
         return this.appSettingsService.appSettings$.pipe(
             map(settings => settings['tripUpdateTime']),
-            // distinctUntilChanged(),
-            // tap(ms => console.log('Trip polling / interval (ms): ', ms)),        // Polling debug
-
             switchMap(ms =>
                 interval(ms).pipe(
                     startWith(0),
                     switchMap(() => this.getTrip(gtfsId))
-                ),
-            ),
-
-            shareReplay({ bufferSize: 1, refCount: true })      // Shares the stream between subscribers to avoid triggering multiple requests
+                )
+            )
         );
     }
 

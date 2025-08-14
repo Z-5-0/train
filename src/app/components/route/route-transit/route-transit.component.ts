@@ -12,7 +12,7 @@ import { NzSegmentedModule } from 'ng-zorro-antd/segmented';
 import { RestApiService } from '../../../services/rest-api.service';
 import { FormsModule } from '@angular/forms';
 import { createPlanQuery } from '../../../shared/constants/query/plan-query';
-import { BehaviorSubject, catchError, EMPTY, filter, finalize, interval, map, merge, Observable, pairwise, startWith, Subject, Subscription, switchMap, take, takeUntil, takeWhile, tap } from 'rxjs';
+import { BehaviorSubject, catchError, combineLatest, EMPTY, filter, finalize, interval, map, merge, Observable, pairwise, startWith, Subject, Subscription, switchMap, take, takeUntil, takeWhile, tap } from 'rxjs';
 import { Trip, TripResponse } from '../../../shared/models/api/response-trip';
 import { CurrentTrip, StopStatus, StopTime } from '../../../shared/models/trip';
 import { DelayStatus, PointGeometry } from '../../../shared/models/common';
@@ -77,24 +77,14 @@ export class RouteTransitComponent {
   selectedTransit$ = new BehaviorSubject<number>(0);
   tripSubscription?: Subscription;
   destroy$ = new Subject<void>();
-  tripStreamDestroy$ = new Subject<void>();
+
+  private tripDestroy$ = new Subject<void>();
 
   tripIsLoading: boolean = false;
 
   ngOnInit() {
     this.initCurrentRoute();
     this.initTripStream();
-
-    this.appSettingsService.appSettings$
-      .pipe(
-    )
-      .subscribe(settings => {
-        this.autoUpdate = !!settings['autoTripUpdate'];
-        // console.log('autoTrip: ', this.autoUpdate);
-        this.tripStreamDestroy$.next();
-        this.tripStreamDestroy$ = new Subject<void>();
-        this.initTripStream();
-      });
   }
 
   private initCurrentRoute() {
@@ -112,48 +102,67 @@ export class RouteTransitComponent {
   }
 
   private initTripStream() {
+    this.tripDestroy$ = new Subject<void>();
+
     const trip$ = this.selectedTransit$.pipe(
+      filter(() => !!this.currentRoute),
+      startWith(this.selectedTransit),
       tap(() => this.tripIsLoading = true),
-      switchMap(selectedTransit => this.getTripObservable(selectedTransit)),
-      takeWhile(trip => this.evaluateTripStatus(trip)),
+      switchMap(transit => this.getTripObservable(transit, this.tripDestroy$)),
+      takeWhile(trip => this.evaluateTripStatus(trip))
     );
 
     trip$.pipe(
       startWith(null),
-      tap(() => {
-        // console.log('subStream started');
-      }),
       pairwise(),
-      tap((data) => {
-        // console.log('tap data: ', data);
+      tap(([prev, curr]) => {
+        if (prev?.gtfsId !== curr?.gtfsId) {
+          this.ngZone.onStable.pipe(take(1)).subscribe(() => this.scrollToCurrentStop());
+        }
       }),
-      filter(([previousTrip, currentTrip]) => previousTrip?.gtfsId !== currentTrip?.gtfsId),
-      switchMap(() => this.ngZone.onStable.pipe(take(1), map(() => true))),
-      takeUntil(this.tripStreamDestroy$),
-    ).subscribe((data) => {
-      // console.log('pairwise: ', data);
-      this.scrollToCurrentStop();
-    });
+      takeUntil(this.destroy$)
+    ).subscribe();
 
-    merge(
+    this.tripSubscription = merge(
       trip$,
-      this.restApi.errorNotification$.pipe(
-        tap(() => {
-          this.tripIsLoading = false;
-        })
-      )
-    ).pipe(
-      takeUntil(this.tripStreamDestroy$)
-    ).subscribe({
-      next: trip => {
-        if (trip) {
-          this.updateStopState(trip);
+      this.restApi.errorNotification$.pipe(tap(() => this.tripIsLoading = false))
+    ).pipe(takeUntil(this.destroy$))
+      .subscribe(trip => {
+        if (trip && 'gtfsId' in trip) {
+          this.updateStopState(trip as CurrentTrip);
           this.markTripStops();
           this.tripIsLoading = false;
         }
-      }
-    });
+      });
   }
+
+  private getTripObservable(selectedTransit: number, destroy: any): Observable<CurrentTrip> {
+    if (!this.currentRoute) return EMPTY;
+
+    const gtfsId = this.currentRoute.sequences[selectedTransit]?.transportInfo?.gtfsId ?? null;
+    if (!gtfsId) return EMPTY;
+
+    return this.autoUpdate
+      ? this.tripService.getTripPolling(gtfsId)
+      : this.tripService.getTrip(gtfsId);
+  }
+
+  onTabIndexChange(index: number): void {
+    this.scrollToCurrentStop();
+  }
+
+  ngOnDestroy() {
+    console.log('DESTROY');
+    this.destroy$.next();
+    this.destroy$.complete();
+
+    this.tripDestroy$.next();
+    this.tripDestroy$.complete();
+
+    this.tripSubscription?.unsubscribe();
+  }
+
+  // --------------------------------------------------------------------------------------------------------------------------------
 
   public onTransitChange(e: string | number) {
     this.selectedTransit$.next(e as number);
@@ -164,17 +173,6 @@ export class RouteTransitComponent {
 
     const index = this.currentRoute.sequences.findIndex(seq => seq.mode !== 'WALK');
     return index >= 0 ? index : 0;
-  }
-
-  private getTripObservable(selectedTransit: number): Observable<CurrentTrip> {
-    if (!this.currentRoute) return EMPTY;
-
-    const gtfsId = this.currentRoute.sequences[selectedTransit]?.transportInfo?.gtfsId ?? null;
-    if (!gtfsId) return EMPTY;
-
-    return this.autoUpdate
-      ? this.tripService.getTripPolling(gtfsId)
-      : this.tripService.getTrip(gtfsId);
   }
 
   private evaluateTripStatus(trip: CurrentTrip): boolean {
@@ -299,23 +297,5 @@ export class RouteTransitComponent {
         behavior: 'smooth'
       });
     }
-  }
-
-  onTabIndexChange(index: number): void {
-    if (index) {
-      this.tripStreamDestroy$.next();
-      this.scrollToCurrentStop();
-    } else {
-      this.tripStreamDestroy$ = new Subject<void>();
-      this.initTripStream();
-    }
-  }
-
-  ngOnDestroy() {
-    console.log('DESTROY');
-    this.destroy$.next();
-    this.destroy$.complete();
-    this.tripStreamDestroy$.next();
-    this.tripStreamDestroy$.complete();
   }
 }

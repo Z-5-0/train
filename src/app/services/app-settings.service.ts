@@ -34,25 +34,25 @@ export class AppSettingsService {
     }
 
     loadOrInitializeSettings(): Record<string, any> {
-        const settings: Record<string, any> = {};
+        let settings = this.localStorageService.getItem<AppSettings>('appSettings') ?? null;
+
+        if (settings) {
+            return settings;
+        }
+
+        settings = {} as AppSettings;
 
         Object.entries(this.APP_SETTINGS).forEach(([key, config]) => {
-            let setting = this.localStorageService.getItem<string>(key);
-
-            if (setting === null) {
-                this.localStorageService.setItem<string>(key, config.defaultValue);
-                setting = config.defaultValue;
-            }
-
-            settings[key] = setting;
+            settings[key as keyof AppSettings] = config.defaultValue;
         });
+
+        this.localStorageService.setItem<string>('appSettings', settings as any);
 
         return settings;
     }
 
-    updateSettings(key: string, value: string | number): void {
-        this.localStorageService.setItem(key, value);
-
-        this._appSettings$.next({ ...this._appSettings$.getValue(), [key]: value });
+    updateSettings(settings: AppSettings): void {
+        this.localStorageService.setItem('appSettings', settings);
+        this._appSettings$.next(settings);
     }
 }

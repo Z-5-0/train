@@ -41,3 +41,5 @@ export interface AppSettings {
     walkSpeed: SliderSetting;
     alternativeRoutes: SliderSetting;
 }
+
+export type Setting = SegmentedSetting<number> | SliderSetting;

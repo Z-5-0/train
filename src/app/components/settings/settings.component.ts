@@ -2,16 +2,16 @@ import { CommonModule, KeyValue } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NzSegmentedModule } from 'ng-zorro-antd/segmented';
-import { NzSliderModule } from 'ng-zorro-antd/slider';
+import { NzSliderModule, NzSliderValue } from 'ng-zorro-antd/slider';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { ModalOptions, NzModalService } from 'ng-zorro-antd/modal';
 import { FavouritesComponent } from '../../shared/components/favourites/favourites.component';
 import { LocalStorageService } from '../../services/local-storage.service';
 import { APP_SETTINGS } from '../../shared/constants/settings';
-import { BaseSetting } from '../../shared/models/settings';
+import { AppSettings, BaseSetting, Setting } from '../../shared/models/settings';
 import { AppSettingsService } from '../../services/app-settings.service';
-import { take } from 'rxjs';
+import { Subject, take, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'settings',
@@ -28,7 +28,10 @@ import { take } from 'rxjs';
 })
 export class SettingsComponent {
   public APP_SETTINGS: Record<string, any> = APP_SETTINGS;
-  public settingsModel: any;
+  public originalSettingsModel!: Record<string, Setting>;
+  public settingsModel!: Record<string, Setting>;
+  public settingsChanged: boolean = false;
+  private destroy$: Subject<void> = new Subject<void>;
 
   orderByIndex = (
     a: KeyValue<string, any>,
@@ -69,22 +72,36 @@ export class SettingsComponent {
 
   ngOnInit() {
     this.appSettingsService.appSettings$
-      .pipe(take(1))
+      .pipe(
+        takeUntil(this.destroy$)
+      )
       .subscribe(settings => {
-        this.settingsModel = settings;
+        this.originalSettingsModel = { ...settings };
+        this.settingsModel = { ...settings };
+        this.settingsChanged = false;
       });
   }
 
-  settingValueChange(e: string | number, modelName: string) {
-    (this as any)[modelName] = e;
-    this.appSettingsService.updateSettings(modelName, e);
+  settingValueChange(value: number[] | number | string, key: string) {
+    (this.settingsModel as any)[key] = value;
+    this.settingsChanged = JSON.stringify(this.originalSettingsModel) !== JSON.stringify(this.settingsModel);
   }
 
   trackSetting(index: number, item: { key: string; value: BaseSetting<string> }) {
     return item.value.index;
   }
 
+  saveChanges() {
+    this.appSettingsService.updateSettings(this.settingsModel as unknown as AppSettings);   // multiple type assertion for bypassing Typescript compatibility check
+  }
+
+  cancelChanges() {
+    this.settingsModel = { ...this.originalSettingsModel };
+    this.settingsChanged = false;
+  }
+
   ngOnDestroy() {
-    console.log('settings destroyed');
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

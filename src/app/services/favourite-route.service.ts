@@ -80,6 +80,10 @@ export class FavouriteRouteService {
         });
     }
 
+    reorderFavouriteRoutes(routes: SelectableRoute[]): void {
+        this.localStorageService.setItem(this.storageKey, routes);
+    }
+
     removeCurrentFavouriteRoute() {
         const selectedRoute = this.routeService.getSelectedPlace();
 

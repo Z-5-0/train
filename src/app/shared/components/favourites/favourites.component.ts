@@ -13,6 +13,7 @@ import { FillProgressDirective } from '../../directives/fill-progress.directive'
 import { LongPressDirective } from '../../directives/long-press.directive';
 import { NzBadgeModule } from 'ng-zorro-antd/badge';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
+import { CdkDragDrop, CdkDragEnd, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 
 @Component({
   selector: 'app-favourites',
@@ -27,6 +28,7 @@ import { NzAvatarModule } from 'ng-zorro-antd/avatar';
     FillProgressDirective,
     NzBadgeModule,
     NzAvatarModule,
+    DragDropModule,
   ],
   templateUrl: './favourites.component.html',
   styleUrl: './favourites.component.scss'
@@ -48,10 +50,13 @@ export class FavouritesComponent {
   clearFavouritesDisabled: boolean = false;
   allFavouriteRoutesIsSelected: boolean = false;
   hasSelectedRow: boolean = false;
+  isSortable: boolean = false;
 
   constructor(
-    @Inject(NZ_MODAL_DATA) public data: { rowSelection: boolean, favouriteSelection: boolean }
-  ) { }
+    @Inject(NZ_MODAL_DATA) public data: { rowSelection: boolean, favouriteSelection: boolean, sortable: boolean }
+  ) {
+    this.isSortable = !data.sortable;
+  }
 
   ngOnInit() {
     this.favouriteRoutes = this.favouriteRouteService.getFavouriteRoutes();
@@ -76,7 +81,7 @@ export class FavouritesComponent {
 
   selectFavourite(index: number) {
     this.favouriteRouteService.selectFavouriteRoute(index);
-    this.modalRef.close({favouriteSelected: true});
+    this.modalRef.close({ favouriteSelected: true });
   }
 
   rowSelectionChange(index: number) {
@@ -121,6 +126,11 @@ export class FavouritesComponent {
 
   checkHasSelectedRow(): boolean {
     return this.selectedRows.some(row => !!row)
+  }
+
+  dropped(e: any) {
+    moveItemInArray(this.favouriteRoutes, e.previousIndex, e.currentIndex);
+    this.favouriteRouteService.reorderFavouriteRoutes(this.favouriteRoutes);
   }
 
   ngOnDestroy() {

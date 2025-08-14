@@ -47,7 +47,7 @@ export class SettingsComponent {
     const modalOptions: ModalOptions = {
       nzContent: FavouritesComponent,
       nzCentered: false,
-      nzData: { rowSelection: true, favouriteSelection: false },
+      nzData: { rowSelection: true, favouriteSelection: false, sortable: true },
       nzFooter: null,
       nzTitle: '',
       nzClosable: true,

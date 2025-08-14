@@ -45,7 +45,7 @@ export class FavouriteTogglerComponent {
     const modalOptions: ModalOptions = {
       nzContent: FavouritesComponent,
       nzCentered: false,
-      nzData: { rowSelection: false, favouriteSelection: true },
+      nzData: { rowSelection: false, favouriteSelection: true, sortable: false },
       nzFooter: null,
       nzTitle: '',
       nzClosable: true,

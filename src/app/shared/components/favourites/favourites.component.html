@@ -14,9 +14,9 @@
     </div>
     <!-- Content -->
     <div class="grow overflow-y-auto p-4">
-        <nz-list [nzLoading]="false">
+        <nz-list [nzLoading]="false" cdkDropList (cdkDropListDropped)="dropped($event)">
             @for (fav of favouriteRoutes; track fav; let index = $index) {
-            <nz-list-item>
+            <nz-list-item cdkDrag [cdkDragDisabled]="isSortable">
                 <div class="w-full grid gap-x-2 items-center"
                     [class]="data.rowSelection ? 'grid-cols-[auto_1fr_auto]' : 'grid-cols-[1fr_auto]'">
                     @if (data.rowSelection) {

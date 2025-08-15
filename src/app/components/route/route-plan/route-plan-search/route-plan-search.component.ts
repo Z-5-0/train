@@ -97,7 +97,7 @@ export class RoutePlanSearchComponent {
       this.originPlace.set(data.originPlace);
       this.originPlaces = {};
       this.setPlaceFieldPostButtons();
-      this.routeService.setSelectedPlace('originPlace', this.originPlace() ?? null);
+      this.routeService.setSelectedPlace({ 'originPlace': this.originPlace() ?? null });
       this.originIsCurrentLocation = true;
 
       this.routeIsFavourite = this.favouriteRouteService.isFavouriteRoute();
@@ -128,8 +128,11 @@ export class RoutePlanSearchComponent {
         if (selected) {
           this.originPlace.set(selected?.originPlace ?? null)
           this.destinationPlace.set(selected?.destinationPlace ?? null);
-          this.routeService.setSelectedPlace('originPlace', this.originPlace() ?? null);
-          this.routeService.setSelectedPlace('destinationPlace', this.destinationPlace() ?? null);
+          this.routeService.setSelectedPlace(
+            {
+              originPlace: this.originPlace() || null,
+              destinationPlace: this.destinationPlace() ?? null
+            });
           // this.originIsCurrentLocation = true;    // TODO
           // this.currentLocation.set('');
         }
@@ -160,9 +163,6 @@ export class RoutePlanSearchComponent {
   }
 
   onPlaceSelect(event: { name: string, field: string, place: Place }) {
-    const { name: placeInputName, place } = event;
-    (this as any)[placeInputName].set(place);
-
     if (this.currentLocation && event.name === 'originPlace') {
       this.currentLocation.set('');
       this.originIsCurrentLocation = false;
@@ -173,7 +173,10 @@ export class RoutePlanSearchComponent {
       this.routeService.setPlaceCollection(event.field, null);
     }
 
-    this.routeService.setSelectedPlace(event.name, place);
+    (this as any)[event.name].set(event.place);
+
+    this.routeService.setSelectedPlace({ [event.name]: event.place });
+
     this.favouriteRouteService.selectFavouriteRoute(-1);
 
     this.routeIsFavourite = this.favouriteRouteService.isFavouriteRoute();

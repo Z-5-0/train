@@ -60,7 +60,7 @@ export class SearchButtonComponent {
         variables: {
           numItineraries: this.numberOfItineraries,
           fromPlace: this.currentLocation() || `${this.originPlace()?.name}::${this.originPlace()?.id}`,
-          toPlace: `${this.destinationPlace?.name}::${this.destinationPlace()?.id}`,
+          toPlace: `${this.destinationPlace()?.name}::${this.destinationPlace()?.id}`,
           date: DateTime.now().toFormat('yyyy-LL-dd HH:mm').split(' ')[0],
           time: DateTime.now().toFormat('yyyy-LL-dd HH:mm').split(' ')[1],
           modes: Object.entries(this.transportMode).map(([key]) => ({ mode: key })).slice(0, -2),

@@ -21,3 +21,5 @@ export interface PlaceSearchEvent {
 }
 
 export type PlaceType = 'station' | 'location';
+
+export type TravelDirectionsKeys = 'originPlace' | 'destinationPlace';

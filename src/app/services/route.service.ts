@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
 import { BehaviorSubject } from "rxjs";
-import { Place, PlaceGroup } from "../shared/models/place";
+import { Place, PlaceGroup, TravelDirectionsKeys } from "../shared/models/place";
 import { Route } from "../shared/models/route";
 
 @Injectable({
@@ -41,9 +41,8 @@ export class RouteService {
         }); */
     }
 
-    setSelectedPlace(field: string, place: Place | null) {
-        const current = this._selectedPlace$.getValue();
-        this._selectedPlace$.next({ ...current, [field]: place });
+    setSelectedPlace(places: Partial<Record<TravelDirectionsKeys, Place | null>>) {
+        this._selectedPlace$.next({ ...this._selectedPlace$.getValue(), ...places });
     }
 
     getSelectedPlace(): { originPlace: Place | null; destinationPlace: Place | null } {

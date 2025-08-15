@@ -79,11 +79,16 @@ export class RoutePlanSearchComponent {
         this.setPlaceFieldPostButtons();
       },
       (error: GeolocationPositionError) => {
-        this.gpsEnabled = false;
+        console.log('GeolocationPositionError');
+
         this.originPlace.set(null);
-        this.setPlaceFieldPostButtons();
-        this.messageService.showWarning(this.geolocationError[error.code]);
+        this.gpsEnabled = false;
+        this.originIsCurrentLocation = false;
         this.routeIsLoading = false;
+
+        this.setPlaceFieldPostButtons();
+
+        this.messageService.showWarning(this.geolocationError(error.code));
       }
     );
   }

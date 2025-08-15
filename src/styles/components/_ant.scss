@@ -294,11 +294,47 @@ nz-notification-container {
 
         &.ant-notification-top {
             top: 2rem !important;
+            width: 100%;
+            max-width: 36rem;
+            padding: 0 1rem;
+            box-sizing: border-box;
         }
 
         nz-notification {
             .ant-notification-notice {
+                min-height: 112px;
+                display: flex;
+                align-items: center;
+                width: 100%;
+                max-width: 100%;
+                margin: 0;
+                border-width: 3px;
+                border-style: solid;
                 border-radius: 5px;
+
+                &.success {
+                    border-color: #52c41a;
+                }
+
+                &.warning {
+                    border-color: #faad14;
+                }
+
+                &.error {
+                    border-color: #ff4d4f;
+                }
+
+                &.info {
+                    border-color: #1890ff;
+                }
+
+                .ant-notification-notice-content {
+                    .ant-notification-notice-with-icon {
+                        nz-icon {
+                            font-size: 30px;
+                        }
+                    }
+                }
             }
         }
     }

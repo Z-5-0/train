@@ -1,4 +1,4 @@
-<nz-collapse [nzExpandIconPosition]="'start'">
+<nz-collapse [nzExpandIconPosition]="'start'" class="dark-mode-background">
     @for (route of routeOptions; track route; let routeIndex = $index) {
     <ng-template #headerTemplate let-index=index>
         <div
@@ -22,13 +22,13 @@
                         </small>
                     </span>
                     @if (!last) {
-                    <span class="text-[var(--color-mid-opacity-black)]">.....</span>
+                    <span class="text-[var(--color-mid-opacity-black)] dark-mode-text">.....</span>
                     }
                     }
                 </div>
             </div>
-            <div class="post-button" [ngClass]="selectedRoute?.index === routeIndex
-                    ? 'text-[var(--color-success)]'
+            <div class="post-button dark-mode-text" [ngClass]="selectedRoute?.index === routeIndex
+                    ? '!text-[var(--color-success)]'
                     : 'text-[var(--color-mid-opacity-black)]'" (click)="onSelectRoute($event, route)">
                 <i class="fa-solid"
                     [ngClass]="selectedRoute?.index === routeIndex ? 'fa-circle-check' : 'fa-circle'"></i>

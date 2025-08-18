@@ -16,7 +16,7 @@
 
 </div>
 
-<nz-autocomplete #auto [nzBackfill]="true">
+<nz-autocomplete #auto [nzBackfill]="true" [nzDefaultActiveFirstOption]="false">
     @for (place of innerCollection | keyvalue; track place.key) {
     <nz-auto-optgroup [nzLabel]="groupTitle">
         <ng-template #groupTitle>

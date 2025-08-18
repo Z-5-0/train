@@ -1,0 +1,227 @@
+@use '../variables/colors' as color;
+
+@mixin dark-mode-surface {
+    background-color: color.$dark-background-color;
+    color: color.$dark-text-color;
+}
+
+@mixin dark-mode-selected-surface {
+    background-color: color.$dark-background-color;
+    color: color.$dark-selected-text-color;
+}
+
+@mixin dark-mode-background {
+    background-color: color.$dark-background-color;
+}
+
+@mixin dark-mode-text {
+    color: color.$dark-text-color;
+}
+
+@mixin dark-mode-selected-text {
+    color: color.$dark-selected-text-color;
+}
+
+body.dark {
+    .dark-mode-text {
+        @include dark-mode-text;
+    }
+
+    .dark-mode-background {
+        @include dark-mode-background;
+    }
+
+    .dark-mode-surface {
+        @include dark-mode-surface;
+    }
+
+    .dark-mode-border {
+        border: 1px solid color.$dark-light-grey-color;
+    }
+
+    nz-input-group {
+        @include dark-mode-background;
+
+        input {
+            @include dark-mode-surface;
+        }
+
+        .ant-input-suffix {
+            nz-icon {
+                @include dark-mode-text;
+            }
+        }
+    }
+
+    nz-steps.ant-steps {
+        nz-step.ant-steps-item {
+            .ant-steps-item-container {
+                .ant-steps-item-content {
+                    .ant-steps-item-title {
+                        @include dark-mode-text;
+                    }
+                }
+            }
+        }
+    }
+
+    nz-icon {
+        &.anticon-loading {
+            @include dark-mode-text;
+        }
+    }
+
+    nz-collapse.ant-collapse {
+        nz-collapse-panel.ant-collapse-item {
+            .ant-collapse-header {
+                @include dark-mode-text;
+
+                .ant-collapse-header-text {
+                    div:first-child {
+                        @include dark-mode-text;
+                    }
+
+                    .post-button {
+                        box-shadow: inset 0px 0px 15px 0px color.$dark-mid-opacity-black-color, 0px 0px 10px 0px color.$dark-mid-opacity-black-color;
+
+                        &:hover {
+                            box-shadow: inset 0px 0px 15px 0px color.$dark-light-grey-color, 0px 0px 10px 0px color.$dark-light-grey-color;
+                        }
+                    }
+
+                }
+            }
+
+            .ant-collapse-content {
+                @include dark-mode-background;
+            }
+
+        }
+    }
+
+    nz-timeline {
+        .ant-timeline {
+            @include dark-mode-surface;
+        }
+    }
+
+    nz-list {
+        @include dark-mode-background;
+
+        nz-spin {
+            @include dark-mode-background;
+
+            .ant-spin-container {
+                .ant-list-items {
+                    nz-list-item {
+                        @include dark-mode-text;
+                    }
+                }
+            }
+        }
+    }
+
+    nz-segmented {
+        .ant-segmented-group {
+            .ant-segmented-item {
+                @include dark-mode-text;
+
+                &.ant-segmented-item-selected {
+                    background-color: color.$dark-mid-opacity-black-color;
+                }
+            }
+        }
+
+        .ant-segmented-thumb {
+            background-color: color.$dark-mid-opacity-black-color
+        }
+    }
+
+    nz-tabset {
+        &.scrollable-content {
+            nz-tabs-nav.ant-tabs-nav {
+                &:after {
+                    background: linear-gradient(180deg, color.$dark-background-color, transparent);
+                }
+
+                .ant-tabs-nav-wrap {
+                    .ant-tabs-nav-list {
+                        @include dark-mode-text;
+                    }
+                }
+            }
+        }
+    }
+
+    nz-spin {
+        background-color: color.$dark-mid-opacity-black-color;
+    }
+
+    nz-card {
+        @include dark-mode-surface;
+    }
+
+    nz-slider {
+        nz-slider-marks {
+            span {
+                @include dark-mode-text;
+            }
+        }
+    }
+
+    .cdk-overlay-container {
+        .cdk-global-overlay-wrapper {
+            .cdk-overlay-pane {
+                nz-modal-container {
+                    .ant-modal {
+                        .ant-modal-content {
+                            @include dark-mode-background;
+
+                            .ant-modal-close {
+                                @include dark-mode-text;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        .cdk-overlay-pane {
+            @include dark-mode-background;
+
+            .ant-select-dropdown {
+                @include dark-mode-background;
+
+                .ant-select-dropdown-content-wrapper {
+                    .ant-select-dropdown-content {
+                        nz-auto-optgroup {
+                            .ant-select-item {
+                                @include dark-mode-text;
+                            }
+
+                            nz-auto-option {
+                                @include dark-mode-text;
+
+                                &.ant-select-item-option-active {
+                                    @include dark-mode-selected-surface;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    .has-after-gradient {
+        &:after {
+            background: linear-gradient(180deg, color.$dark-background-color, transparent);
+        }
+    }
+
+    .has-before-gradient {
+        &:before {
+            background: linear-gradient(0, color.$dark-background-color, transparent);
+        }
+    }
+}

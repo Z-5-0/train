@@ -12,6 +12,7 @@ import { DateTime } from 'luxon';
 import { filter, map, Subject, Subscription, takeUntil, tap } from 'rxjs';
 import { MapComponent } from '../../shared/components/map/map.component';
 import { AppSettingsService } from '../../services/app-settings.service';
+import { NzConfigService } from 'ng-zorro-antd/core/config';
 
 @Component({
   selector: 'app-home',
@@ -53,6 +54,8 @@ export class HomeComponent {
   private destroy$ = new Subject<void>();
 
   activeIndex!: number;
+
+  private nzConfig: NzConfigService = inject(NzConfigService)
 
   ngOnInit() {
     this.routeService.selectedRoute$

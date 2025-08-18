@@ -167,7 +167,7 @@
             </div>
             }
             @else {
-            <div class="flex gap-1">
+            <div class="flex gap-1 dark-mode-text">
                 <nz-icon nzType="check-circle" nzTheme="outline" class="!text-[var(--color-success)]" />
                 <span>No alert, everything's all right.</span>
             </div>
@@ -197,7 +197,7 @@
         @if (currentOriginStop?.station?.isPassed) {
         <span class="mr-1 text-[var(--color-error)] font-bold">PASSED</span>
         }
-        @else {
+        @else if (currentOriginStop?.delay?.status) {
         <nz-badge class="status-badge small p-2" [ngStyle]="{'margin-right': '16px'}" [ngClass]="{
             'success': currentOriginStop?.delay?.status === 'on time',
             'error': currentOriginStop?.delay?.status === 'late',
@@ -232,7 +232,7 @@
 
 <ng-template #currentStopLabelTemplate>
     <div
-        class="inline-grid grid-cols-[auto_1fr] gap-[5px] leading-none items-center bg-[var(--color-light-grey)] p-[5px] rounded-[5px]">
+        class="inline-grid grid-cols-[auto_1fr] gap-[5px] leading-none items-center bg-[var(--color-light-grey)] p-[5px] rounded-[5px] dark-mode-background dark-mode-border">
         <i [ngClass]="currentTrip.transportInfo?.vehicle?.status | stopStatus:'icon'"
             [ngStyle]="{color: 'var(' + (currentTrip.transportInfo?.vehicle?.status | stopStatus:'color') + ')'}"></i>
         <span>{{currentTrip.transportInfo?.vehicle?.status | stopStatus:'label'}}</span>
@@ -247,7 +247,7 @@
 
 <ng-template #currentOriginStopLabelTemplate>
     <div class="flex items-center justify-between gap-x-[10px]">
-        <div class="inline-grid gap-x-1 items-center bg-[var(--color-light-grey)] p-[5px] rounded-[5px]">
+        <div class="inline-grid gap-x-1 items-center bg-[var(--color-light-grey)] p-[5px] rounded-[5px] dark-mode-background dark-mode-border">
             @if (currentOriginStop?.delay?.departureDelay) {
             <div class="flex gap-x-[5px] items-center">
                 <span

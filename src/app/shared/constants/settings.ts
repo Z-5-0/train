@@ -32,7 +32,7 @@ export const APP_SETTINGS: AppSettings = {
         field: 'segmented',
         defaultValue: 1,
         // options: ['Light', 'Dark'], // [{label: 'Dark', value: false}, {label: 'Light', value: true}]
-        options: [{ label: 'Dark', value: 0, disabled: true }, { label: 'Light', value: 1 }],
+        options: [{ label: 'Dark', value: 0 }, { label: 'Light', value: 1 }],
         marks: null,
         min: null,
         max: null,

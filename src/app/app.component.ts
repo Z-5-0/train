@@ -12,10 +12,11 @@ import { AppSettingsService } from './services/app-settings.service';
 export class AppComponent {
   appSettingsService: AppSettingsService = inject(AppSettingsService);
 
+  theme: number = 1;    // light mode
+
   constructor() {
-    // this.appSettingsService.loadSettingsFromLocalStorage();
-    this.appSettingsService.appSettings$.pipe().subscribe(settings => {
-      // console.log(settings);
+    this.appSettingsService.appSettings$.subscribe(settings => {
+      document.body.classList.toggle('dark', !settings['theme']);
     })
   }
 }

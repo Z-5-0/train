@@ -1,23 +1,6 @@
 @use '../variables/colors' as color;
 
 
-// ----- ----- CAROUSEL ----- ----- //
-
-nz-carousel {
-    .slick-slider {
-        .slick-list {
-            .slick-track {
-                .slick-slide {
-                    .card {
-                        .footer {}
-                    }
-                }
-            }
-        }
-    }
-}
-
-
 // ----- ----- STEPS ----- ----- //
 
 nz-steps {
@@ -108,8 +91,6 @@ nz-timeline {
             .ant-timeline-item-head {
                 background: transparent;
             }
-
-            .ant-timeline-item-label {}
         }
     }
 

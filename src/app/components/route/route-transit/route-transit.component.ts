@@ -154,9 +154,14 @@ export class RouteTransitComponent {
     const gtfsId = this.currentRoute.sequences[selectedTransit]?.transportInfo?.gtfsId ?? null;
     if (!gtfsId) return EMPTY;
 
-    return this.autoUpdate
-      ? this.tripService.getTripPolling(gtfsId)
-      : this.tripService.getTrip(gtfsId);
+    return this.appSettingsService.appSettings$.pipe(
+      map(settings => !!settings['autoTripUpdate']),
+      switchMap(autoUpdate =>
+        autoUpdate
+          ? this.tripService.getTripPolling(gtfsId)
+          : this.tripService.getTrip(gtfsId)
+      )
+    );
   }
 
   onTabIndexChange(index: number): void {

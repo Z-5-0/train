@@ -67,8 +67,8 @@ interface Alert {
     text: string;
     severityLevel: AlertSeverityLevel;
     startDate: string;
-    endDate: string;
-    endProgress: number;
+    endDate: string | null;
+    endProgress: number | null;
 }
 
 export type AlertSeverityLevel = 'INFO' | 'WARNING' | 'SEVERE' | 'UNKNOWN_SEVERITY';

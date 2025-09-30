@@ -44,6 +44,11 @@ body.dark {
 
         input {
             @include dark-mode-surface;
+
+            &.ant-input-disabled {
+                background-color: color.$dark-light-grey-color;
+                @include dark-mode-text;
+            }
         }
 
         .ant-input-suffix {
@@ -179,6 +184,28 @@ body.dark {
 
                             .ant-modal-close {
                                 @include dark-mode-text;
+                            }
+                        }
+                    }
+                }
+
+                nz-notification-container {
+                    .ant-notification {
+                        nz-notification {
+                            .ant-notification-notice {
+                                @include dark-mode-surface;
+
+                                .ant-notification-notice-content {
+                                    .ant-notification-notice-with-icon {
+                                        .ant-notification-notice-message {
+                                            @include dark-mode-text;
+                                        }
+                                    }
+                                }
+
+                                .ant-notification-notice-close {
+                                    @include dark-mode-text;
+                                }
                             }
                         }
                     }

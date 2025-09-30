@@ -50,6 +50,7 @@ export class RoutePlanSearchComponent {
   isFavouriteChangeBlocked = signal<boolean>(false);
   originIsCurrentLocation: boolean = false;
   gpsEnabled: boolean = false;
+  gpsIsLoading: boolean = false;
 
   currentLocation = signal<string>('');
   favouriteFillStep: number = 0;
@@ -94,6 +95,8 @@ export class RoutePlanSearchComponent {
   }
 
   getGpsPosition() {
+    console.log('getGps');
+    this.gpsIsLoading = true;
     this.originIsCurrentLocation = true;
     this.geolocationService.getCurrentLocationInfo$().subscribe(data => {
       if (!data) return;
@@ -104,6 +107,7 @@ export class RoutePlanSearchComponent {
       this.setPlaceFieldPostButtons();
       this.routeService.setSelectedPlace({ 'originPlace': this.originPlace() ?? null });
       this.originIsCurrentLocation = true;
+      this.gpsIsLoading = false;
 
       this.routeIsFavourite = this.favouriteRouteService.isFavouriteRoute();
       this.favouriteFillStep = this.routeIsFavourite ? 100 : 0;

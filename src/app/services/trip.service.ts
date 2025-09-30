@@ -72,14 +72,15 @@ export class TripService {
                 text: alert.alertDescriptionText,
                 severityLevel: alert.alertSeverityLevel,
                 startDate: DateTime.fromSeconds(alert.effectiveStartDate).toFormat('yyyy-LL-dd HH:mm'),
-                endDate: DateTime.fromSeconds(alert.effectiveEndDate).toFormat('yyyy-LL-dd HH:mm'),
-                endProgress: Number(Math.min(
-                    Math.max(
-                        ((Date.now() / 1000 - alert.effectiveStartDate) / (alert.effectiveEndDate - alert.effectiveStartDate)) * 100,
-                        0
-                    ),
-                    100
-                ).toFixed(2))
+                endDate: alert.effectiveEndDate ? DateTime.fromSeconds(alert.effectiveEndDate).toFormat('yyyy-LL-dd HH:mm') : null,     // could be null
+                endProgress: alert.effectiveEndDate ?
+                    Number(Math.min(
+                        Math.max(
+                            ((Date.now() / 1000 - alert.effectiveStartDate) / (alert.effectiveEndDate - alert.effectiveStartDate)) * 100,
+                            0
+                        ),
+                        100
+                    ).toFixed(2)) : null
             })),
             allStops: stoptimes?.map((
                 { arrivalDelay,

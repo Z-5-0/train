@@ -156,11 +156,13 @@
                             <div>{{alert.startDate}}</div>
                             <nz-progress [nzType]="'line'" [nzShowInfo]="false" [nzPercent]="alert.endProgress"
                                 [nzSteps]="10" nzStrokeColor="#1890ff"></nz-progress>
-                            <div>{{alert.endDate}}</div>
+                            <div>{{alert.endDate || 'Unknown end date'}}</div>
                         </div>
+                        @if (alert.endProgress) {
                         <div class="flex justify-center">
                             <span class="text-center">{{alert.endProgress}} %</span>
                         </div>
+                        }
                     </div>
                 </nz-card>
                 }
@@ -247,7 +249,8 @@
 
 <ng-template #currentOriginStopLabelTemplate>
     <div class="flex items-center justify-between gap-x-[10px]">
-        <div class="inline-grid gap-x-1 items-center bg-[var(--color-light-grey)] p-[5px] rounded-[5px] dark-mode-background dark-mode-border">
+        <div
+            class="inline-grid gap-x-1 items-center bg-[var(--color-light-grey)] p-[5px] rounded-[5px] dark-mode-background dark-mode-border">
             @if (currentOriginStop?.delay?.departureDelay) {
             <div class="flex gap-x-[5px] items-center">
                 <span

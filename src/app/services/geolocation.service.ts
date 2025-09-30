@@ -15,8 +15,6 @@ export class GeolocationService {
     getCurrentLocationInfo$(): Observable<{ currentLocation: string; originPlace: any } | null> {
 
         return new Observable<GeolocationPosition | null>((observer) => {
-            console.log('getCurrentLocationInfo: ', observer);
-
             if (!navigator.geolocation) {
                 observer.next(null);
                 observer.complete();

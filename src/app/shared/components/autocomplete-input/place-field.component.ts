@@ -31,6 +31,7 @@ export class PlaceFieldComponent {
   @Input() collection: PlaceGroup | null = null;
   @Input() placeholder: string = '';
   @Input() disabled: boolean = false;
+  @Input() loading: boolean = false;
   @Input() selectedPlace: Place | null = null;
   @Input() postButton: PlaceFieldPostButton | null = null;
   @Output() inputChanged: EventEmitter<any> = new EventEmitter<any>; // TODO: TYPE

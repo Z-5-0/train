@@ -15,7 +15,6 @@ export class MessageService {
         this.notificationSubject$.pipe(
             debounceTime(100)
         ).subscribe(([type, msg]) => {
-            // this.message[type](msg);
             this.notification.create(
                 type,
                 type,

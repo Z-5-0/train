@@ -104,12 +104,24 @@ export class RouteTransitComponent {
   private initTripStream() {
     this.tripDestroy$ = new Subject<void>();
 
-    const trip$ = this.selectedTransit$.pipe(
+    /* const trip$ = this.selectedTransit$.pipe(
       filter(() => !!this.currentRoute),
       startWith(this.selectedTransit),
       tap(() => this.tripIsLoading = true),
       switchMap(transit => this.getTripObservable(transit, this.tripDestroy$)),
       takeWhile(trip => this.evaluateTripStatus(trip))
+    ); */
+
+    const trip$ = this.selectedTransit$.pipe(
+      filter(() => !!this.currentRoute),
+      startWith(this.selectedTransit),
+      tap(() => this.tripIsLoading = true),
+      switchMap(transit =>
+        this.getTripObservable(transit, this.tripDestroy$).pipe(
+          takeWhile(trip => this.evaluateTripStatus(trip), true),
+          catchError(() => EMPTY) // ha hiba lenne
+        )
+      )
     );
 
     trip$.pipe(

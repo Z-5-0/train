@@ -91,6 +91,11 @@ nz-timeline {
             .ant-timeline-item-head {
                 background: transparent;
             }
+
+            .ant-timeline-item-tail {
+                top: 14px;
+                height: calc(100% - 18px);
+            }
         }
     }
 

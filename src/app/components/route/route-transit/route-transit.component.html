@@ -43,7 +43,7 @@
                 <nz-timeline [nzMode]="'right'">
                     @for (segmentStop of currentTrip.allStops; let first = $first; let last = $last; track
                     segmentStop?.station?.gtfsId) {
-                    <nz-timeline-item [nzLabel]="' '" [nzDot]="undefined">
+                    <nz-timeline-item [nzLabel]="' '" [nzDot]="outTripDotTemplate">
                         <div [ngClass]="{
                         'font-bold': segmentStop?.station?.gtfsId === currentRoute?.sequences?.[selectedTransit]?.origin?.gtfsId 
                                     || segmentStop?.station?.gtfsId === currentRoute?.sequences?.[selectedTransit]?.destination?.gtfsId

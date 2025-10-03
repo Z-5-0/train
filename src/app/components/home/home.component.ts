@@ -13,6 +13,7 @@ import { filter, map, Subject, Subscription, takeUntil, tap } from 'rxjs';
 import { MapComponent } from '../../shared/components/map/map.component';
 import { AppSettingsService } from '../../services/app-settings.service';
 import { NzConfigService } from 'ng-zorro-antd/core/config';
+import { InfoComponent } from '../info/info.component';
 
 @Component({
   selector: 'app-home',
@@ -24,6 +25,7 @@ import { NzConfigService } from 'ng-zorro-antd/core/config';
     SettingsComponent,
     TransportModePipe,
     MapComponent,
+    InfoComponent,
   ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',

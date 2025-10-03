@@ -4,6 +4,11 @@ import { DelayStatus, PointGeometry } from "./common";
 export interface CurrentTrip {
     gtfsId: string;
     alerts: Alert[];
+    services: {
+        bikesAllowed: {label: string, icon: string, color: string},
+        wheelchairAccessible: {label: string, icon: string, color: string},
+        info: ServiceInfo[]
+    }
     tripShortName: string | null | undefined;
     allStops: StopTime[];
     transportInfo: null | {
@@ -71,5 +76,17 @@ interface Alert {
     endProgress: number | null;
 }
 
+interface ServiceInfo {
+    index: number,
+    name: string;
+    icon: string;
+    color: string;
+    fromStopName: string;
+    tillStopName: string;
+}
+
 export type AlertSeverityLevel = 'INFO' | 'WARNING' | 'SEVERE' | 'UNKNOWN_SEVERITY';
 export type StopStatus = 'STOPPED_AT' | 'IN_TRANSIT_TO' | 'UNKNOWN';
+// export type BikesAllowed = 'NOT_ALLOWED' | 'ALLOWED' | 'UNKNOWN';
+// export type WheelchairAccessible = 'NOT_POSSIBLE' | 'POSSIBLE' | 'UNKNOWN';
+export type ServiceStatusKey = 'NOT_ALLOWED' | 'ALLOWED' | 'NOT_POSSIBLE' | 'POSSIBLE' | 'UNKNOWN';

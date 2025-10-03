@@ -135,45 +135,73 @@
             }
 
         </nz-tab>
-        <nz-tab [nzTitle]="(currentTrip && currentTrip.alerts && currentTrip.alerts.length) ? alertTemplate : 'Alert'">
-            <ng-template #alertTemplate>
-                <nz-icon [nzType]="'eye'" class="!text-[var(--color-error)]" /> Alert
+        <nz-tab [nzTitle]="(currentTrip && currentTrip.alerts && currentTrip.alerts.length) ? infoTemplate : 'Info'">
+            <ng-template #infoTemplate>
+                <nz-icon [nzType]="'eye'" class="!text-[var(--color-error)]" /> Info
             </ng-template>
-            @if (currentTrip && currentTrip.alerts && currentTrip.alerts.length) {
-            <div class="grid gap-2">
-                @for (alert of currentTrip.alerts; track alert) {
-                <nz-card>
-                    <div class="grid gap-2">
-                        <div class="flex justify-center">
-                            <i class="text-2xl" [ngClass]="tripAlert[alert.severityLevel].icon"
-                                [style.color]="'var(' + tripAlert[alert.severityLevel].color + ')'">
-                            </i>
+            <div class="grid gap-8 pb-8">
+                @if (currentTrip && currentTrip.alerts && currentTrip.alerts.length) {
+                <div class="grid gap-2">
+                    @for (alert of currentTrip.alerts; track alert) {
+                    <nz-card>
+                        <div class="grid gap-2">
+                            <div class="flex justify-center">
+                                <i class="text-2xl" [ngClass]="tripAlert[alert.severityLevel].icon"
+                                    [style.color]="'var(' + tripAlert[alert.severityLevel].color + ')'">
+                                </i>
+                            </div>
+                            <div class="flex justify-center">
+                                <span class="text-center" [innerHTML]="alert.text | safeHtml"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <div>{{alert.startDate}}</div>
+                                <nz-progress [nzType]="'line'" [nzShowInfo]="false" [nzPercent]="alert.endProgress"
+                                    [nzSteps]="10" nzStrokeColor="#1890ff"></nz-progress>
+                                <div>{{alert.endDate || 'Unknown end date'}}</div>
+                            </div>
+                            @if (alert.endProgress) {
+                            <div class="flex justify-center">
+                                <span class="text-center">{{alert.endProgress}} %</span>
+                            </div>
+                            }
                         </div>
-                        <div class="flex justify-center">
-                            <span class="text-center" [innerHTML]="alert.text | safeHtml"></span>
-                        </div>
-                        <div class="flex justify-between">
-                            <div>{{alert.startDate}}</div>
-                            <nz-progress [nzType]="'line'" [nzShowInfo]="false" [nzPercent]="alert.endProgress"
-                                [nzSteps]="10" nzStrokeColor="#1890ff"></nz-progress>
-                            <div>{{alert.endDate || 'Unknown end date'}}</div>
-                        </div>
-                        @if (alert.endProgress) {
-                        <div class="flex justify-center">
-                            <span class="text-center">{{alert.endProgress}} %</span>
+                    </nz-card>
+                    }
+                </div>
+                }
+                <!--@else {-->
+                <div class="flex gap-2 dark-mode-text">
+                    <!--nz-icon nzType="check-circle" nzTheme="outline" class="!text-[var(--color-success)]" /-->
+                    <!--span>No alert, everything's all right.</!--span-->
+                    @if (!currentTrip.services.info.length) {
+                    <div class="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 items-center">
+                        <i
+                            [ngClass]="[currentTrip.services.bikesAllowed.icon, 'text-[var(' + currentTrip.services.bikesAllowed.color + ')]', 'text-lg']">
+                        </i>
+                        <span>{{currentTrip.services.bikesAllowed.label}}</span>
+                        <i
+                            [ngClass]="[currentTrip.services.wheelchairAccessible.icon, 'text-[var(' + currentTrip.services.wheelchairAccessible.color + ')]', 'text-lg']">
+                        </i>
+                        <span>{{currentTrip.services.wheelchairAccessible.label}}</span>
+                    </div>
+                    }
+                    @else {
+                    <div class="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 items-center">
+                        @for (service of currentTrip.services.info; track service.name) {
+                        <i [ngClass]="[service.icon, 'text-[var(' + service.color + ')]', 'text-lg']"></i>
+                        <div class="flex gap-x-2">
+                            <span>{{service.name}}</span>
+                            @if (service.color === '--color-error') {
+                            <span [ngClass]="'text-[var(' + service.color + ')]'">(status code missing)</span>
+                            }
                         </div>
                         }
+                        <!--pre>{{currentTrip.services | json}}</pre-->
                     </div>
-                </nz-card>
-                }
+                    }
+                </div>
+                <!--}-->
             </div>
-            }
-            @else {
-            <div class="flex gap-1 dark-mode-text">
-                <nz-icon nzType="check-circle" nzTheme="outline" class="!text-[var(--color-success)]" />
-                <span>No alert, everything's all right.</span>
-            </div>
-            }
         </nz-tab>
     </nz-tabset>
 </ng-container>

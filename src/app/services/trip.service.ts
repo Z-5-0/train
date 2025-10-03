@@ -2,12 +2,14 @@ import { inject, Injectable } from "@angular/core";
 import { catchError, debounceTime, distinctUntilChanged, EMPTY, interval, map, Observable, of, shareReplay, startWith, switchMap, takeUntil, tap, throwError } from "rxjs";
 import { createPlanQuery } from "../shared/constants/query/plan-query";
 import { Trip, TripResponse } from "../shared/models/api/response-trip";
-import { CurrentTrip, StopStatus } from "../shared/models/trip";
+import { CurrentTrip, ServiceStatusKey, StopStatus } from "../shared/models/trip";
 import { DelayStatus, PointGeometry } from "../shared/models/common";
 import { TRANSPORT_MODE } from "../shared/constants/transport-mode";
 import { DateTime, Duration } from "luxon";
 import { RestApiService } from "./rest-api.service";
 import { AppSettingsService } from "./app-settings.service";
+import { SERVICE_CODE } from "../shared/constants/service-code";
+import { SERVICE_STATUS } from "../shared/constants/service.status";
 
 @Injectable({
     providedIn: 'root',
@@ -54,11 +56,14 @@ export class TripService {
     transformTripResponse(trip: Trip) {
         const {
             id,
+            bikesAllowed,
             alerts,
+            infoServices,
             route,
             stoptimes,
             tripShortName,
             vehiclePositions,
+            wheelchairAccessible
         } = trip;
 
         const vehicle = vehiclePositions?.[0];
@@ -82,6 +87,33 @@ export class TripService {
                         100
                     ).toFixed(2)) : null
             })),
+            services: {
+                bikesAllowed: SERVICE_STATUS[bikesAllowed as ServiceStatusKey || 'UNKNOWN'],
+                wheelchairAccessible: SERVICE_STATUS[wheelchairAccessible as ServiceStatusKey || 'UNKNOWN'],
+                info: (infoServices ?? [])
+                    .filter(service => service.displayable)
+                    .map(service => {
+                        return {
+                            index: (SERVICE_CODE[service.fontCode ?? 0] ?? SERVICE_CODE[0]).index,
+                            name: service.name
+                                ? service.name[0].toUpperCase() + service.name.slice(1)
+                                : '',
+                            icon: (SERVICE_CODE[service.fontCode ?? 0] ?? SERVICE_CODE[0]).icon,
+                            color: (SERVICE_CODE[service.fontCode ?? 0] ?? SERVICE_CODE[0]).color,
+                            fromStopName: service.fromStop?.name ?? 'Unknown',
+                            tillStopName: service.tillStop?.name ?? 'Unknown',
+                        }
+                    })
+                    .sort((a, b) => a.index - b.index)
+                /* info: [
+                    {
+                        name: 'name',
+                        icon: 'icon',
+                        fromStopName: 'fromStopName',
+                        tillStopName: 'tillStopName'
+                    }
+                ] */
+            },
             allStops: stoptimes?.map((
                 { arrivalDelay,
                     departureDelay,

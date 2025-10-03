@@ -42,7 +42,7 @@ import { NzSpinModule } from 'ng-zorro-antd/spin';
     NzCardModule,
     SafeHtmlPipe,
     StopStatusPipe,
-    NzSpinModule,
+    NzSpinModule
   ],
   templateUrl: './route-transit.component.html',
   styleUrl: './route-transit.component.scss'
@@ -119,7 +119,7 @@ export class RouteTransitComponent {
       switchMap(transit =>
         this.getTripObservable(transit, this.tripDestroy$).pipe(
           takeWhile(trip => this.evaluateTripStatus(trip), true),
-          catchError(() => EMPTY) // ha hiba lenne
+          catchError(() => EMPTY)   // in case of error
         )
       )
     );
@@ -169,7 +169,6 @@ export class RouteTransitComponent {
   }
 
   ngOnDestroy() {
-    console.log('DESTROY');
     this.destroy$.next();
     this.destroy$.complete();
 
@@ -223,7 +222,7 @@ export class RouteTransitComponent {
         lastStopDelayedDateTime < now
       ) {
         currentTrip.transportInfo.isFinished = true;
-        this.currentTrip$.next(currentTrip); // frissíted az observable értékét
+        this.currentTrip$.next(currentTrip); // frissül az observable értéke
       }
     });
 

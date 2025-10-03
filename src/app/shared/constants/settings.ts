@@ -18,9 +18,9 @@ export const APP_SETTINGS: AppSettings = {
         index: 2,
         label: 'Language',
         field: 'segmented',
-        defaultValue: 1,
+        defaultValue: 0,
         // options: ['HU', 'EN'], // [{label: 'EN', value: false}, {label: 'HU', value: true}]
-        options: [{ label: 'EN', value: 0, disabled: true }, { label: 'HU', value: 1 }],
+        options: [{ label: 'EN', value: 0 }, { label: 'HU', value: 1, disabled: true }],
         marks: null,
         min: null,
         max: null,

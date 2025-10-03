@@ -105,7 +105,8 @@
                 @if (segmentStop?.station?.gtfsId === currentRoute?.sequences?.[selectedTransit]?.origin?.gtfsId &&
                 segmentStop.station.gtfsId === currentTrip.transportInfo?.station?.gtfsId) {
                 <nz-timeline-item [nzLabel]="currentOriginStopLabelTemplate" [nzDot]="currentOriginStopDotTemplate">
-                    <div #stopToScroll class="flex items-baseline justify-between gap-2.5 font-bold text-[16px]">
+                    <div #transportCurrentPosition
+                        class="flex items-baseline justify-between gap-2.5 font-bold text-[16px]">
                         <i class="fa-solid fa-arrow-down-long"></i>
                         <span>{{segmentStop.station.name}}</span>
                     </div>
@@ -115,7 +116,8 @@
                 segmentStop.station.gtfsId === currentTrip.transportInfo?.station?.gtfsId &&
                 !this.currentDestinationStop.station.isArrived) {
                 <nz-timeline-item [nzLabel]="currentStopLabelTemplate" [nzDot]="currentStopDotTemplate">
-                    <div #stopToScroll class="flex items-baseline justify-between gap-2.5 font-bold text-[16px]">
+                    <div #transportCurrentPosition
+                        class="flex items-baseline justify-between gap-2.5 font-bold text-[16px]">
                         <i class="fa-solid fa-flag"></i>
                         <span>{{segmentStop.station.name}}</span>
                     </div>
@@ -125,7 +127,7 @@
                 segmentStop?.station?.gtfsId !== currentRoute?.sequences?.[selectedTransit]?.destination?.gtfsId &&
                 segmentStop.station.gtfsId === currentTrip.transportInfo?.station?.gtfsId) {
                 <nz-timeline-item [nzLabel]="currentStopLabelTemplate" [nzDot]="currentStopDotTemplate">
-                    <div #stopToScroll>
+                    <div #transportCurrentPosition>
                         <span>{{segmentStop.station.name}}</span>
                     </div>
                 </nz-timeline-item>
@@ -139,7 +141,7 @@
             <ng-template #infoTemplate>
                 <nz-icon [nzType]="'eye'" class="!text-[var(--color-error)]" /> Info
             </ng-template>
-            <div class="grid gap-8 pb-8">
+            <div #infoTabContainer class="grid gap-8 pb-8">
                 @if (currentTrip && currentTrip.alerts && currentTrip.alerts.length) {
                 <div class="grid gap-2">
                     @for (alert of currentTrip.alerts; track alert) {
@@ -174,7 +176,7 @@
                     <!--nz-icon nzType="check-circle" nzTheme="outline" class="!text-[var(--color-success)]" /-->
                     <!--span>No alert, everything's all right.</!--span-->
                     @if (!currentTrip.services.info.length) {
-                    <div class="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 items-center">
+                    <div class="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 pr-2 items-center">
                         <i
                             [ngClass]="[currentTrip.services.bikesAllowed.icon, 'text-[var(' + currentTrip.services.bikesAllowed.color + ')]', 'text-lg']">
                         </i>
@@ -186,7 +188,7 @@
                     </div>
                     }
                     @else {
-                    <div class="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 items-center">
+                    <div class="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 pr-2 items-center">
                         @for (service of currentTrip.services.info; track service.name) {
                         <i [ngClass]="[service.icon, 'text-[var(' + service.color + ')]', 'text-lg']"></i>
                         <div class="flex gap-x-2">
@@ -207,7 +209,7 @@
 </ng-container>
 
 <ng-template #originLabelTemplate>
-    <div class="flex items-center justify-between gap-x-[10px]">
+    <div #transportCurrentPosition class="flex items-center justify-between gap-x-[10px]">
         @if (currentOriginStop?.delay?.departureDelay) {
         <div class="flex gap-x-[5px] items-center">
             <span

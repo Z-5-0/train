@@ -48,7 +48,8 @@ import { NzSpinModule } from 'ng-zorro-antd/spin';
   styleUrl: './route-transit.component.scss'
 })
 export class RouteTransitComponent {
-  @ViewChild('stopToScroll') stopToScroll!: ElementRef<HTMLDivElement>;
+  @ViewChild('transportCurrentPosition') transportCurrentPosition!: ElementRef<HTMLDivElement>;
+  // @ViewChild('infoTabContainer') infoTabContainer!: ElementRef<HTMLDivElement>;
   // @ViewChildren('stopToScroll') stopToScroll!: QueryList<HTMLDivElement>;
 
   ngZone: NgZone = inject(NgZone);
@@ -81,6 +82,8 @@ export class RouteTransitComponent {
   private tripDestroy$ = new Subject<void>();
 
   tripIsLoading: boolean = false;
+
+  currentTransitDataTabIndex: number = 0;
 
   ngOnInit() {
     this.initCurrentRoute();
@@ -128,8 +131,9 @@ export class RouteTransitComponent {
       startWith(null),
       pairwise(),
       tap(([prev, curr]) => {
+        console.log(prev, curr);
         if (prev?.gtfsId !== curr?.gtfsId) {
-          this.ngZone.onStable.pipe(take(1)).subscribe(() => this.scrollToCurrentStop());
+          this.ngZone.onStable.pipe(take(1)).subscribe(() => this.onTabChange());
         }
       }),
       takeUntil(this.destroy$)
@@ -165,7 +169,8 @@ export class RouteTransitComponent {
   }
 
   onTabIndexChange(index: number): void {
-    this.scrollToCurrentStop();
+    this.currentTransitDataTabIndex = index;
+    this.onTabChange();
   }
 
   ngOnDestroy() {
@@ -289,18 +294,17 @@ export class RouteTransitComponent {
     return sequence?.transportInfo?.shortName ?? null;
   }
 
-  scrollToCurrentStop() {
-    const target = this.stopToScroll?.nativeElement as HTMLElement;
-    // const scrollableContainer = target?.closest<HTMLElement>('.ant-tabs-content-holder');
-    const scrollableContainer = document.querySelector<HTMLElement>('.ant-tabs-content-holder')
+  onTabChange() {
+    const tripElement = this.transportCurrentPosition?.nativeElement as HTMLElement;
+    const scrollableContainer = document.querySelector<HTMLElement>('.ant-tabs-content-holder');
 
     if (!scrollableContainer) {
       return;
     }
 
-    if (target) {
+    if (this.currentTransitDataTabIndex === 0) {
       const containerRect = scrollableContainer.getBoundingClientRect();
-      const targetRect = target.getBoundingClientRect();
+      const targetRect = tripElement.getBoundingClientRect();
       const offset = targetRect.top - containerRect.top + scrollableContainer.scrollTop;
 
       scrollableContainer.scrollTo({
@@ -312,6 +316,10 @@ export class RouteTransitComponent {
         top: 0,
         behavior: 'smooth'
       });
-    }
+    };
+
+    if (this.currentTransitDataTabIndex === 1) {
+      scrollableContainer.scrollTo({ top: 0, behavior: 'smooth' });
+    };
   }
 }

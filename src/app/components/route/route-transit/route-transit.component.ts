@@ -258,6 +258,7 @@ export class RouteTransitComponent {
   }
 
   private updateStopState(trip: CurrentTrip) {
+    console.log('trip: ', trip);
     const { allStops, transportInfo } = trip;
 
     const currentGtfsId = transportInfo?.station.gtfsId;
@@ -268,16 +269,21 @@ export class RouteTransitComponent {
     const originStopIndex = this.getStopIndex(allStops, originGtfsId);
     const destinationStopIndex = this.getStopIndex(allStops, destinationGtfsId);
 
+    console.log(originStopIndex);
+    console.log(allStops[originStopIndex]);
+
     this.currentTrip = trip;
     this.currentTrip$.next(trip);
 
-    this.currentOriginStop = allStops[currentStopIndex];
+    this.currentOriginStop = allStops[originStopIndex];
 
-    if (currentStopIndex !== -1) {
+    if (this.currentOriginStop && currentStopIndex !== -1) {
       this.currentOriginStop.station.isPassed = currentStopIndex > originStopIndex;
     }
 
+    if (this.currentOriginStop && currentStopIndex !== -1) {
     this.currentDestinationStop.station.isArrived = currentStopIndex > destinationStopIndex;
+    } 
   }
 
   private getStopIndex(allStops: StopTime[], gtfsId: string | undefined): number {

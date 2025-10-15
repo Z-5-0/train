@@ -22,7 +22,7 @@ export class TripService {
 
     getTripPolling(gtfsId: string): Observable<CurrentTrip> {
         return this.appSettingsService.appSettings$.pipe(
-            map(settings => settings['tripUpdateTime']),
+            map(settings => settings['updateTime']),
             switchMap(ms =>
                 interval(ms).pipe(
                     startWith(0),
@@ -149,7 +149,6 @@ export class TripService {
                         /* scheduledStartTime: realtime
                             ? DateTime.fromSeconds(serviceDay + realtimeDeparture - departureDelay, { zone: 'utc' }).setZone('Europe/Budapest').toFormat('HH:mm')
                             : DateTime.fromSeconds(serviceDay + scheduledDeparture, { zone: 'utc' }).setZone('Europe/Budapest').toFormat('HH:mm'),
-
                         delayedStartTime: realtime
                             ? DateTime.fromSeconds(serviceDay + realtimeDeparture, { zone: 'utc' }).setZone('Europe/Budapest').toFormat('HH:mm')
                             : DateTime.fromSeconds(serviceDay + scheduledDeparture + departureDelay, { zone: 'utc' }).setZone('Europe/Budapest').toFormat('HH:mm'), */

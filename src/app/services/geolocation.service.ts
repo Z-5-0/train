@@ -7,7 +7,6 @@ import { GEOLOCATION_ERROR_MESSAGE } from '../shared/constants/error-geolocation
 
 @Injectable({ providedIn: 'root' })
 export class GeolocationService {
-    constructor() { }
 
     private restApi: RestApiService = inject(RestApiService);
     private messageService: MessageService = inject(MessageService);

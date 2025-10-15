@@ -35,11 +35,22 @@ export interface AppSettings {
     welcomeCard: SegmentedSetting<number>;
     language: SegmentedSetting<number>;
     theme: SegmentedSetting<number>;
-    autoTripUpdate: SegmentedSetting<number>;
-    tripUpdateTime: SliderSetting;
+    autoUpdate: SegmentedSetting<number>;
+    updateTime: SliderSetting;
     debounceTime: SliderSetting;
     walkSpeed: SliderSetting;
     alternativeRoutes: SliderSetting;
 }
 
 export type Setting = SegmentedSetting<number> | SliderSetting;
+
+export interface CurrentAppSettings {
+    alternativeRoutes: number;
+    autoUpdate: number;
+    debounceTime: number;
+    language: number;
+    theme: number;
+    updateTime: number;
+    walkSpeed: number;
+    welcomeCard: number
+}

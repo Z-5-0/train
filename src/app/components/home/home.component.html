@@ -27,29 +27,29 @@
                             </div>
                         </small>
                         <small class="flex items-center justify-center gap-x-2 h-[18px]">
-                            @if (latestSearchTime) {
-                            <i class="fa-solid fa-magnifying-glass"></i>
-                            {{latestSearchTime}}
-                            <i class="fa-solid fa-magnifying-glass"></i>
-                            }
+                            <ng-container *ngIf="searchDateTime$ | async as dt">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                {{ dt }}
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </ng-container>
                         </small>
                     </div>
                     }
                     <div class="content h-full overflow-hidden">
                         @switch (card.index) {
-                        @case (4) {
-                        <welcome></welcome>
-                        }
-                        @case (1) {
+                        @case (0) {
                         <route></route>
                         }
-                        @case (2) {
-                        <map></map>
+                        @case (1) {
+                        <map [mapType]="'FREE'"></map>
                         }
-                        @case (3) {
+                        @case (2) {
                         <settings></settings>
                         }
-                        @case (5) {
+                        @case (3) {
+                        <welcome></welcome>
+                        }
+                        @case (4) {
                         <info></info>
                         }
                         }

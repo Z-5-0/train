@@ -1,7 +1,8 @@
 import { Injectable } from "@angular/core";
 import { BehaviorSubject } from "rxjs";
 import { Place, PlaceGroup, TravelDirectionsKeys } from "../shared/models/place";
-import { Route } from "../shared/models/route";
+import { Route, RouteSequence } from "../shared/models/route";
+import { DateTime } from 'luxon';
 
 @Injectable({
     providedIn: 'root',
@@ -25,6 +26,12 @@ export class RouteService {
     private _selectedRoute$ = new BehaviorSubject<Route | null>(null);
     readonly selectedRoute$ = this._selectedRoute$.asObservable();
 
+    private _routeSearchDateTime$ = new BehaviorSubject<string | null>(null);
+    readonly routeSearchDateTime$ = this._routeSearchDateTime$.asObservable();
+
+    private readonly _selectedRouteKey$ = new BehaviorSubject<string | null>(null);
+    readonly selectedRouteKey$ = this._selectedRouteKey$.asObservable();
+
     constructor() {
         /* const stored = localStorage.getItem('selectedPlaces');
         if (stored) {
@@ -39,6 +46,14 @@ export class RouteService {
         this.selectedPlaces$.subscribe(state => {
             localStorage.setItem('selectedPlaces', JSON.stringify(state));
         }); */
+    }
+
+    setRouteSearchDateTime() {
+        this._routeSearchDateTime$.next(DateTime.now().toFormat('yyyy-LL-dd HH:mm'));
+    }
+
+    getRouteSearchDateTime(): string | null {
+        return this._routeSearchDateTime$.getValue();
     }
 
     setSelectedPlace(places: Partial<Record<TravelDirectionsKeys, Place | null>>) {
@@ -72,9 +87,38 @@ export class RouteService {
     }
 
     setSelectedRoute(route: Route | null) {
+        this.setRoutePath(route?.sequences);
+        this.setSelectedRouteKey(route || null);
         this._selectedRoute$.next(route);
     }
+
     getSelectedRoute(): Route | null {
         return this._selectedRoute$.getValue();
+    }
+
+    setRoutePath(sequences: any | null) {      // TODO TYPE
+        if (!sequences) {
+            return;
+        }
+
+        
+
+        console.log('setRoutePath sequences: ', sequences);
+    }
+
+    setSelectedRouteKey(route: Route | null) {
+        if (!route || !route?.sequences.length) {
+            this._selectedRouteKey$.next(null);
+            return;
+        }
+
+        const key = `${route.sequences.length}_` + route.sequences
+            .map(seq => seq.transportInfo?.id ?? '0')
+            .join('_');
+        this._selectedRouteKey$.next(key);
+    }
+
+    getSelectedRouteKey(): string | null {
+        return this._selectedRouteKey$.getValue();
     }
 }

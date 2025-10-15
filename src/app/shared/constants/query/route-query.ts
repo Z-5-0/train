@@ -42,6 +42,7 @@ export const ROUTE_QUERY: string = `
         walkTime
         waitingTime
         legs {
+        legGeometry { points length }
           mode
           realTime
           startTime

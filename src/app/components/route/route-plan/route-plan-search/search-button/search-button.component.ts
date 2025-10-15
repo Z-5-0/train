@@ -12,6 +12,7 @@ import { IntermediateStop, Itinerary, Leg, RouteApiResponse } from '../../../../
 import { PointGeometry } from '../../../../../shared/models/common';
 import { Route, RouteSequence } from '../../../../../shared/models/route';
 import { AppSettingsService } from '../../../../../services/app-settings.service';
+import polyline from '@mapbox/polyline';
 
 @Component({
   selector: 'search-button',
@@ -63,7 +64,12 @@ export class SearchButtonComponent {
           toPlace: `${this.destinationPlace()?.name}::${this.destinationPlace()?.id}`,
           date: DateTime.now().toFormat('yyyy-LL-dd HH:mm').split(' ')[0],
           time: DateTime.now().toFormat('yyyy-LL-dd HH:mm').split(' ')[1],
-          modes: Object.entries(this.transportMode).map(([key]) => ({ mode: key })).slice(0, -2),
+          // modes: Object.entries(this.transportMode).map(([key]) => ({ mode: key })).slice(0, -2),
+          modes: Object.keys(TRANSPORT_MODE)
+            .filter(mode => !['GPS', 'ERROR'].includes(mode))
+            .map(includedMode => {    // .map(mode => ({ mode }))
+              return { mode: includedMode }
+            }),
           distributionChannel: "ERTEKESITESI_CSATORNA#INTERNET",
           distributionSubChannel: "ERTEKESITESI_ALCSATORNA#EMMA",
           walkSpeed: this.walkSpeed / 3.6,
@@ -98,8 +104,11 @@ export class SearchButtonComponent {
       numberOfTransfers: itinerary.numberOfTransfers,
       duration: Math.ceil(Duration.fromObject({ seconds: itinerary.duration }).as('minutes')),
       startTime: DateTime.fromMillis(itinerary.startTime, { zone: 'utc' }).setZone('Europe/Budapest').toFormat('HH:mm'),
+      startTimeTimestamp: itinerary.startTime,
       endTime: DateTime.fromMillis(itinerary.endTime, { zone: 'utc' }).setZone('Europe/Budapest').toFormat('HH:mm'),
+      endTimeTimestamp: itinerary.endTime,
       walkTime: Math.ceil(Duration.fromObject({ seconds: itinerary.walkTime }).as('minutes')),
+      walkTimeInSeconds: itinerary.walkTime,
       waitingTime: Math.ceil(Duration.fromObject({ seconds: itinerary.waitingTime }).as('minutes')),
       sequences: itinerary.legs.map(leg => this.transformLeg(leg))
     }));
@@ -116,9 +125,13 @@ export class SearchButtonComponent {
         scheduledStartTime: leg.realTime
           ? DateTime.fromMillis(leg.startTime - leg.departureDelay * 1000, { zone: 'utc' }).setZone('Europe/Budapest').toFormat('HH:mm')
           : DateTime.fromMillis(leg.startTime, { zone: 'utc' }).setZone('Europe/Budapest').toFormat('HH:mm'),
+        /* scheduledStartTime: DateTime.fromMillis(leg.startTime - (leg.realTime ? leg.departureDelay * 1000 : 0), { zone: 'utc' })
+          .setZone('Europe/Budapest').toFormat('HH:mm'), */
         delayedStartTime: leg.realTime
           ? DateTime.fromMillis(leg.startTime, { zone: 'utc' }).setZone('Europe/Budapest').toFormat('HH:mm')
           : DateTime.fromMillis(leg.startTime + leg.departureDelay * 1000, { zone: 'utc' }).setZone('Europe/Budapest').toFormat('HH:mm'),
+        /* delayedStartTime: DateTime.fromMillis(leg.startTime, { zone: 'utc' })
+          .setZone('Europe/Budapest').toFormat('HH:mm'), */
         departureDelay: (leg.departureDelay > 0)
           ? Math.floor(Math.abs(Duration.fromObject({ seconds: leg.departureDelay }).as('minutes')))
           : Math.ceil(Math.abs(Duration.fromObject({ seconds: leg.departureDelay }).as('minutes'))),
@@ -167,7 +180,10 @@ export class SearchButtonComponent {
           name: leg.to.name,
           geometry: { type: 'Point', coordinates: [leg.to.lat, leg.to.lon] } as PointGeometry
         }
-      ]
+      ],
+      sequenceGeometry: {
+        length: leg.legGeometry.length,
+        points: polyline.decode(leg.legGeometry.points) as [number, number][]}
     }
   }
 }

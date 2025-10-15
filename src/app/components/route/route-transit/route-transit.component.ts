@@ -159,7 +159,7 @@ export class RouteTransitComponent {
     if (!gtfsId) return EMPTY;
 
     return this.appSettingsService.appSettings$.pipe(
-      map(settings => !!settings['autoTripUpdate']),
+      map(settings => !!settings['autoUpdate']),
       switchMap(autoUpdate =>
         autoUpdate
           ? this.tripService.getTripPolling(gtfsId)
@@ -258,7 +258,6 @@ export class RouteTransitComponent {
   }
 
   private updateStopState(trip: CurrentTrip) {
-    console.log('trip: ', trip);
     const { allStops, transportInfo } = trip;
 
     const currentGtfsId = transportInfo?.station.gtfsId;
@@ -268,9 +267,6 @@ export class RouteTransitComponent {
     const currentStopIndex = this.getStopIndex(allStops, currentGtfsId ?? undefined); // ha -1 jön vissza, ERROR --> Budapest, Újpest-központ M / Budapest, Tél utca / Pozsonyi utca 25-ös busz
     const originStopIndex = this.getStopIndex(allStops, originGtfsId);
     const destinationStopIndex = this.getStopIndex(allStops, destinationGtfsId);
-
-    console.log(originStopIndex);
-    console.log(allStops[originStopIndex]);
 
     this.currentTrip = trip;
     this.currentTrip$.next(trip);

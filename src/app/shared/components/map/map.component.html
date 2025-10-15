@@ -1,1 +1,17 @@
-<div id="map" class="w-full h-[300px]" ></div>
+<div class="relative map-container w-full h-[calc(100vh-309px)]">
+    <div #mapContainer class="w-full h-full"></div>
+
+    <div style="position: absolute; left: 0; bottom: 0; z-index: 10000">
+        <button nz-button nzType="primary" [nzSize]="'small'" nzShape="round" (click)="getVehiclePosition()">
+            getVehiclePosition
+        </button>
+
+        <!--button nz-button nzType="primary" [nzSize]="'large'" nzShape="round" (click)="getRoutePath()">
+    getRoutePath
+</!--button-->
+
+        <button nz-button nzType="primary" [nzSize]="'small'" nzShape="round" (click)="getLocation()">
+            getLocation
+        </button>
+    </div>
+</div>

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { AsyncPipe, CommonModule } from '@angular/common';
 import { Component, inject, ViewChild } from '@angular/core';
 import { NzCarouselComponent, NzCarouselModule } from 'ng-zorro-antd/carousel';
 import { RouteComponent } from '../route/route.component';
@@ -9,11 +9,14 @@ import { RouteService } from '../../services/route.service';
 import { TransportModePipe } from '../../shared/pipes/transport-mode.pipe';
 import { TransportMode } from '../../shared/models/common';
 import { DateTime } from 'luxon';
-import { filter, map, Subject, Subscription, takeUntil, tap } from 'rxjs';
+import { filter, map, Observable, of, Subject, Subscription, take, takeUntil, tap } from 'rxjs';
 import { MapComponent } from '../../shared/components/map/map.component';
 import { AppSettingsService } from '../../services/app-settings.service';
 import { NzConfigService } from 'ng-zorro-antd/core/config';
 import { InfoComponent } from '../info/info.component';
+import { Route } from '../../shared/models/route';
+import { MapService } from '../../services/map.service';
+import { MapMode } from '../../shared/models/map';
 
 @Component({
   selector: 'app-home',
@@ -26,6 +29,7 @@ import { InfoComponent } from '../info/info.component';
     TransportModePipe,
     MapComponent,
     InfoComponent,
+    AsyncPipe,
   ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
@@ -36,6 +40,7 @@ export class HomeComponent {
 
   routeService: RouteService = inject(RouteService);
   appSettingsService: AppSettingsService = inject(AppSettingsService);
+  mapService: MapService = inject(MapService);
 
   homeCards = HOME_CARDS;
   currentHomeCards = JSON.parse(JSON.stringify(this.homeCards));
@@ -57,7 +62,9 @@ export class HomeComponent {
 
   activeIndex!: number;
 
-  private nzConfig: NzConfigService = inject(NzConfigService)
+  private nzConfig: NzConfigService = inject(NzConfigService);
+
+  searchDateTime$: Observable<string | null> = of(null);
 
   ngOnInit() {
     this.routeService.selectedRoute$
@@ -82,9 +89,19 @@ export class HomeComponent {
         this.selectedRoute = result;
       });
 
-    this.routeService.routeOptions$
+    /* this.routeService.routeOptions$
       .pipe(takeUntil(this.destroy$))
       .subscribe(options => options?.length && (this.latestSearchTime = DateTime.now().toFormat('yyyy-LL-dd HH:mm')));
+      }); */
+
+    this.routeService.routeOptions$
+      .pipe(
+        takeUntil(this.destroy$),
+        filter((options): options is Route[] => !!options && options.length > 0)
+      )
+      .subscribe(() => this.routeService.setRouteSearchDateTime());
+
+    this.searchDateTime$ = this.routeService.routeSearchDateTime$;
   }
 
   ngAfterViewInit() {

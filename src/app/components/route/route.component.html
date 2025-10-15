@@ -4,6 +4,8 @@
         <nz-step [nzTitle]="'Transit'"
             [nzIcon]="(routeIsLoading && !transitDisabled) ? 'loading' : transportIconTemplate"
             [nzDisabled]="!hasRouteSelected || routeIsLoading || transitDisabled"></nz-step>
+        <!--nz-step [nzTitle]="'Map'" [nzIcon]="routeIsLoading ? 'loading' : mapIconTemplate"
+            [nzDisabled]="!hasRouteSelected  || routeIsLoading"></!--nz-step-->
         <nz-step [nzTitle]="'Map'" [nzIcon]="routeIsLoading ? 'loading' : mapIconTemplate"
             [nzDisabled]="!hasRouteSelected  || routeIsLoading"></nz-step>
     </nz-steps>
@@ -19,7 +21,7 @@
     </div>
 
     <div *ngSwitchCase="2">
-        <map></map>
+        <map [mapType]="'TRIP'"></map>
     </div>
     <br>
     <br>

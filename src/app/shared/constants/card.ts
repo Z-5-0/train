@@ -1,14 +1,45 @@
 type HomeCard = {
   index: number;
   header: string;
-  details?: string;
+  details: string;
+  mapMode: 'FREE' | 'TRIP' | null;
   footer: string;
 };
 
 export const HOME_CARDS: HomeCard[] = [
-    { index: 1, header: 'Route', details: 'selectedRoute', footer: 'footer' },
-    { index: 2, header: 'Map', footer: 'footer' },
-    { index: 3, header: 'Settings', footer: 'footer' },
-    { index: 4, header: 'Welcome', footer: '' },
-    { index: 5, header: 'Info', footer: '' },   // Details, legend...
+  {
+    index: 0,
+    header: 'Route',
+    details: 'selectedRoute',
+    mapMode: 'TRIP',
+    footer: 'footer'
+  },
+  {
+    index: 1,
+    header: 'Map',
+    details: '',
+    mapMode: 'FREE',
+    footer: 'footer'
+  },
+  {
+    index: 2,
+    header: 'Settings',
+    details: '',
+    mapMode: null,
+    footer: 'footer'
+  },
+  {
+    index: 3,
+    header: 'Welcome',
+    details: '',
+    mapMode: null,
+    footer: ''
+  },
+  {
+    index: 4,
+    header: 'Info',
+    details: '',
+    mapMode: null,
+    footer: ''
+  },
 ]

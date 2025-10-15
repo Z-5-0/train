@@ -1,0 +1,28 @@
+@use '../variables/colors' as color;
+
+.map-stop-label {
+    display: grid;
+    transform-origin: left top;
+    font-weight: bold;
+    min-width: max-content;
+
+    > div {
+        background: rgba(47, 79, 79, .2);
+        padding: 5px;
+        border-radius: 5px;
+
+        .start-time {
+            color: color.$mid-opacity-black-color;
+
+            &.early {
+                color: color.$warning-color;
+            }
+
+            &.late {
+                color: color.$error-color;
+            }
+        }
+
+
+    }
+}

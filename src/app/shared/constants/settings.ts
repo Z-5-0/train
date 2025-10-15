@@ -38,7 +38,7 @@ export const APP_SETTINGS: AppSettings = {
         max: null,
         step: null
     },
-    autoTripUpdate: {
+    autoUpdate: {
         index: 4,
         label: 'Continuous update',
         field: 'segmented',
@@ -51,9 +51,9 @@ export const APP_SETTINGS: AppSettings = {
         step: null
     },
 
-    tripUpdateTime: {
+    updateTime: {
         index: 5,
-        label: 'Trip update time (ms)',
+        label: 'Update time (ms)',
         field: 'slider',
         defaultValue: 10000,
         options: null,

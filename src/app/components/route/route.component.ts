@@ -1,20 +1,17 @@
 import { Component, inject } from '@angular/core';
 import { MapComponent } from '../../shared/components/map/map.component';
-import { Place } from '../../shared/models/place';
-import { RestApiService } from '../../services/rest-api.service';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { CommonModule } from '@angular/common';
 import { NzStepsModule } from 'ng-zorro-antd/steps';
 import { NzIconModule } from 'ng-zorro-antd/icon';
-import { Route } from '../../shared/models/route';
 import { NzTimelineModule } from 'ng-zorro-antd/timeline';
 import { NzTabsModule } from 'ng-zorro-antd/tabs';
 import { NzBadgeModule } from 'ng-zorro-antd/badge';
 import { RoutePlanComponent } from './route-plan/route-plan.component';
 import { RouteTransitComponent } from './route-transit/route-transit.component';
-import { CurrentTrip } from '../../shared/models/trip';
 import { RouteService } from '../../services/route.service';
 import { timer } from 'rxjs';
+import { MapService } from '../../services/map.service';
 
 
 @Component({
@@ -36,6 +33,7 @@ import { timer } from 'rxjs';
 })
 export class RouteComponent {
   private routeService: RouteService = inject(RouteService);
+  private mapService: MapService = inject(MapService);
 
   currentStep = 0;
   hasRouteSelected: boolean = false;
@@ -68,6 +66,7 @@ export class RouteComponent {
 
   onIndexChange(index: number): void {
     this.currentStep = index;
+
     // !this.routeService.getSelectedRoute() ? this.hasRouteSelected = false : this.hasRouteSelected = true;
   }
 

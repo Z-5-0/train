@@ -5,8 +5,11 @@ export interface Route {
   numberOfTransfers: number;
   duration: number; // in minutes
   startTime: string; // 'HH:mm' format
+  startTimeTimestamp: number;   // UNIX timestamp
   endTime: string;   // 'HH:mm' format
+  endTimeTimestamp: number;   // UNIX timestamp
   walkTime: number;
+  walkTimeInSeconds: number;
   waitingTime: number;
   sequences: RouteSequence[];
 }
@@ -18,6 +21,10 @@ export interface RouteSequence {
   destination: OriginOrDestination;
   transportInfo: TransportInfo | null;
   stops?: IntermediateStop[] | null;
+  sequenceGeometry: {
+    length: number,
+    points: [number, number][]
+  };
 }
 
 interface OriginOrDestination {

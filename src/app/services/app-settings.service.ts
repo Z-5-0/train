@@ -2,15 +2,15 @@ import { inject, Injectable } from "@angular/core";
 import { LocalStorageService } from "./local-storage.service";
 import { APP_SETTINGS } from "../shared/constants/settings";
 import { BehaviorSubject } from "rxjs";
-import { AppSettings } from "../shared/models/settings";
+import { AppSettings, CurrentAppSettings } from "../shared/models/settings";
 
 
 type SettingsKeys = {
     welcomeCard: string;
     language: string;
     theme: string;
-    autoTripUpdate: string;
-    tripUpdateTime: number;
+    autoUpdate: string;
+    updateTime: number;
     debounceTime: number;
     walkSpeed: number;
     alternativeRoutes: number;
@@ -51,8 +51,13 @@ export class AppSettingsService {
         return settings;
     }
 
+    get currentAppSettings(): CurrentAppSettings {
+        return this._appSettings$.getValue() as CurrentAppSettings;
+    }
+
     updateSettings(settings: AppSettings): void {
         this.localStorageService.setItem('appSettings', settings);
+
         this._appSettings$.next(settings);
     }
 }

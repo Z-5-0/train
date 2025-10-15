@@ -28,6 +28,10 @@ export interface Leg {
     intermediateStops?: IntermediateStop[] | null;
     route: Route | null;
     trip: Trip | null;
+    legGeometry: {
+        length: number,
+        points: string
+    };
 }
 
 interface Stop {
@@ -37,7 +41,8 @@ interface Stop {
     lon: number;
     stop: {
         id: string;
-        gtfsId: string } | null;
+        gtfsId: string
+    } | null;
 }
 
 export interface IntermediateStop {

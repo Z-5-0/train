@@ -49,7 +49,6 @@ export class PathService {
             fromPlace: `${originName}::${originId}`,
             toPlace: `${destinationName}::${destinationId}`,
             date,
-            // time,
             time,
             modes: Object.keys(TRANSPORT_MODE)
                 .filter(mode => !['GPS', 'ERROR'].includes(mode))
@@ -82,19 +81,15 @@ export class PathService {
                             .map(leg => leg.trip?.id ?? '0')
                             .join('_');
 
-                        console.log('RESPONSE: ', `${key}`);
-                        console.log('ROUTE: ', this.routeService.getSelectedRouteKey());
-                        console.log('----- -----', `${key}` === this.routeService.getSelectedRouteKey(), '----- -----')
+                        console.log('itineraryMatched: ', `${key}` === this.routeService.getSelectedRouteKey());
                         return `${key}` === this.routeService.getSelectedRouteKey()
                     }
                 );
 
-                console.log('*** ' + itineraryMatched + ' ***');
-
                 if (!itineraryMatched) {
                     // Trigger retry
                     // throw new Error('No matching itinerary found yet');
-                    this.messageService.showError('!');
+                    this.messageService.showError('!');     // TODO
                 }
 
                 return itineraryMatched;
@@ -102,12 +97,12 @@ export class PathService {
                     (itinerary: RoutePathItinerary) => `${itinerary.endTime}_${itinerary.legs.length}_${itinerary.walkTime}` === this.routeService.getSelectedRouteKey()
                 ); */
             }),
-            switchMap(itineraryMatched => {
+            /* switchMap(itineraryMatched => {
                 if (!itineraryMatched) {
                     return throwError(() => new Error('No matching itinerary found yet'));
                 }
                 return of(itineraryMatched);
-            }),
+            }), */
             map((itinerary: RoutePathItinerary | undefined) => this.createRoutePathSequence(itinerary)),
             // tap(t => console.log(t)),       // TODO DELETE
             catchError(err => {
@@ -130,6 +125,7 @@ export class PathService {
             endTime: DateTime.fromMillis(itinerary.endTime, { zone: 'utc' }).setZone('Europe/Budapest').toFormat('HH:mm'),
             endTimestamp: itinerary.endTime,
             waitingTime: itinerary.waitingTime,
+            waitingTimeInMinutes: Math.ceil(Duration.fromObject({ seconds: itinerary.waitingTime }).as('minutes')),
             walkTime: itinerary.walkTime,
             walkTimeInMinutes: Math.ceil(Duration.fromObject({ seconds: itinerary.walkTime }).as('minutes')),
             sequences: itinerary.legs.map((leg: RoutePathLeg, index: number) => {

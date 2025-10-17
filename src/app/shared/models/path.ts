@@ -9,6 +9,7 @@ export interface RoutePath {
     waitingTime: number;         // min
     walkTime: number;            // min
     walkTimeInMinutes: number;
+    waitingTimeInMinutes: number;
     sequences: RoutePathSequence[]
 }
 export interface RoutePathSequence {

@@ -15,6 +15,7 @@ export const VEHICLE_POSITION_QUERY: string = `
             route {
               mode
               shortName
+              longName
               color
             }
           }

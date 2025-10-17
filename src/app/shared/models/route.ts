@@ -5,7 +5,7 @@ export interface Route {
   numberOfTransfers: number;
   duration: number; // in minutes
   startTime: string; // 'HH:mm' format
-  startTimeTimestamp: number;   // UNIX timestamp
+  startTimestamp: number;   // UNIX timestamp
   endTime: string;   // 'HH:mm' format
   endTimeTimestamp: number;   // UNIX timestamp
   walkTime: number;

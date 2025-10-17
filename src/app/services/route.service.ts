@@ -29,6 +29,9 @@ export class RouteService {
     private _routeSearchDateTime$ = new BehaviorSubject<string | null>(null);
     readonly routeSearchDateTime$ = this._routeSearchDateTime$.asObservable();
 
+    private _routePath$ = new BehaviorSubject<any>(null);       // TODO TYPE
+    readonly routePath$ = this._routePath$.asObservable();       // TODO TYPE
+
     private readonly _selectedRouteKey$ = new BehaviorSubject<string | null>(null);
     readonly selectedRouteKey$ = this._selectedRouteKey$.asObservable();
 
@@ -96,12 +99,16 @@ export class RouteService {
         return this._selectedRoute$.getValue();
     }
 
+    getRoutePath() {        // TODO TYPE
+        return this._routePath$.getValue();
+    }
+
     setRoutePath(sequences: any | null) {      // TODO TYPE
         if (!sequences) {
             return;
         }
 
-        
+        // TODO STATIC ROUTE PATH FROM get-route API
 
         console.log('setRoutePath sequences: ', sequences);
     }
@@ -120,5 +127,17 @@ export class RouteService {
 
     getSelectedRouteKey(): string | null {
         return this._selectedRouteKey$.getValue();
+    }
+
+    getSelectedTransportGtfsIds() {
+        const route = this._selectedRoute$.getValue();
+
+        // if (route?.sequences) return [];
+
+        const routeGtfsIds = route?.sequences
+            .filter(seq => seq.mode !== 'WALK')
+            .map(seq => seq.transportInfo?.gtfsId);
+
+        return routeGtfsIds;
     }
 }

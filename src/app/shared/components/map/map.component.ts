@@ -2,7 +2,7 @@ import { Component, ElementRef, inject, Input, SimpleChanges, ViewChild } from '
 import * as L from 'leaflet';
 import { RestApiService } from '../../../services/rest-api.service';
 import { createPlanQuery } from '../../constants/query/plan-query';
-import { BehaviorSubject, catchError, combineLatest, distinctUntilChanged, filter, map, Observable, of, Subject, Subscription, switchMap, takeUntil, tap, throwError } from 'rxjs';
+import { BehaviorSubject, catchError, combineLatest, distinctUntilChanged, filter, forkJoin, map, Observable, of, Subject, Subscription, switchMap, takeUntil, tap, throwError } from 'rxjs';
 import { VEHICLE_POSITION_QUERY } from '../../constants/query/vehicle-location-query';
 import { ROUTE_PATH_QUERY } from '../../constants/query/route-path-query';
 import { RouteService } from '../../../services/route.service';
@@ -16,6 +16,8 @@ import { ActiveMap, MapMode } from '../../models/map';
 import { MapService } from '../../../services/map.service';
 import { AppSettings, CurrentAppSettings } from '../../models/settings';
 import { MapModeAction } from '../../constants/map';
+import { TransportLocationService } from '../../../services/transport-location.service';
+import { TransportLocation } from '../../models/transport-location';
 
 @Component({
   selector: 'map',
@@ -33,6 +35,7 @@ export class MapComponent {
   private appSettingsService: AppSettingsService = inject(AppSettingsService);
   private pathService: PathService = inject(PathService);
   private mapService: MapService = inject(MapService);
+  private transportLocationService: TransportLocationService = inject(TransportLocationService);
 
   private mapMode!: MapMode;
 
@@ -61,6 +64,7 @@ export class MapComponent {
   private freeLayer: L.Layer | null = null;
   private tripLayers: L.LayerGroup | null = null;
   private statusLayers: L.LayerGroup | null = null;
+  private locationLayers: L.LayerGroup | null = null;
 
   private currentTileLayer: L.TileLayer | null = null;
 
@@ -82,32 +86,29 @@ export class MapComponent {
     const observer = new IntersectionObserver((entries) => {
       const isVisible = entries.some(e => e.isIntersecting);
 
-      // Ha látható a térkép
-      if (isVisible && !this.intersectionObserverSub) {
-        console.log('Map visible → subscribing');
-
+      if (isVisible && !this.intersectionObserverSub) {   // If map visible
         this.intersectionObserverSub = combineLatest([
           this.appSettingsService.appSettings$,
           this.mapType$
         ])
           .pipe(
             tap(([settings, type]) => {
-              this.updateTileLayer(settings['theme']);
-              this.updateMapContent(type);
+              if (!this.statusLayers) {
+                this.updateTileLayer(settings['theme']);
+                this.updateMapContent(type);
+              }
             })
           )
           .subscribe();
       }
 
-      // Ha nem látható → leiratkozunk, ha volt subscription
-      if (!isVisible && this.intersectionObserverSub) {
-        console.log('Map hidden → unsubscribed');
+      if (!isVisible && this.intersectionObserverSub) {   // Unsubscribe when map not visible
         this.intersectionObserverSub.unsubscribe();
         this.intersectionObserverSub = undefined;
       }
     }, {
       root: null,
-      threshold: 0.1 // csak ha ténylegesen eltűnik/látszik
+      threshold: 0
     });
 
     observer.observe(this.mapContainer.nativeElement);
@@ -121,7 +122,7 @@ export class MapComponent {
     }
     if (this.tripLayers && this.statusLayers) {
       this.map.removeLayer(this.tripLayers);
-      // this.map.removeLayer(this.statusLayers);
+      this.map.removeLayer(this.statusLayers);
       this.tripLayers = null;
       // this.statusLayers = null;
     }
@@ -142,12 +143,15 @@ export class MapComponent {
 
       this.initRoutePath()
         .pipe(takeUntil(this.destroy$))
-        .subscribe(routePath => {
-          console.log('RoutePath frissítve:', routePath);
+        .subscribe(([routePath, transportLocation]) => {
+          console.log('Update', routePath, transportLocation);
           this.initMapTrip(routePath);
+          this.initTransportLocation(transportLocation);
+          this.updateMapLabelsVisibility();
         });
-
     }
+
+    this.initMapEvents();
   }
 
   updateTileLayer(theme: number = 1) {
@@ -183,45 +187,58 @@ export class MapComponent {
     this.map?.on('dragstart', () => console.log('dragstart'));
     this.map?.on('dragend', () => console.log('dragend'));
 
+    /* this.map?.on('load', () => {
+      setTimeout(() => {
+        const zoom = this.map?.getZoom() || 0;    // TODO || 0
+        // this.stopLabels = Array.from(document.querySelectorAll('.map-stop-label')) as HTMLElement[];
+
+        document.querySelectorAll('.map-stop-label, .map-vehicle-label').forEach((el) => {
+          const span = el as HTMLElement;
+          if (zoom < 14) {
+            span.style.display = 'none';
+          } else {
+            span.style.display = 'grid';
+            const fontSize = 4 + (zoom - 12) * 2;
+            span.style.fontSize = `${fontSize}px`;
+          }
+        });
+      }, 3000);
+    }); */
+
     this.map?.on('zoomend', () => {
-      const zoom = this.map?.getZoom() || 0;    // TODO || 0
-      // this.stopLabels = Array.from(document.querySelectorAll('.map-stop-label')) as HTMLElement[];
-      document.querySelectorAll('.map-stop-label').forEach((el) => {
-        const span = el as HTMLElement;
-        if (zoom < 14) {
-          span.style.display = 'none';
-        } else {
-          span.style.display = 'grid';
-          const fontSize = 4 + (zoom - 12) * 2;
-          span.style.fontSize = `${fontSize}px`;
-        }
-      });
+      this.updateMapLabelsVisibility();
     });
   }
 
-  initRoutePath(): Observable<RoutePath | null> {
+  initRoutePath(): Observable<[RoutePath | null, any | null]> {   // TODO TYPE
     return this.appSettingsService.appSettings$.pipe(
       map(settings => !!settings['autoUpdate']),
       switchMap(autoUpdate =>
         autoUpdate
-          ? this.pathService.getRoutePathPolling()
-          : this.pathService.getRoutePath()
+          ?
+          combineLatest([
+            this.pathService.getRoutePathPolling(),
+            this.transportLocationService.getTransportLocationPolling()
+          ])
+          :
+          combineLatest([
+            this.pathService.getRoutePath(),
+            this.transportLocationService.getTransportLocation()
+          ])
       )
     );
   }
 
   initMapTrip(selectedPath: any) {
-
-
-    return;
     if (!selectedPath) return;
 
     if (this.statusLayers) {
-      // this.map.removeLayer(this.statusLayers);
+      this.map.removeLayer(this.statusLayers);
       this.statusLayers = L.layerGroup().addTo(this.map);
 
       selectedPath.sequences.forEach((seq: any) => {
         this.addStatuses(seq);
+        this.updateMapLabelsVisibility();
       });
       return;
     }
@@ -239,6 +256,8 @@ export class MapComponent {
     const allPoints = selectedPath.sequences.flatMap((seq: any) => seq.sequenceGeometry.points);
 
     this.mapService.fitBounds(this.map, allPoints);
+
+    this.updateMapLabelsVisibility();
   }
 
   initFreeMap() {
@@ -250,6 +269,18 @@ export class MapComponent {
       fillOpacity: 0.5,
       radius: 500
     }).addTo(this.map);
+  }
+
+  initTransportLocation(transportLocation: TransportLocation) {
+    if (this.locationLayers) {
+      this.map.removeLayer(this.locationLayers);
+    }
+    this.locationLayers = L.layerGroup().addTo(this.map);
+
+    transportLocation.forEach((vehicle: any) => {
+      console.log(vehicle);
+      this.addLocations(vehicle);
+    });
   }
 
   addPolyline(seq: RoutePathSequence) {
@@ -277,6 +308,7 @@ export class MapComponent {
     ));
 
     this.tripLayers?.addLayer(this.mapService.drawDivIcon(
+      'stop',
       [seq.to.lat, seq.to.lon],
       seq.modeData.color,
       seq.to.name,
@@ -292,13 +324,14 @@ export class MapComponent {
         [stop.geometry.coordinates[0], stop.geometry.coordinates[1]],
         seq.modeData.color,
         true,
-        0,
+        1,
         seq.modeData.color,
         2,
         5
       ));
 
       this.tripLayers?.addLayer(this.mapService.drawDivIcon(
+        'stop',
         [stop.geometry.coordinates[0], stop.geometry.coordinates[1]],
         seq.modeData.color,
         stop.name,
@@ -311,6 +344,7 @@ export class MapComponent {
 
   addStatuses(seq: RoutePathSequence) {
     this.statusLayers?.addLayer(this.mapService.drawDivIcon(
+      'stopWithTime',
       [seq.from.lat, seq.from.lon],
       seq.modeData.color,
       seq.from.name,
@@ -318,6 +352,48 @@ export class MapComponent {
       seq.delayedStartTime,
       'map-stop-label'
     ));
+  }
+
+  addLocations(vehicle: TransportLocation[number]) { // TODO TYPE
+    console.log
+    this.locationLayers?.addLayer(this.mapService.drawDivIcon(
+      'icon',
+      vehicle.point,
+      vehicle.modeData.color,
+      vehicle.label,
+      vehicle.lastUpdated,
+      '',
+      'map-vehicle-label',
+      vehicle.modeData.icon
+    ));
+  }
+
+  updateMapLabelsVisibility() {
+    const zoom = this.map?.getZoom() || 0;    // TODO || 0
+    // this.stopLabels = Array.from(document.querySelectorAll('.map-stop-label')) as HTMLElement[];
+
+    document.querySelectorAll('.map-stop-label').forEach((el) => {
+      const span = el as HTMLElement;
+      if (zoom < 14) {
+        span.style.display = 'none';
+      } else {
+        span.style.display = 'grid';
+        const fontSize = 4 + (zoom - 12) * 2;
+        span.style.fontSize = `${fontSize}px`;
+      }
+    });
+
+    document.querySelectorAll('.map-vehicle-label > div > div').forEach((el) => {
+      const span = el as HTMLElement;
+      if (zoom < 14) {
+        span.style.display = 'none';
+      } else {
+        span.style.display = 'flex';
+        const fontSize = 4 + (zoom - 12) * 2;
+        span.style.fontSize = `${fontSize}px`;
+      }
+    });
+
   }
 
   // ----------------------------------------------- //
@@ -364,6 +440,14 @@ export class MapComponent {
   }
 
   getVehiclePosition() {
+    this.transportLocationService.getTransportLocationPolling()
+      .pipe(
+        tap(vehicles => console.log(vehicles))
+      )
+      .subscribe();
+
+    return;
+
     const variables = {
       trips: [
         { id: "BKK:D032858681", serviceDay: DateTime.now().toUTC().startOf('day').toMillis() },
@@ -388,8 +472,6 @@ export class MapComponent {
   }
 
   ngOnDestroy() {
-    console.log('MAP DESTROYED');
-
     this.destroy$.next();
     this.destroy$.complete();
 

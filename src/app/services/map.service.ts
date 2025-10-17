@@ -49,6 +49,7 @@ export class MapService {
     }
 
     drawDivIcon(
+        type: 'stop' | 'stopWithTime' | 'icon',
         point: L.LatLngExpression,
         color: string,
         name: string,
@@ -58,24 +59,68 @@ export class MapService {
         icon: string = 'fa-fw fa-solid fa-clock',
         iconAnchor: [number, number] = [0, 0]
     ): L.Marker {
-        return L.marker(point, {
-            icon: L.divIcon({
-                html: `<div>
-                        <div style="color: ${color}">${name}</div>
-                        ${status?.length
-                        ? `
+        let divIcon: L.DivIcon;
+        const settings = { className, iconAnchor };
+        switch (type) {
+            case 'icon':
+                divIcon = L.divIcon({
+                    html: `
+                        <div>
+                            <div>${name}</div>
+                            <i class="${icon}"></i>
+                            <div>
+                                <i class="fa-fw fa-solid fa-rotate"></i>
+                                <span>${status}</span>
+                            </div>
+                        </div>
+                    `, ...settings
+                });
+                break;
+            case 'stop': ``;
+                divIcon = L.divIcon({ html: `<div><div style="color: ${color}">${name}</div></div>`, ...settings });
+                break;
+            case 'stopWithTime': ``;
+                divIcon = L.divIcon({
+                    html: `
+                        <div>
+                            <div style="color: ${color}">${name}</div>
                             <div class="start-time ${status === 'early' ? 'early' : status === 'late' ? 'late' : ''}">
                                 <i class="${icon}"></i>
                                 <span>${delayedStartTime}</span>
                             </div>
-                            `
-                        : ''
-                    }
-                    </div>`,
-                className,
-                iconAnchor,
-            })
-        })
+                        </div>
+                    `, ...settings
+                });
+                break;
+        }
+
+        return L.marker(point, { icon: divIcon, });
+
+        return L.marker(point, {
+            icon: divIcon
+        });
+        /* icon: L.divIcon({
+            html: `
+            ${icon ?
+                `
+                <i [ngClass]="${icon}"><i/>
+                ` : ``}
+            <div>
+                    <div style="color: ${color}">${name}</div>
+                    ${status?.length
+                    ? `
+                        <div class="start-time ${status === 'early' ? 'early' : status === 'late' ? 'late' : ''}">
+                            <i class="${icon}"></i>
+                            <span>${delayedStartTime}</span>
+                        </div>
+                        `
+                    : ''
+                }
+                </div>`,
+            className,
+            iconAnchor,
+        }) */
+        //  })
     }
 
     fitBounds(map: L.Map, points: L.LatLngExpression[]) {

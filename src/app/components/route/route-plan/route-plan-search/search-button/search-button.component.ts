@@ -104,7 +104,7 @@ export class SearchButtonComponent {
       numberOfTransfers: itinerary.numberOfTransfers,
       duration: Math.ceil(Duration.fromObject({ seconds: itinerary.duration }).as('minutes')),
       startTime: DateTime.fromMillis(itinerary.startTime, { zone: 'utc' }).setZone('Europe/Budapest').toFormat('HH:mm'),
-      startTimeTimestamp: itinerary.startTime,
+      startTimestamp: itinerary.startTime,
       endTime: DateTime.fromMillis(itinerary.endTime, { zone: 'utc' }).setZone('Europe/Budapest').toFormat('HH:mm'),
       endTimeTimestamp: itinerary.endTime,
       walkTime: Math.ceil(Duration.fromObject({ seconds: itinerary.walkTime }).as('minutes')),

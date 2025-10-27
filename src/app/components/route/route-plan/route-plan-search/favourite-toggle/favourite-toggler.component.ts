@@ -39,6 +39,15 @@ export class FavouriteTogglerComponent {
     this.changeIsBlocked()
   );
 
+  ngOnInit() {
+    this.favouriteRouteService.selectedFavourite$.subscribe(sel => {
+      if (!sel) { 
+        this.fillPercent = 0;
+        this.routeIsFavourite = false;
+      }
+    });
+  }
+
   openFavouritesModal() {
     this.fillPercent = this.routeIsFavourite ? 100 : 0;
 

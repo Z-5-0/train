@@ -54,18 +54,15 @@ export interface RoutePathSequence {
         points: [number, number][];
     }
 }
-
 interface RoutePathLocation {
     name: string;
     lat: number;
     lon: number;
     stop: RoutePathStop;
 }
-
 interface RoutePathStop {
     gtfsId: string;
 }
-
 export interface IntermediateStop {
     id: string;
     name: string;

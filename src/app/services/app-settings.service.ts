@@ -22,7 +22,7 @@ type SettingsKeys = {
 export class AppSettingsService {
     private readonly APP_SETTINGS: AppSettings = APP_SETTINGS;
 
-    private readonly _appSettings$ = new BehaviorSubject<Record<string, any>>({});
+    private readonly _appSettings$ = new BehaviorSubject<Record<string, any>>({});      // TODO TYPE CurrentAppSettings ?
 
     public readonly appSettings$ = this._appSettings$.asObservable();
 

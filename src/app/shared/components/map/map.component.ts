@@ -1,23 +1,18 @@
 import { Component, ElementRef, inject, Input, SimpleChanges, ViewChild } from '@angular/core';
 import * as L from 'leaflet';
-import { RestApiService } from '../../../services/rest-api.service';
-import { createPlanQuery } from '../../constants/query/plan-query';
-import { BehaviorSubject, catchError, combineLatest, distinctUntilChanged, filter, forkJoin, map, Observable, of, Subject, Subscription, switchMap, takeUntil, tap, throwError } from 'rxjs';
-import { VEHICLE_POSITION_QUERY } from '../../constants/query/vehicle-location-query';
-import { ROUTE_PATH_QUERY } from '../../constants/query/route-path-query';
-import { RouteService } from '../../../services/route.service';
-import { DateTime } from 'luxon';
+import { BehaviorSubject, combineLatest, filter, map, Observable, Subject, Subscription, switchMap, takeUntil, tap } from 'rxjs';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { AppSettingsService } from '../../../services/app-settings.service';
-import { TRANSPORT_MODE } from '../../constants/transport-mode';
 import { PathService } from '../../../services/path.service';
-import { IntermediateStop, RoutePath, RoutePathSequence } from '../../models/path';
-import { ActiveMap, MapMode } from '../../models/map';
+import { RoutePath, RoutePathSequence } from '../../models/path';
+import { MapTripService } from '../../../services/map-trip.service';
+import { MapFreeService } from '../../../services/map-free.service';
 import { MapService } from '../../../services/map.service';
-import { AppSettings, CurrentAppSettings } from '../../models/settings';
-import { MapModeAction } from '../../constants/map';
 import { TransportLocationService } from '../../../services/transport-location.service';
 import { TransportLocation } from '../../models/transport-location';
+import { MapMode } from '../../models/map';
+import { CurrentAppSettings } from '../../models/settings';
+import { GeolocationService } from '../../../services/geolocation.service';
 
 @Component({
   selector: 'map',
@@ -30,45 +25,30 @@ import { TransportLocation } from '../../models/transport-location';
 export class MapComponent {
   @Input() mapType!: 'FREE' | 'TRIP';
 
-  private restApi: RestApiService = inject(RestApiService);
-  private routeService: RouteService = inject(RouteService);
+  @ViewChild('mapContainer', { static: true }) mapContainer!: ElementRef<HTMLDivElement>;
+
   private appSettingsService: AppSettingsService = inject(AppSettingsService);
   private pathService: PathService = inject(PathService);
   private mapService: MapService = inject(MapService);
+  private mapTripService: MapTripService = inject(MapTripService);
+  private mapFreeService: MapFreeService = inject(MapFreeService);
   private transportLocationService: TransportLocationService = inject(TransportLocationService);
+  private geolocationService: GeolocationService = inject(GeolocationService);
 
-  private mapMode!: MapMode;
-
-  @ViewChild('mapContainer', { static: true }) mapContainer!: ElementRef<HTMLDivElement>;
-  map!: L.Map;
-  protected mapId: string = '';
-
-  private locationMarker: L.Marker | null = null;
-  private stopLabels: HTMLElement[] = [];
-
-  destroy$ = new Subject<void>();
-
-  tileTheme: { image: string; attribution: string }[] = [
-    {
-      image: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png',
-      attribution: '&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    },
-    {
-      image: 'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png',
-      attribution: '&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }
-  ];
+  private map!: L.Map;
 
   private mapType$ = new BehaviorSubject<'FREE' | 'TRIP'>('FREE');
 
-  private freeLayer: L.Layer | null = null;
-  private tripLayers: L.LayerGroup | null = null;
-  private statusLayers: L.LayerGroup | null = null;
-  private locationLayers: L.LayerGroup | null = null;
-
   private currentTileLayer: L.TileLayer | null = null;
+  private freeMapLayers: L.Layer | null = null;
+  private tripMapLayers: L.LayerGroup | null = null;
+  private originLayers: L.LayerGroup | null = null;
+  private transportLocationLayers: L.LayerGroup | null = null;
+  private locationMarker: L.Marker | null = null;
 
   private intersectionObserverSub?: Subscription;
+
+  private destroy$ = new Subject<void>();
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['mapType']) {
@@ -77,24 +57,23 @@ export class MapComponent {
   }
 
   ngAfterViewInit() {
-    this.map = L.map(this.mapContainer.nativeElement, {
-      center: [47.4979, 19.0402],
-      zoom: 13,
-      zoomControl: false,
-    });
+    this.initMap();
 
-    const observer = new IntersectionObserver((entries) => {
-      const isVisible = entries.some(e => e.isIntersecting);
+    const observer = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
+      const isVisible = entries.some((entry: IntersectionObserverEntry) => {
+        return entry.isIntersecting
+      });
 
       if (isVisible && !this.intersectionObserverSub) {   // If map visible
         this.intersectionObserverSub = combineLatest([
-          this.appSettingsService.appSettings$,
+          this.appSettingsService.appSettings$ as Observable<CurrentAppSettings>,
           this.mapType$
         ])
           .pipe(
-            tap(([settings, type]) => {
-              if (!this.statusLayers) {
-                this.updateTileLayer(settings['theme']);
+            tap(([settings, type]: [CurrentAppSettings, MapMode]) => {    // Probably not the best solution inside tap
+              this.updateTileLayer(settings['theme']);
+
+              if (!this.originLayers) {
                 this.updateMapContent(type);
               }
             })
@@ -114,39 +93,36 @@ export class MapComponent {
     observer.observe(this.mapContainer.nativeElement);
   }
 
+  initMap() {
+    this.map = this.mapService.initMap(this.mapContainer.nativeElement);
+  }
 
-  private updateMapContent(type: 'FREE' | 'TRIP') {
-    if (this.freeLayer) {
-      this.map.removeLayer(this.freeLayer);
-      this.freeLayer = null;
+  updateMapContent(type: 'FREE' | 'TRIP') {
+    if (this.freeMapLayers) {
+      this.map.removeLayer(this.freeMapLayers);
+      this.freeMapLayers = null;
     }
-    if (this.tripLayers && this.statusLayers) {
-      this.map.removeLayer(this.tripLayers);
-      this.map.removeLayer(this.statusLayers);
-      this.tripLayers = null;
-      // this.statusLayers = null;
+    if (this.tripMapLayers && this.originLayers) {
+      this.mapService.removeLayer(this.map, this.tripMapLayers);
+      this.mapService.removeLayer(this.map, this.originLayers);
+      this.tripMapLayers = null;
     }
 
     if (type === 'FREE') {
-      console.log('🎯 FREE map init');
-      this.freeLayer = L.circle([47.4979, 19.0402], {
+      this.freeMapLayers = L.circle([47.4979, 19.0402], {   // TODO LATER...
         color: 'red',
         radius: 500
       }).addTo(this.map);
     }
 
     if (type === 'TRIP') {
-      console.log('🎯 TRIP map init');
-
-      // this.tripLayers = L.layerGroup().addTo(this.map);
-      // this.statusLayers = L.layerGroup().addTo(this.map);
-
       this.initRoutePath()
         .pipe(takeUntil(this.destroy$))
-        .subscribe(([routePath, transportLocation]) => {
-          console.log('Update', routePath, transportLocation);
-          this.initMapTrip(routePath);
+        .subscribe(([routePath, transportLocation]: [RoutePath | null, TransportLocation | null]) => {
+          console.log(routePath);
+          this.initTripMap(routePath);
           this.initTransportLocation(transportLocation);
+          this.initLocation();
           this.updateMapLabelsVisibility();
         });
     }
@@ -155,65 +131,40 @@ export class MapComponent {
   }
 
   updateTileLayer(theme: number = 1) {
-    if (this.currentTileLayer) {
-      this.map.removeLayer(this.currentTileLayer);
-    }
+    if (this.currentTileLayer) this.mapService.removeLayer(this.map, this.currentTileLayer);
 
-    this.currentTileLayer = L.tileLayer(
-      this.tileTheme[theme].image,
-      {
-        minZoom: -1,
-        maxZoom: 20,
-        attribution: this.tileTheme[theme].attribution,
-        updateWhenIdle: true,
-        updateWhenZooming: false,
-        keepBuffer: 2
-      }
-    ).addTo(this.map);
+    this.mapService.getTile(theme).addTo(this.map);
 
     requestAnimationFrame(() => this.map.invalidateSize());
   }
 
-  initMap() {
-    this.map = L.map(this.mapContainer.nativeElement, {
-      center: [47.497913, 19.040236],
-      zoom: 13
-    });
-
-    return;
+  updateMapLabelsVisibility() {
+    this.mapService.updateMapLabelsVisibility(
+      this.map?.getZoom(),
+      [
+        '.map-stop-label',
+        '.map-vehicle-label > div:first-child',
+        '.map-vehicle-label > div:last-child'
+      ],
+      [
+        { 'display': ['none', 'grid'] }
+      ]
+    );
   }
 
   initMapEvents() {
-    this.map?.on('dragstart', () => console.log('dragstart'));
-    this.map?.on('dragend', () => console.log('dragend'));
-
-    /* this.map?.on('load', () => {
-      setTimeout(() => {
-        const zoom = this.map?.getZoom() || 0;    // TODO || 0
-        // this.stopLabels = Array.from(document.querySelectorAll('.map-stop-label')) as HTMLElement[];
-
-        document.querySelectorAll('.map-stop-label, .map-vehicle-label').forEach((el) => {
-          const span = el as HTMLElement;
-          if (zoom < 14) {
-            span.style.display = 'none';
-          } else {
-            span.style.display = 'grid';
-            const fontSize = 4 + (zoom - 12) * 2;
-            span.style.fontSize = `${fontSize}px`;
-          }
-        });
-      }, 3000);
-    }); */
+    // this.map?.on('dragstart', () => console.log('dragstart'));    // TODO LATER
+    // this.map?.on('dragend', () => console.log('dragend'));    // TODO LATER
 
     this.map?.on('zoomend', () => {
       this.updateMapLabelsVisibility();
     });
   }
 
-  initRoutePath(): Observable<[RoutePath | null, any | null]> {   // TODO TYPE
+  initRoutePath(): Observable<[RoutePath | null, TransportLocation | null]> {   // TODO TYPE
     return this.appSettingsService.appSettings$.pipe(
-      map(settings => !!settings['autoUpdate']),
-      switchMap(autoUpdate =>
+      map(settings => !!(settings as CurrentAppSettings)['autoUpdate']),
+      switchMap((autoUpdate: boolean) =>
         autoUpdate
           ?
           combineLatest([
@@ -229,35 +180,36 @@ export class MapComponent {
     );
   }
 
-  initMapTrip(selectedPath: any) {
+  initTripMap(selectedPath: RoutePath | null) {
     if (!selectedPath) return;
 
-    if (this.statusLayers) {
-      this.map.removeLayer(this.statusLayers);
-      this.statusLayers = L.layerGroup().addTo(this.map);
+    if (this.originLayers) {
+      this.map.removeLayer(this.originLayers);
+      this.originLayers = this.mapService.addLayer(this.map);
 
-      selectedPath.sequences.forEach((seq: any) => {
-        this.addStatuses(seq);
+      selectedPath.sequences.forEach((seq: RoutePathSequence) => {
+        this.mapTripService.updateOriginsLayer(this.originLayers, seq);
         this.updateMapLabelsVisibility();
       });
       return;
     }
 
-    this.tripLayers = L.layerGroup().addTo(this.map);
-    this.statusLayers = L.layerGroup().addTo(this.map);
+    this.tripMapLayers = this.mapService.addLayer(this.map);
+    this.originLayers = this.mapService.addLayer(this.map);
 
-    selectedPath.sequences.forEach((seq: any) => {
-      this.addPolyline(seq);
-      this.addMarkers(seq);
-      this.addIntermediateStops(seq);
-      this.addStatuses(seq);
-    });
+    this.tripMapLayers = this.mapTripService.createTripLayers(this.tripMapLayers, selectedPath.sequences);
 
-    const allPoints = selectedPath.sequences.flatMap((seq: any) => seq.sequenceGeometry.points);
+    const allPoints = selectedPath.sequences.flatMap((seq: RoutePathSequence) => seq.sequenceGeometry.points);
 
     this.mapService.fitBounds(this.map, allPoints);
 
     this.updateMapLabelsVisibility();
+  }
+
+  initTransportLocation(transportLocations: TransportLocation | null) {
+    if (this.transportLocationLayers) this.mapService.removeLayer(this.map, this.transportLocationLayers);
+    this.transportLocationLayers = this.mapService.addLayer(this.map);
+    this.transportLocationLayers = this.mapTripService.updateTransportLayer(this.transportLocationLayers, transportLocations);
   }
 
   initFreeMap() {
@@ -271,204 +223,23 @@ export class MapComponent {
     }).addTo(this.map);
   }
 
-  initTransportLocation(transportLocation: TransportLocation) {
-    if (this.locationLayers) {
-      this.map.removeLayer(this.locationLayers);
-    }
-    this.locationLayers = L.layerGroup().addTo(this.map);
+  initLocation() {    // TODO
+    this.geolocationService.startTracking();
 
-    transportLocation.forEach((vehicle: any) => {
-      console.log(vehicle);
-      this.addLocations(vehicle);
-    });
-  }
-
-  addPolyline(seq: RoutePathSequence) {
-    this.tripLayers?.addLayer(this.mapService.drawPolyline(
-      seq.sequenceGeometry.points,
-      seq.modeData.color,
-      3,
-      'map-trip-polyline'
-    ));
-  }
-
-  addMarkers(seq: RoutePathSequence) {
-    this.tripLayers?.addLayer(this.mapService.drawCircleMarker(
-      [seq.to.lat, seq.to.lon]
-    ));
-
-    this.tripLayers?.addLayer(this.mapService.drawCircleMarker(
-      [seq.from.lat, seq.from.lon],
-      '#000000',
-      false,
-      1,
-      '',
-      2,
-      6
-    ));
-
-    this.tripLayers?.addLayer(this.mapService.drawDivIcon(
-      'stop',
-      [seq.to.lat, seq.to.lon],
-      seq.modeData.color,
-      seq.to.name,
-      '',
-      seq.delayedStartTime,
-      'map-stop-label'
-    ));
-  }
-
-  addIntermediateStops(seq: RoutePathSequence) {
-    seq.intermediateStops?.forEach((stop: IntermediateStop) => {
-      this.tripLayers?.addLayer(this.mapService.drawCircleMarker(
-        [stop.geometry.coordinates[0], stop.geometry.coordinates[1]],
-        seq.modeData.color,
-        true,
-        1,
-        seq.modeData.color,
-        2,
-        5
-      ));
-
-      this.tripLayers?.addLayer(this.mapService.drawDivIcon(
-        'stop',
-        [stop.geometry.coordinates[0], stop.geometry.coordinates[1]],
-        seq.modeData.color,
-        stop.name,
-        '',
-        '',
-        'map-stop-label'
-      ));
-    });
-  }
-
-  addStatuses(seq: RoutePathSequence) {
-    this.statusLayers?.addLayer(this.mapService.drawDivIcon(
-      'stopWithTime',
-      [seq.from.lat, seq.from.lon],
-      seq.modeData.color,
-      seq.from.name,
-      seq.status,
-      seq.delayedStartTime,
-      'map-stop-label'
-    ));
-  }
-
-  addLocations(vehicle: TransportLocation[number]) { // TODO TYPE
-    console.log
-    this.locationLayers?.addLayer(this.mapService.drawDivIcon(
-      'icon',
-      vehicle.point,
-      vehicle.modeData.color,
-      vehicle.label,
-      vehicle.lastUpdated,
-      '',
-      'map-vehicle-label',
-      vehicle.modeData.icon
-    ));
-  }
-
-  updateMapLabelsVisibility() {
-    const zoom = this.map?.getZoom() || 0;    // TODO || 0
-    // this.stopLabels = Array.from(document.querySelectorAll('.map-stop-label')) as HTMLElement[];
-
-    document.querySelectorAll('.map-stop-label').forEach((el) => {
-      const span = el as HTMLElement;
-      if (zoom < 14) {
-        span.style.display = 'none';
-      } else {
-        span.style.display = 'grid';
-        const fontSize = 4 + (zoom - 12) * 2;
-        span.style.fontSize = `${fontSize}px`;
-      }
-    });
-
-    document.querySelectorAll('.map-vehicle-label > div > div').forEach((el) => {
-      const span = el as HTMLElement;
-      if (zoom < 14) {
-        span.style.display = 'none';
-      } else {
-        span.style.display = 'flex';
-        const fontSize = 4 + (zoom - 12) * 2;
-        span.style.fontSize = `${fontSize}px`;
-      }
-    });
-
-  }
-
-  // ----------------------------------------------- //
-
-  getLocation() {   // TODO
-    const location = this.map?.locate({}).on('locationfound', (e: L.LocationEvent) => {
-      console.log('Latitude:', e.latlng.lat);
-      console.log('Longitude:', e.latlng.lng);
-    });
-
-    navigator.geolocation.watchPosition(
-      (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        const rawHeading = position.coords.heading; // lehet null
-        const heading = (rawHeading !== null && rawHeading !== undefined ? rawHeading : 0) - 45;
-
-
-        // Ha már létezik marker, frissítjük
-        if (this.locationMarker) {
-          this.locationMarker.setLatLng([lat, lng]);
-          const icon = this.locationMarker.getIcon() as L.DivIcon;
-          icon.options.html = `<i class="fa-solid fa-location-arrow" style="color: red; transform: rotate(${heading}deg); font-size: 24px;"></i>`;
-          this.locationMarker.setIcon(icon);
-        } else {
-          // Új marker létrehozása
-          const userIcon = L.divIcon({
-            className: 'user-marker',
-            html: `<i class="fa-solid fa-location-arrow" style="color: red; transform: rotate(${heading}deg); font-size: 24px;"></i>`,
-            iconSize: [24, 24],
-            iconAnchor: [12, 12]
-          });
-
-          if (this.map) {
-            this.locationMarker = L.marker([lat, lng], { icon: userIcon }).addTo(this.map);
-          }
-        }
-      },
-      (err) => console.error(err),
-      { enableHighAccuracy: true }
-    );
-
-    this.map?.locate({ setView: true });
-  }
-
-  getVehiclePosition() {
-    this.transportLocationService.getTransportLocationPolling()
+    this.geolocationService.currentLocation$
       .pipe(
-        tap(vehicles => console.log(vehicles))
+        takeUntil(this.destroy$),
+        filter((pos): pos is { lat: number; lng: number; heading: number } => !!pos),
+        tap((pos) => {
+          // console.log('locationMarker: ', this.locationMarker);
+          this.locationMarker = this.mapTripService.updateLocationMarker(
+            this.map,
+            this.locationMarker,
+            pos
+          );
+        })
       )
       .subscribe();
-
-    return;
-
-    const variables = {
-      trips: [
-        { id: "BKK:D032858681", serviceDay: DateTime.now().toUTC().startOf('day').toMillis() },
-        // { id: "1:003609100_0", serviceDay: DateTime.now().toUTC().startOf('day').toMillis() },
-      ]
-    };
-
-    this.restApi.getVehiclePosition({
-      body: {
-        query: VEHICLE_POSITION_QUERY,
-        variables: variables
-      },
-      debounceTime: false
-    }).pipe(
-      map((response: any) => response),
-      tap(resp => console.log('Vehicle position: ', resp)),
-      catchError(err => {     // does not run due to retry in rest-api service
-        // return EMPTY;
-        return throwError(() => err);       // pushes error towards components
-      })
-    ).subscribe();
   }
 
   ngOnDestroy() {
@@ -479,5 +250,7 @@ export class MapComponent {
       this.map.off();
       this.map.remove();
     }
+
+    this.geolocationService.stopTracking();
   }
 }

@@ -81,7 +81,6 @@ export class PathService {
                             .map(leg => leg.trip?.id ?? '0')
                             .join('_');
 
-                        console.log('itineraryMatched: ', `${key}` === this.routeService.getSelectedRouteKey());
                         return `${key}` === this.routeService.getSelectedRouteKey()
                     }
                 );
@@ -116,7 +115,11 @@ export class PathService {
         if (!itinerary) return null;
 
         const intermediateStopSequences = this.routeService.getSelectedRoute()?.sequences.map(
-            seq => seq.stops?.slice(1, -1) || null      // start from index 1 and stop before the last index
+            // seq => seq.stops?.slice(1, -1) || null      // start from index 1 and stop before the last index
+            seq => {
+                // console.log('SEQUENCES: ', seq);
+                return seq.stops?.slice(1, -1) || null;
+            }      // start from index 1 and stop before the last index
         );
 
         return {
@@ -166,15 +169,17 @@ export class PathService {
                     departureDelay: leg.departureDelay < 0
                         ? Math.ceil(Math.abs(leg.departureDelay) / 60) * -1
                         : Math.floor(leg.departureDelay / 60),
-                    status: (
-                        (leg.departureDelay < 0
+                    status: (() => {
+                        if (leg.mode === 'WALK') return null;
+
+                        const delayMinutes = leg.departureDelay < 0
                             ? Math.ceil(Math.abs(leg.departureDelay) / 60) * -1
-                            : Math.floor(leg.departureDelay / 60)) < 0
-                            ? 'early'
-                            : (Math.abs(leg.departureDelay) < 60)
-                                ? 'on time'
-                                : 'late'
-                    ) as DelayStatus,
+                            : Math.floor(leg.departureDelay / 60);
+
+                        if (delayMinutes < 0) return 'early';
+                        if (Math.abs(leg.departureDelay) < 60) return 'on time';
+                        return 'late';
+                    })() as DelayStatus,
                     mode: leg.mode as TransportMode,
                     modeData: TRANSPORT_MODE[leg.mode],
                     realTime: leg.realTime,
@@ -199,7 +204,7 @@ export class PathService {
                         ? {
                             id: leg.route.id,
                             mode: leg.route.mode as TransportMode,
-                            longName: leg.route.longName,
+                            longName: leg.route.longName.replace(/\s+/g, '').trim().slice(0, 5),
                             shortName: leg.route.shortName,
                             color: leg.route.color,
                             textColor: leg.route.textColor

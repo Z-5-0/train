@@ -9,7 +9,7 @@ interface VehiclePositionsForTrips {
     vehiclePositionsForTrips: VehiclePosition[] | null;
 }
 
-interface VehiclePosition {
+export interface VehiclePosition {
     vehicleId: string;
     heading: number;
     label: string;

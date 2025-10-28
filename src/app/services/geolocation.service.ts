@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, map, switchMap, take } from 'rxjs/operators';
 import { RestApiService } from './rest-api.service';
 import { MessageService } from './message.service';
@@ -7,9 +7,56 @@ import { GEOLOCATION_ERROR_MESSAGE } from '../shared/constants/error-geolocation
 
 @Injectable({ providedIn: 'root' })
 export class GeolocationService {
-
     private restApi: RestApiService = inject(RestApiService);
     private messageService: MessageService = inject(MessageService);
+
+    private _currentLocation$ = new BehaviorSubject<{ lat: number; lng: number; heading: number } | null>(null);
+    readonly currentLocation$ = this._currentLocation$.asObservable();
+
+    private watchId: number | null = null;
+
+    startTracking() {
+        if (!navigator.geolocation) {
+            // TODO MEESSAGE ?
+            return console.error('Geolocation not supported');
+        }
+
+        this.watchId = navigator.geolocation.watchPosition(
+            (pos) => {
+                const { latitude: lat, longitude: lng, heading: rawHeading } = pos.coords;
+                const heading = (rawHeading ?? 0) - 45;
+                this._currentLocation$.next({ lat, lng, heading });
+            },
+            (err) => {
+                // TODO MEESSAGE ?
+                console.error('Geolocation error:', err);
+            },
+            { enableHighAccuracy: true }
+        );
+    }
+
+    stopTracking() {
+        if (this.watchId !== null) navigator.geolocation.clearWatch(this.watchId);
+    }
+
+    getCurrentLocation() {
+        navigator.geolocation.watchPosition(        // TODO UNSUB?
+            (position: GeolocationPosition) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                const rawHeading = position.coords.heading;     // Could be null
+                const heading = (rawHeading !== null && rawHeading !== undefined ? rawHeading : 0) - 45;
+
+                const pos = { lat, lng, heading };
+
+                this._currentLocation$.next(pos);
+            },
+            (err) => {
+                console.error(err);
+                // TODO MESSAGE
+            },
+            { enableHighAccuracy: true });
+    }
 
     getCurrentLocationInfo$(): Observable<{ currentLocation: string; originPlace: any } | null> {
 

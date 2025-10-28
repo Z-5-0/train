@@ -5,7 +5,7 @@ import { AppSettingsService } from "./app-settings.service";
 import { RestApiService } from "./rest-api.service";
 import { VEHICLE_POSITION_QUERY } from "../shared/constants/query/vehicle-location-query";
 import { DateTime } from "luxon";
-import { TransportLocationResponse } from "../shared/models/api/response-transport-location";
+import { TransportLocationResponse, VehiclePosition } from "../shared/models/api/response-transport-location";
 import { point } from "leaflet";
 import { TRANSPORT_MODE } from "../shared/constants/transport-mode";
 import { TransportLocation } from "../shared/models/transport-location";
@@ -18,9 +18,6 @@ export class TransportLocationService {
     private restApi: RestApiService = inject(RestApiService);
     private routeService: RouteService = inject(RouteService);
     private appSettingsService: AppSettingsService = inject(AppSettingsService);
-
-    private _locations$ = new BehaviorSubject<any>(null);       // TODO TYPE
-    readonly locations$ = this._locations$.asObservable();
 
     getTransportLocationPolling() {
         return this.appSettingsService.appSettings$.pipe(
@@ -56,7 +53,7 @@ export class TransportLocationService {
     createTransportLocationData(response: TransportLocationResponse): TransportLocation | null {
         if (!response.data.vehiclePositionsForTrips?.length) return null;
 
-        return response.data.vehiclePositionsForTrips?.map(vehicle => {
+        return response.data.vehiclePositionsForTrips?.map((vehicle: VehiclePosition) => {
             return {
                 id: vehicle.vehicleId,
                 gtfsId: vehicle.trip.gtfsId,
@@ -67,6 +64,6 @@ export class TransportLocationService {
                 point: [vehicle.lat, vehicle.lon],
                 lastUpdated: DateTime.fromSeconds(vehicle.lastUpdated).toFormat('HH:mm:ss'),
             }
-        });
+        }) as TransportLocation;
     }
 }

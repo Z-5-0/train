@@ -11,7 +11,6 @@ import { RoutePlanComponent } from './route-plan/route-plan.component';
 import { RouteTransitComponent } from './route-transit/route-transit.component';
 import { RouteService } from '../../services/route.service';
 import { timer } from 'rxjs';
-import { MapService } from '../../services/map.service';
 
 
 @Component({
@@ -33,7 +32,6 @@ import { MapService } from '../../services/map.service';
 })
 export class RouteComponent {
   private routeService: RouteService = inject(RouteService);
-  private mapService: MapService = inject(MapService);
 
   currentStep = 0;
   hasRouteSelected: boolean = false;

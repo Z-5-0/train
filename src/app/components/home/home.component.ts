@@ -15,7 +15,6 @@ import { AppSettingsService } from '../../services/app-settings.service';
 import { NzConfigService } from 'ng-zorro-antd/core/config';
 import { InfoComponent } from '../info/info.component';
 import { Route } from '../../shared/models/route';
-import { MapService } from '../../services/map.service';
 import { MapMode } from '../../shared/models/map';
 
 @Component({
@@ -40,7 +39,6 @@ export class HomeComponent {
 
   routeService: RouteService = inject(RouteService);
   appSettingsService: AppSettingsService = inject(AppSettingsService);
-  mapService: MapService = inject(MapService);
 
   homeCards = HOME_CARDS;
   currentHomeCards = JSON.parse(JSON.stringify(this.homeCards));

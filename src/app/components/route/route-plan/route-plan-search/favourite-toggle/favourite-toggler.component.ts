@@ -34,6 +34,7 @@ export class FavouriteTogglerComponent {
 
   readonly favouriteLongPressDisabled = computed(() =>
     !this.originPlace() ||
+    this.originPlace()?.mode === 'GPS' ||
     !this.destinationPlace() ||
     this.hasCurrentLocation() ||
     this.changeIsBlocked()

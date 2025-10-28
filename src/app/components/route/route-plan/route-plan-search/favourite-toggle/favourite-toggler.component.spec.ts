@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { FavouriteToggleComponentComponent } from './favourite-toggler.component';
+import { FavouriteTogglerComponent } from './favourite-toggler.component';
 
 describe('FavouriteToggleComponentComponent', () => {
-  let component: FavouriteToggleComponentComponent;
-  let fixture: ComponentFixture<FavouriteToggleComponentComponent>;
+  let component: FavouriteTogglerComponent;
+  let fixture: ComponentFixture<FavouriteTogglerComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [FavouriteToggleComponentComponent]
+      imports: [FavouriteTogglerComponent]
     })
-    .compileComponents();
+      .compileComponents();
 
-    fixture = TestBed.createComponent(FavouriteToggleComponentComponent);
+    fixture = TestBed.createComponent(FavouriteTogglerComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

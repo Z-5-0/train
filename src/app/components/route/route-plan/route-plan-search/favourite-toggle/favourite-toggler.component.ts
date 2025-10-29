@@ -117,6 +117,6 @@ export class FavouriteTogglerComponent {
   }
 
   pressCancelled() {
-    this.routeIsFavourite ? this.fillPercent = 100 : this.fillPercent = 0;
+    this.fillPercent = this.routeIsFavourite ? 100 : 0;
   }
 }

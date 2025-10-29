@@ -57,8 +57,8 @@
             }
             @if (!currentTrip.transportInfo?.isFinished) {
             <nz-timeline [nzMode]="'right'">
-                @for (segmentStop of currentTrip.allStops; let first = $first; let last = $last; track
-                segmentStop?.station?.gtfsId) {
+                @for (segmentStop of currentTrip.allStops; let index = $index; let first = $first; let last = $last;
+                track segmentStop?.station?.gtfsId + '-' + index) {
                 @if (segmentStop?.station?.gtfsId !== currentRoute?.sequences?.[selectedTransit]?.origin?.gtfsId &&
                 segmentStop?.station?.gtfsId !== currentRoute?.sequences?.[selectedTransit]?.destination?.gtfsId &&
                 segmentStop.station.gtfsId !== currentTrip.transportInfo?.station?.gtfsId) {

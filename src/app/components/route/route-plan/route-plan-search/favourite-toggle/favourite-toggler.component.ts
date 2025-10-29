@@ -76,7 +76,7 @@ export class FavouriteTogglerComponent {
       }
     };
 
-    const modalRef = this.modalService.create(modalOptions);
+    const modalRef = this.modalService.create(modalOptions);    // TODO delete ?
   }
 
   toggleFavouriteRoute() {
@@ -114,5 +114,9 @@ export class FavouriteTogglerComponent {
   private blockFavouriteChange() {
     this.changeIsBlocked.set(true);
     timer(1000).subscribe(() => this.changeIsBlocked.set(false))
+  }
+
+  pressCancelled() {
+    this.routeIsFavourite ? this.fillPercent = 100 : this.fillPercent = 0;
   }
 }

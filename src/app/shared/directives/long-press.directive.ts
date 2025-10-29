@@ -1,6 +1,6 @@
 import { Directive, ElementRef, EventEmitter, inject, Input, OnDestroy, Output } from "@angular/core";
 import { concat, fromEvent, interval, merge, of, Subject, Subscription, timer } from "rxjs";
-import { filter, map, switchMap, take, takeUntil, tap } from "rxjs/operators";
+import { filter, finalize, map, switchMap, take, takeUntil, tap } from "rxjs/operators";
 
 @Directive({
     selector: "[longPress]"
@@ -9,6 +9,7 @@ export class LongPressDirective implements OnDestroy {
     @Input() longPressDisabled: boolean = false;
     @Output() longPressed = new EventEmitter();     // TODO TYPE
     @Output() timeCollapseWhilePressing = new EventEmitter();
+    @Output() pressCancelled = new EventEmitter<void>();
     private elementRef: ElementRef = inject(ElementRef);
     private destroy$: Subject<void> = new Subject<void>();
     private threshold: number = 1000;
@@ -57,7 +58,13 @@ export class LongPressDirective implements OnDestroy {
                         takeUntil(pressEnd$)
                     );
 
-                    return merge(interval$, threshold$);
+                    return merge(interval$, threshold$).pipe(
+                        finalize(() => {
+                            if (!this.isPressing) {
+                                this.pressCancelled.emit();
+                            }
+                        })
+                    );
                 }),
                 takeUntil(this.destroy$)
             )

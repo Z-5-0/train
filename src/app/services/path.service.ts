@@ -204,7 +204,7 @@ export class PathService {
                         ? {
                             id: leg.route.id,
                             mode: leg.route.mode as TransportMode,
-                            longName: leg.route.longName.replace(/\s+/g, '').trim().slice(0, 5),
+                            longName: leg.route.longName?.replace(/\s+/g, '')?.trim()?.slice(0, 5),
                             shortName: leg.route.shortName,
                             color: leg.route.color,
                             textColor: leg.route.textColor

@@ -74,13 +74,15 @@ export class MapService {
         points,
         color,
         weight = 3,
-        className
+        className,
+        interactive = false
     }: PolylineDrawOptions
     ): L.Polyline {
         return L.polyline(points, {
             color,
             className,
-            weight
+            weight,
+            interactive
         })
     }
 
@@ -91,7 +93,8 @@ export class MapService {
         fillOpacity = 1,
         fillColor,
         weight = 2,
-        radius = 6
+        radius = 6,
+        interactive = false
     }: CircleMarkerDrawOptions
     ): L.CircleMarker {
         return L.circleMarker(point, {
@@ -100,7 +103,8 @@ export class MapService {
             fillOpacity,
             fillColor,
             weight,
-            radius
+            radius,
+            interactive
         })
     }
 
@@ -117,7 +121,8 @@ export class MapService {
         line,
         className,
         iconAnchor = [0, 0],
-        iconSize = undefined
+        iconSize = undefined,
+        interactive = false
     }: DivIconDrawOptions
     ): L.Marker {
         let divIcon: L.DivIcon;
@@ -163,7 +168,7 @@ export class MapService {
                     `
                 });
                 break;
-            case 'transfer':
+            case 'transfer':        // TODO status: 'on time' not too elegant for className (start-time ...)
                 divIcon = L.divIcon({
                     ...settings,
                     html: `
@@ -188,15 +193,15 @@ export class MapService {
                 });
                 break;
             case 'icon':
-    divIcon = L.divIcon({
-        ...settings,
-        html: `
+                divIcon = L.divIcon({
+                    ...settings,
+                    html: `
             <div class="${className}">
                 <i class="${icon}" ${heading ? `style="transform: rotate(${heading}deg);"` : ''}></i>
             </div>
         `
-    });
-    break;
+                });
+                break;
             default:
                 console.warn(`drawDivIcon: unhandled type '${type}'`);
                 divIcon = L.divIcon({
@@ -208,6 +213,6 @@ export class MapService {
                 });
                 break;
         }
-        return L.marker(point, { icon: divIcon, });
+        return L.marker(point, { icon: divIcon, interactive });
     }
 }

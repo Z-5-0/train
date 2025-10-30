@@ -9,7 +9,8 @@ export interface PolylineDrawOptions {
     points: L.LatLngExpression[];
     color: string;
     weight?: number;
-    className: string
+    className: string;
+    interactive?: boolean;
 }
 
 export interface CircleMarkerDrawOptions {
@@ -20,6 +21,7 @@ export interface CircleMarkerDrawOptions {
     fillColor?: string;
     weight?: number;
     radius?: number;
+    interactive?: boolean;
 }
 
 export interface DivIconDrawOptions {
@@ -36,5 +38,6 @@ export interface DivIconDrawOptions {
     className?: string;
     html?: string;
     iconAnchor?: [number, number];
-    iconSize?: [number, number] | undefined
+    iconSize?: [number, number] | undefined;
+    interactive?: boolean;
 }

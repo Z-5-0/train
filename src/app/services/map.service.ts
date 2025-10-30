@@ -124,8 +124,8 @@ export class MapService {
         const settings = { className, iconAnchor, iconSize };
         const delayClass = status === 'early' ? 'early' : status === 'late' ? 'late' : null;
 
-        if (type === 'transfer') {
-            console.log(label + ' ' + status);
+        if (type === 'transfer') {      // TODO DELETE
+            //console.log('transfer type: ', label + ' ' + status);
         }
 
         /* const delayClass = () => {
@@ -187,16 +187,16 @@ export class MapService {
                     `
                 });
                 break;
-            case 'location':
-                divIcon = L.divIcon({
-                    ...settings,
-                    html: `
-                        <i class="fa-solid fa-location-arrow text-red-600 text-[24px]"
-                            style="transform: rotate(${heading}deg)">
-                        </i>
-                    `
-                });
-                break;
+            case 'icon':
+    divIcon = L.divIcon({
+        ...settings,
+        html: `
+            <div class="${className}">
+                <i class="${icon}" ${heading ? `style="transform: rotate(${heading}deg);"` : ''}></i>
+            </div>
+        `
+    });
+    break;
             default:
                 console.warn(`drawDivIcon: unhandled type '${type}'`);
                 divIcon = L.divIcon({

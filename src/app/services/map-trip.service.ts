@@ -19,6 +19,44 @@ export class MapTripService {
 
         sequences
             .forEach((seq: RoutePathSequence, index: number) => {
+                if (index === 0) {
+                    console.log('index === 0');
+                    layerGroup.addLayer(this.mapService.drawDivIcon({
+                        type: 'icon',
+                        point: [seq.from.lat, seq.from.lon],
+                        icon: 'fa-fw fa-solid fa-map-marker-alt text-[24px] text-emerald-500',
+                        color: '#00ff00',
+                        className: 'start-icon',
+                        iconAnchor: [12, 24],
+                        iconSize: [24, 24],
+                    }));
+                }
+                if (index === sequences.length - 1) {
+                    layerGroup.addLayer(this.mapService.drawDivIcon({
+                        type: 'icon',
+                        point: [seq.to.lat, seq.to.lon],
+                        icon: 'fa-fw fa-solid fa-flag-checkered text-[24px] text-rose-500',
+                        color: '#ff0000',
+                        className: 'destination-icon',
+                        iconAnchor: [12, 24],
+                        iconSize: [24, 24],
+                    }));
+                }
+                if (index !== 0 && index !== sequences.length - 1) {
+                    layerGroup.addLayer(this.mapService.drawCircleMarker(
+                        {
+                            point: [seq.from.lat, seq.from.lon],
+                            color: '#000000',
+                        }
+                    ));
+                    layerGroup.addLayer(this.mapService.drawCircleMarker(
+                        {
+                            point: [seq.to.lat, seq.to.lon],
+                            color: '#000000',
+                        }
+                    ));
+                }
+
                 layerGroup.addLayer(this.mapService.drawPolyline(
                     {
                         points: seq.sequenceGeometry.points,
@@ -26,34 +64,6 @@ export class MapTripService {
                         className: 'map-trip-polyline'
                     }
                 ));
-                layerGroup.addLayer(this.mapService.drawCircleMarker(
-                    {
-                        point: [seq.from.lat, seq.from.lon],
-                        color: '#000000',
-                    }
-                ));
-                layerGroup.addLayer(this.mapService.drawCircleMarker(
-                    {
-                        point: [seq.to.lat, seq.to.lon],
-                        color: '#000000',
-                    }
-                ));
-                layerGroup.addLayer(this.mapService.drawDivIcon(
-                    {
-                        type: 'transfer',
-                        point: [seq.from.lat, seq.from.lon],
-                        label: seq.from.name,
-                        icon: seq.modeData.icon,
-                        color: seq.modeData.color,
-                        lightColor: TRANSPORT_MODE[seq.mode].lightColor,
-                        status: seq.status,
-                        delayedStartTime: seq.delayedStartTime,
-                        line: seq.route ? seq.route[(seq.modeData.name as 'longName' | 'shortName')] : null,
-                        className: 'map-stop-label'
-                    }
-                ));
-
-                // if (!seq.intermediateStops?.length) return;
 
                 seq.intermediateStops?.forEach((stop: IntermediateStop) => {
                     layerGroup.addLayer(this.mapService.drawDivIcon(
@@ -92,24 +102,29 @@ export class MapTripService {
         return layerGroup;
     }
 
-    updateOriginsLayer(layerGroup: L.LayerGroup | null, sequence: RoutePathSequence) {
-        if (!layerGroup) return;
+    updateTripOriginsLayer(layerGroup: L.LayerGroup | null, sequences: RoutePathSequence[]) {
+        if (!layerGroup) return null;
 
         layerGroup.clearLayers();
 
-        layerGroup.addLayer(this.mapService.drawDivIcon(
-            {
-                type: 'transfer',
-                point: [sequence.from.lat, sequence.from.lon],
-                label: sequence.from.name,
-                icon: sequence.modeData.icon,
-                color: sequence.modeData.color,
-                lightColor: TRANSPORT_MODE[sequence.mode].lightColor,
-                status: sequence.status,
-                delayedStartTime: sequence.delayedStartTime,
-                className: 'map-stop-label',
-            }
-        ));
+        sequences
+            .forEach((seq: RoutePathSequence, index: number) => {
+                layerGroup.addLayer(this.mapService.drawDivIcon(
+                    {
+                        type: 'transfer',
+                        point: [seq.from.lat, seq.from.lon],
+                        label: seq.from.name,
+                        icon: seq.modeData.icon,
+                        color: seq.modeData.color,
+                        lightColor: TRANSPORT_MODE[seq.mode].lightColor,
+                        status: seq.status,
+                        delayedStartTime: seq.delayedStartTime,
+                        line: seq.route ? seq.route[(seq.modeData.name as 'longName' | 'shortName')] : null,
+                        className: 'map-stop-label',
+                        iconAnchor: [0, 0]
+                    }
+                ));
+            });
         return layerGroup;
     }
 
@@ -142,11 +157,11 @@ export class MapTripService {
     updateLocationMarker(map: L.Map, marker: L.Marker | null, pos: { lat: number; lng: number; heading: number }): L.Marker {
         const icon = this.mapService.drawDivIcon(
             {
-                type: 'location',
+                type: 'icon',
                 point: [pos.lat, pos.lng],
                 icon: 'fa-fw fa-solid fa-location-arrow',
                 heading: pos.heading,
-                className: 'user-location',
+                className: 'text-red-600 text-[24px] user-location',
                 iconAnchor: [12, 12],
                 iconSize: [24, 24]
             }
@@ -159,26 +174,4 @@ export class MapTripService {
 
         return icon.addTo(map);
     }
-
-    /* updateLocationMarker(marker: L.Marker | null, pos: any) {     // TODO
-        if (!marker) marker = L.marker([pos.lat, pos.lng]);
-        if (marker) marker.removeFrom;
-
-        this.mapService.drawDivIcon(
-            'location',
-            [pos.lat, pos.lng],
-            '',
-            '',
-            pos.heading,
-            null,
-            '',
-            'user-location',
-            'fa-fw fa-solid fa-location-arrow',
-            [12, 12],
-            [24, 24]
-        );
-
-        // return L.marker([pos.lat, pos.lng], { icon: userIcon }).addTo(map)
-        return marker;
-    } */
 }

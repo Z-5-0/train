@@ -1,4 +1,4 @@
-import { Component, ElementRef, inject, Input, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, ElementRef, inject, Input, SimpleChanges, ViewChild, ɵrestoreComponentResolutionQueue } from '@angular/core';
 import * as L from 'leaflet';
 import { BehaviorSubject, combineLatest, filter, map, Observable, Subject, Subscription, switchMap, takeUntil, tap } from 'rxjs';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -41,8 +41,8 @@ export class MapComponent {
 
   private currentTileLayer: L.TileLayer | null = null;
   private freeMapLayers: L.Layer | null = null;
-  private tripMapLayers: L.LayerGroup | null = null;
-  private originLayers: L.LayerGroup | null = null;
+  public tripMapLayers: L.LayerGroup | null = null;
+  public tripOriginLayers: L.LayerGroup | null = null;
   private transportLocationLayers: L.LayerGroup | null = null;
   private locationMarker: L.Marker | null = null;
 
@@ -73,7 +73,7 @@ export class MapComponent {
             tap(([settings, type]: [CurrentAppSettings, MapMode]) => {    // Probably not the best solution inside tap
               this.updateTileLayer(settings['theme']);
 
-              if (!this.originLayers) {
+              if (!this.tripOriginLayers) {
                 this.updateMapContent(type);
               }
             })
@@ -102,9 +102,9 @@ export class MapComponent {
       this.map.removeLayer(this.freeMapLayers);
       this.freeMapLayers = null;
     }
-    if (this.tripMapLayers && this.originLayers) {
+    if (this.tripMapLayers && this.tripOriginLayers) {
       this.mapService.removeLayer(this.map, this.tripMapLayers);
-      this.mapService.removeLayer(this.map, this.originLayers);
+      this.mapService.removeLayer(this.map, this.tripOriginLayers);
       this.tripMapLayers = null;
     }
 
@@ -161,7 +161,7 @@ export class MapComponent {
     });
   }
 
-  initRoutePath(): Observable<[RoutePath | null, TransportLocation | null]> {   // TODO TYPE
+  initRoutePath(): Observable<[RoutePath | null, TransportLocation | null]> {
     return this.appSettingsService.appSettings$.pipe(
       map(settings => !!(settings as CurrentAppSettings)['autoUpdate']),
       switchMap((autoUpdate: boolean) =>
@@ -183,21 +183,22 @@ export class MapComponent {
   initTripMap(selectedPath: RoutePath | null) {
     if (!selectedPath) return;
 
-    if (this.originLayers) {
-      this.map.removeLayer(this.originLayers);
-      this.originLayers = this.mapService.addLayer(this.map);
+    if (this.tripOriginLayers) {
+      this.map.removeLayer(this.tripOriginLayers);
+      this.tripOriginLayers = this.mapService.addLayer(this.map);
 
-      selectedPath.sequences.forEach((seq: RoutePathSequence) => {
-        this.mapTripService.updateOriginsLayer(this.originLayers, seq);
-        this.updateMapLabelsVisibility();
-      });
+      this.mapTripService.updateTripOriginsLayer(this.tripOriginLayers, selectedPath.sequences);
+      this.updateMapLabelsVisibility();
+
       return;
     }
 
     this.tripMapLayers = this.mapService.addLayer(this.map);
-    this.originLayers = this.mapService.addLayer(this.map);
+    this.tripOriginLayers = this.mapService.addLayer(this.map);
 
+    this.tripOriginLayers = this.mapTripService.updateTripOriginsLayer(this.tripOriginLayers, selectedPath.sequences);
     this.tripMapLayers = this.mapTripService.createTripLayers(this.tripMapLayers, selectedPath.sequences);
+
 
     const allPoints = selectedPath.sequences.flatMap((seq: RoutePathSequence) => seq.sequenceGeometry.points);
 

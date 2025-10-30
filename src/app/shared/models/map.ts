@@ -23,7 +23,7 @@ export interface CircleMarkerDrawOptions {
 }
 
 export interface DivIconDrawOptions {
-    type: 'transport' | 'stop' | 'transfer' | 'location';
+    type: 'transport' | 'stop' | 'transfer' | 'icon';
     point: L.LatLngExpression;
     label?: string;
     color?: string;

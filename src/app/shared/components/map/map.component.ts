@@ -1,4 +1,4 @@
-import { Component, ElementRef, inject, Input, SimpleChanges, ViewChild, ɵrestoreComponentResolutionQueue } from '@angular/core';
+import { Component, ElementRef, inject, Input, SimpleChanges, ViewChild } from '@angular/core';
 import * as L from 'leaflet';
 import { BehaviorSubject, combineLatest, filter, map, Observable, Subject, Subscription, switchMap, takeUntil, tap } from 'rxjs';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -6,13 +6,12 @@ import { AppSettingsService } from '../../../services/app-settings.service';
 import { PathService } from '../../../services/path.service';
 import { RoutePath, RoutePathSequence } from '../../models/path';
 import { MapTripService } from '../../../services/map-trip.service';
-import { MapFreeService } from '../../../services/map-free.service';
 import { MapService } from '../../../services/map.service';
-import { TransportLocationService } from '../../../services/transport-location.service';
-import { TransportLocation } from '../../models/transport-location';
 import { MapMode } from '../../models/map';
 import { CurrentAppSettings } from '../../models/settings';
 import { GeolocationService } from '../../../services/geolocation.service';
+import { RealtimeService } from '../../../services/realtime.service';
+import { RealtimeTripPath, RealtimeTripPathOriginData, RealtimeTripPathTransportData } from '../../models/realtime-trip-path';
 
 @Component({
   selector: 'map',
@@ -29,10 +28,9 @@ export class MapComponent {
 
   private appSettingsService: AppSettingsService = inject(AppSettingsService);
   private pathService: PathService = inject(PathService);
+  private realtimeService: RealtimeService = inject(RealtimeService);
   private mapService: MapService = inject(MapService);
   private mapTripService: MapTripService = inject(MapTripService);
-  private mapFreeService: MapFreeService = inject(MapFreeService);
-  private transportLocationService: TransportLocationService = inject(TransportLocationService);
   private geolocationService: GeolocationService = inject(GeolocationService);
 
   private map!: L.Map;
@@ -49,6 +47,8 @@ export class MapComponent {
   private intersectionObserverSub?: Subscription;
 
   private destroy$ = new Subject<void>();
+
+  // ----- ----- COMMON ----- ----- /
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['mapType']) {
@@ -118,10 +118,9 @@ export class MapComponent {
     if (type === 'TRIP') {
       this.initRoutePath()
         .pipe(takeUntil(this.destroy$))
-        .subscribe(([routePath, transportLocation]: [RoutePath | null, TransportLocation | null]) => {
-          console.log(routePath);
+        .subscribe((routePath: RoutePath | null) => {
           this.initTripMap(routePath);
-          this.initTransportLocation(transportLocation);
+          this.initRealtimeData();
           this.initLocation();
           this.updateMapLabelsVisibility();
         });
@@ -152,79 +151,7 @@ export class MapComponent {
     );
   }
 
-  initMapEvents() {
-    // this.map?.on('dragstart', () => console.log('dragstart'));    // TODO LATER
-    // this.map?.on('dragend', () => console.log('dragend'));    // TODO LATER
-
-    this.map?.on('zoomend', () => {
-      this.updateMapLabelsVisibility();
-    });
-  }
-
-  initRoutePath(): Observable<[RoutePath | null, TransportLocation | null]> {
-    return this.appSettingsService.appSettings$.pipe(
-      map(settings => !!(settings as CurrentAppSettings)['autoUpdate']),
-      switchMap((autoUpdate: boolean) =>
-        autoUpdate
-          ?
-          combineLatest([
-            this.pathService.getRoutePathPolling(),
-            this.transportLocationService.getTransportLocationPolling()
-          ])
-          :
-          combineLatest([
-            this.pathService.getRoutePath(),
-            this.transportLocationService.getTransportLocation()
-          ])
-      )
-    );
-  }
-
-  initTripMap(selectedPath: RoutePath | null) {
-    if (!selectedPath) return;
-
-    if (this.tripOriginLayers) {
-      this.map.removeLayer(this.tripOriginLayers);
-      this.tripOriginLayers = this.mapService.addLayer(this.map);
-
-      this.mapTripService.updateTripOriginsLayer(this.tripOriginLayers, selectedPath.sequences);
-      this.updateMapLabelsVisibility();
-
-      return;
-    }
-
-    this.tripMapLayers = this.mapService.addLayer(this.map);
-    this.tripOriginLayers = this.mapService.addLayer(this.map);
-
-    this.tripOriginLayers = this.mapTripService.updateTripOriginsLayer(this.tripOriginLayers, selectedPath.sequences);
-    this.tripMapLayers = this.mapTripService.createTripLayers(this.tripMapLayers, selectedPath.sequences);
-
-
-    const allPoints = selectedPath.sequences.flatMap((seq: RoutePathSequence) => seq.sequenceGeometry.points);
-
-    this.mapService.fitBounds(this.map, allPoints);
-
-    this.updateMapLabelsVisibility();
-  }
-
-  initTransportLocation(transportLocations: TransportLocation | null) {
-    if (this.transportLocationLayers) this.mapService.removeLayer(this.map, this.transportLocationLayers);
-    this.transportLocationLayers = this.mapService.addLayer(this.map);
-    this.transportLocationLayers = this.mapTripService.updateTransportLayer(this.transportLocationLayers, transportLocations);
-  }
-
-  initFreeMap() {
-    console.log('init FREE map');
-
-    const circle = L.circle([47.497913, 19.040236], {
-      color: 'red',
-      fillColor: '#f03',
-      fillOpacity: 0.5,
-      radius: 500
-    }).addTo(this.map);
-  }
-
-  initLocation() {    // TODO
+  initLocation() {
     this.geolocationService.startTracking();
 
     this.geolocationService.currentLocation$
@@ -232,7 +159,6 @@ export class MapComponent {
         takeUntil(this.destroy$),
         filter((pos): pos is { lat: number; lng: number; heading: number } => !!pos),
         tap((pos) => {
-          // console.log('locationMarker: ', this.locationMarker);
           this.locationMarker = this.mapTripService.updateLocationMarker(
             this.map,
             this.locationMarker,
@@ -253,5 +179,85 @@ export class MapComponent {
     }
 
     this.geolocationService.stopTracking();
+  }
+
+  // ----- ----- TRIP ----- ----- /
+
+  initTripMap(selectedPath: RoutePath | null) {
+    if (!selectedPath) return;
+
+    if (this.tripOriginLayers) {
+      this.map.removeLayer(this.tripOriginLayers);
+      this.tripOriginLayers = this.mapService.addLayer(this.map);
+
+      this.updateMapLabelsVisibility();
+
+      return;
+    }
+
+    this.tripMapLayers = this.mapService.addLayer(this.map);
+    this.tripOriginLayers = this.mapService.addLayer(this.map);
+
+    this.tripMapLayers = this.mapTripService.createTripLayers(this.tripMapLayers, selectedPath.sequences);
+
+    const allPoints = selectedPath.sequences.flatMap((seq: RoutePathSequence) => seq.sequenceGeometry.points);
+
+    this.mapService.fitBounds(this.map, allPoints);
+
+    this.updateMapLabelsVisibility();
+  }
+
+  initMapEvents() {
+    // this.map?.on('dragstart', () => console.log('dragstart'));    // TODO LATER
+    // this.map?.on('dragend', () => console.log('dragend'));    // TODO LATER
+
+    this.map?.on('zoomend', () => {
+      this.updateMapLabelsVisibility();
+    });
+  }
+
+  initRoutePath(): Observable<RoutePath | null> {
+    return this.pathService.routePath$;
+  }
+
+  initRealtimeData() {
+    this.appSettingsService.appSettings$
+      .pipe(
+        map(settings => !!(settings as CurrentAppSettings)['autoUpdate']),
+        switchMap((autoUpdate: boolean) =>
+          autoUpdate
+            ? this.realtimeService.startRealtimeDataPolling()
+            : this.realtimeService.getRealtimeData(),
+        ),
+        tap((data: RealtimeTripPath) => this.updateOriginLayers(data?.originData || [])),
+        tap((data: RealtimeTripPath) => this.updateTransportLocation(data?.transportData || [])),
+        takeUntil(this.destroy$)
+      )
+      .subscribe();
+  }
+
+  updateOriginLayers(originData: RealtimeTripPathOriginData[] | null) {
+    this.mapTripService.updateTripOriginsLayer(this.tripOriginLayers, originData || []);
+    this.updateMapLabelsVisibility();
+  }
+
+  updateTransportLocation(transportLocations: RealtimeTripPathTransportData[]) {
+    if (this.transportLocationLayers) this.mapService.removeLayer(this.map, this.transportLocationLayers);
+    this.transportLocationLayers = this.mapService.addLayer(this.map);
+    this.mapTripService.updateTransportLayer(this.transportLocationLayers, transportLocations);
+    return;
+  }
+
+  // ----- ----- FREE ----- ----- /
+
+  initFreeMap() {
+    console.log('init FREE map');
+
+    const circle = L.circle([47.497913, 19.040236], {
+      color: 'red',
+      fillColor: '#f03',
+      fillOpacity: 0.5,
+      radius: 500
+    }).addTo(this.map);
   }
 }

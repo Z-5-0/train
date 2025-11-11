@@ -53,6 +53,7 @@ export interface IntermediateStop {
 }
 
 interface Route {
+    id: string;
     shortName: string | null;
     longName: string | null;
     color: string;

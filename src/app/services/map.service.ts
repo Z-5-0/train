@@ -118,7 +118,7 @@ export class MapService {
         heading,
         status,
         delayedStartTime,
-        line,
+        transportName,
         className,
         iconAnchor = [0, 0],
         iconSize = undefined,
@@ -128,15 +128,6 @@ export class MapService {
         let divIcon: L.DivIcon;
         const settings = { className, iconAnchor, iconSize };
         const delayClass = status === 'early' ? 'early' : status === 'late' ? 'late' : null;
-
-        if (type === 'transfer') {      // TODO DELETE
-            //console.log('transfer type: ', label + ' ' + status);
-        }
-
-        /* const delayClass = () => {
-            return status !== null && status !== undefined ? status : ''
-        }; */
-        // console.log(delayClass);
 
         switch (type) {
             case 'transport':
@@ -177,8 +168,8 @@ export class MapService {
                             <div class="flex gap-x-4 justify-between">
                                 <div class="flex gap-x-1 items-center">
                                     <i class="${icon}"></i>
-                                    ${line ? `
-                                        <div style="color: ${color}">${line}</div>
+                                    ${transportName ? `
+                                        <div style="color: ${color}">${transportName}</div>
                                     ` : ''}
                                 </div>
                                 ${status ? `

@@ -3,10 +3,10 @@ import { DelayStatus, PointGeometry, TransportMode } from "./common";
 export interface Route {
   index: number;
   numberOfTransfers: number;
-  duration: number; // in minutes
-  startTime: string; // 'HH:mm' format
-  startTimestamp: number;   // UNIX timestamp
-  endTime: string;   // 'HH:mm' format
+  duration: number;           // in minutes
+  startTime: string;          // 'HH:mm' format
+  startTimestamp: number;     // UNIX timestamp
+  endTime: string;            // 'HH:mm' format
   endTimeTimestamp: number;   // UNIX timestamp
   walkTime: number;
   walkTimeInSeconds: number;
@@ -38,7 +38,8 @@ interface OriginOrDestination {
 }
 
 export interface TransportInfo {
-  id?: string | null;
+  tripId?: string | null;
+  routeId?: string | null;
   gtfsId?: string | null;
   headSign?: string | null;
   name?: string | null;
@@ -49,7 +50,7 @@ export interface TransportInfo {
   [key: string]: string | null | undefined;
 }
 
-interface IntermediateStop {
+export interface IntermediateStop {
   id: string;
   name: string;
   geometry: PointGeometry;

@@ -1,233 +1,96 @@
 import { inject, Injectable } from "@angular/core";
-import { ROUTE_PATH_QUERY } from '../shared/constants/query/route-path-query';
 import { RouteService } from './route.service';
-import { AppSettingsService } from './app-settings.service';
 import { DateTime, Duration } from 'luxon';
 import { TRANSPORT_MODE } from '../shared/constants/transport-mode';
-import { RestApiService } from "./rest-api.service";
-import { catchError, delayWhen, interval, map, Observable, of, retry, retryWhen, startWith, switchMap, take, tap, throwError, timer } from "rxjs";
-import { RoutePathApiResponse, RoutePathItinerary, RoutePathLeg } from "../shared/models/api/response-path";
+import { map, Observable } from "rxjs";
 import { RoutePath } from "../shared/models/path";
 import { DelayStatus, TransportMode } from "../shared/models/common";
-import polyline from '@mapbox/polyline';
-import { MessageService } from "./message.service";
+import { Route } from "../shared/models/route";
 
 
 @Injectable({
     providedIn: 'root',
 })
 export class PathService {
-    private restApi: RestApiService = inject(RestApiService);
     private routeService: RouteService = inject(RouteService);
-    private appSettingsService: AppSettingsService = inject(AppSettingsService);
-    private messageService: MessageService = inject(MessageService);
 
-    getRoutePathPolling() {
-        return this.appSettingsService.appSettings$.pipe(
-            map(settings => settings['updateTime']),
-            switchMap(ms =>
-                interval(ms).pipe(
-                    startWith(0),
-                    switchMap(() => this.getRoutePath())
-                )
-            )
+    public readonly routePath$: Observable<RoutePath | null>;
+
+    constructor() {
+        this.routePath$ = this.routeService.selectedRoute$.pipe(
+            map(route => route ? this.createRoutePath(route) : null),
         );
     }
 
-    getRoutePath(): Observable<RoutePath | null> {
-        const [date, time] = [
-            this.routeService.getRouteSearchDateTime()?.split(' ')[0],
-            this.routeService.getRouteSearchDateTime()?.split(' ')[1]
-        ];
+    createRoutePath(route: Route | null): RoutePath | null {
+        if (!route) return null;
 
-        const { name: originName, id: originId } = this.routeService.getSelectedPlace().originPlace || {};
-        const { name: destinationName, id: destinationId } = this.routeService.getSelectedPlace().destinationPlace || {};
+        const toMinutes = (seconds?: number) =>
+            Math.ceil(Duration.fromObject({ seconds: seconds ?? 0 }).as('minutes'));
 
-        const { alternativeRoutes, walkSpeed } = this.appSettingsService.currentAppSettings;
-
-        const variables = {
-            fromPlace: `${originName}::${originId}`,
-            toPlace: `${destinationName}::${destinationId}`,
-            date,
-            time,
-            modes: Object.keys(TRANSPORT_MODE)
-                .filter(mode => !['GPS', 'ERROR'].includes(mode))
-                .map(includedMode => {    // .map(mode => ({ mode }))
-                    return { mode: includedMode }
-                }),
-            numItineraries: alternativeRoutes * 2,
-            walkSpeed: walkSpeed / 3.6,
-            distributionChannel: 'ERTEKESITESI_CSATORNA#INTERNET',
-            distributionSubChannel: 'ERTEKESITESI_ALCSATORNA#EMMA',
-            minTransferTime: 0,
-            arriveBy: false,
-            transitPassFilter: [],
-            comfortLevels: [],
-            searchParameters: [],
-            banned: {}
-        };
-
-        return this.restApi.getRoutePath({
-            body: {
-                query: ROUTE_PATH_QUERY,
-                variables: variables
-            },
-            debounceTime: false
-        }).pipe(
-            map((resp: RoutePathApiResponse) => {
-                const itineraryMatched = resp.data.plan.itineraries.find(
-                    (itinerary: RoutePathItinerary) => {
-                        const key = `${itinerary.legs.length}_` + itinerary.legs
-                            .map(leg => leg.trip?.id ?? '0')
-                            .join('_');
-
-                        return `${key}` === this.routeService.getSelectedRouteKey()
-                    }
-                );
-
-                if (!itineraryMatched) {
-                    // Trigger retry
-                    // throw new Error('No matching itinerary found yet');
-                    this.messageService.showError('!');     // TODO
-                }
-
-                return itineraryMatched;
-                /* return resp.data.plan.itineraries.find(
-                    (itinerary: RoutePathItinerary) => `${itinerary.endTime}_${itinerary.legs.length}_${itinerary.walkTime}` === this.routeService.getSelectedRouteKey()
-                ); */
-            }),
-            /* switchMap(itineraryMatched => {
-                if (!itineraryMatched) {
-                    return throwError(() => new Error('No matching itinerary found yet'));
-                }
-                return of(itineraryMatched);
-            }), */
-            map((itinerary: RoutePathItinerary | undefined) => this.createRoutePathSequence(itinerary)),
-            // tap(t => console.log(t)),       // TODO DELETE
-            catchError(err => {
-                // TODO MESSAGE
-                return throwError(() => err);       // pushes error towards components
-            })
-        )
-    }
-
-    createRoutePathSequence(itinerary: RoutePathItinerary | undefined) {
-        if (!itinerary) return null;
-
-        const intermediateStopSequences = this.routeService.getSelectedRoute()?.sequences.map(
-            // seq => seq.stops?.slice(1, -1) || null      // start from index 1 and stop before the last index
-            seq => {
-                // console.log('SEQUENCES: ', seq);
-                return seq.stops?.slice(1, -1) || null;
-            }      // start from index 1 and stop before the last index
-        );
+        const toDelayedDateTime = (time?: string, delay?: number) =>
+            DateTime.fromFormat(time ?? '00:00', 'HH:mm', { zone: 'Europe/Budapest' })
+                .plus({ minutes: ((delay ?? 0) < 0 ? Math.ceil(Math.abs(delay ?? 0) / 60) * -1 : Math.floor((delay ?? 0) / 60)) });
 
         return {
-            startTime: DateTime.fromMillis(itinerary.startTime, { zone: 'utc' }).setZone('Europe/Budapest').toFormat('HH:mm'),
-            startTimestamp: itinerary.startTime,
-            endTime: DateTime.fromMillis(itinerary.endTime, { zone: 'utc' }).setZone('Europe/Budapest').toFormat('HH:mm'),
-            endTimestamp: itinerary.endTime,
-            waitingTime: itinerary.waitingTime,
-            waitingTimeInMinutes: Math.ceil(Duration.fromObject({ seconds: itinerary.waitingTime }).as('minutes')),
-            walkTime: itinerary.walkTime,
-            walkTimeInMinutes: Math.ceil(Duration.fromObject({ seconds: itinerary.walkTime }).as('minutes')),
-            sequences: itinerary.legs.map((leg: RoutePathLeg, index: number) => {
-                return {
-                    index,
-                    scheduledStartTime: DateTime.fromMillis(
-                        leg.startTime -
-                        (
-                            (leg.departureDelay < 0
-                                ? Math.ceil(Math.abs(leg.departureDelay) / 60) * -1
-                                : Math.floor(leg.departureDelay / 60)) * 60 * 1000
-                        )
-                    )
-                        .setZone('Europe/Budapest')
-                        .toFormat('HH:mm'),
-                    delayedStartTime: DateTime.fromMillis(
-                        leg.realTime
-                            ? leg.startTime
-                            : leg.startTime + (
-                                (leg.departureDelay < 0
-                                    ? Math.ceil(Math.abs(leg.departureDelay) / 60) * -1
-                                    : Math.floor(leg.departureDelay / 60)
-                                ) * 60 * 1000
-                            )
-                    )
-                        .setZone('Europe/Budapest')
-                        .toFormat('HH:mm'),
-                    delayedDateTime: DateTime.fromMillis(
-                        leg.realTime
-                            ? leg.startTime
-                            : leg.startTime + (
-                                (leg.departureDelay < 0
-                                    ? Math.ceil(Math.abs(leg.departureDelay) / 60) * -1
-                                    : Math.floor(leg.departureDelay / 60)
-                                ) * 60 * 1000
-                            )
-                    ).setZone('Europe/Budapest'),
-                    departureDelay: leg.departureDelay < 0
-                        ? Math.ceil(Math.abs(leg.departureDelay) / 60) * -1
-                        : Math.floor(leg.departureDelay / 60),
-                    status: (() => {
-                        if (leg.mode === 'WALK') return null;
-
-                        const delayMinutes = leg.departureDelay < 0
-                            ? Math.ceil(Math.abs(leg.departureDelay) / 60) * -1
-                            : Math.floor(leg.departureDelay / 60);
-
-                        if (delayMinutes < 0) return 'early';
-                        if (Math.abs(leg.departureDelay) < 60) return 'on time';
-                        return 'late';
-                    })() as DelayStatus,
-                    mode: leg.mode as TransportMode,
-                    modeData: TRANSPORT_MODE[leg.mode],
-                    realTime: leg.realTime,
-                    serviceDay: Math.floor(DateTime.fromMillis(leg.startTime, { zone: 'Europe/Budapest' }).startOf('day').toSeconds()),
-                    from: {
-                        name: leg.from.name,
-                        lat: leg.from.lat,
-                        lon: leg.from.lon,
-                        stop: {
-                            gtfsId: leg.from.stop.gtfsId
-                        }
-                    },
-                    to: {
-                        name: leg.to.name,
-                        lat: leg.to.lat,
-                        lon: leg.to.lon,
-                        stop: {
-                            gtfsId: leg.to.stop.gtfsId
-                        }
-                    },
-                    route: leg.route
-                        ? {
-                            id: leg.route.id,
-                            mode: leg.route.mode as TransportMode,
-                            longName: leg.route.longName?.replace(/\s+/g, '')?.trim()?.slice(0, 5),
-                            shortName: leg.route.shortName,
-                            color: leg.route.color,
-                            textColor: leg.route.textColor
-                        }
-                        : null,
-                    trip: leg.trip
-                        ? {
-                            gtfsId: leg.trip.gtfsId,
-                            id: leg.trip.id,
-                            tripHeadsign: leg.trip.tripHeadsign,
-                            route: {
-                                color: leg.trip.route.color,
-                                shortName: leg.trip.route.shortName
-                            }
-                        }
-                        : null,
-                    intermediateStops: intermediateStopSequences ? intermediateStopSequences[index] : null,
-                    sequenceGeometry: {
-                        length: leg.legGeometry.length,
-                        points: polyline.decode(leg.legGeometry.points) as [number, number][]
+            startTime: route.startTime,
+            startTimestamp: route.startTimestamp,
+            endTime: route.endTime,
+            endTimestamp: route.endTimeTimestamp,
+            waitingTime: route.walkTime,
+            waitingTimeInMinutes: toMinutes(route.walkTimeInSeconds),
+            walkTime: route.waitingTime,
+            walkTimeInMinutes: toMinutes(route.walkTimeInSeconds),
+            sequences: route.sequences.map((seq, index) => ({
+                index,
+                realTime: seq.realTime,
+                mode: seq.mode,
+                modeData: TRANSPORT_MODE[seq.mode as TransportMode],
+                status: seq.origin.status as DelayStatus,
+                scheduledStartTime: seq.origin.scheduledStartTime || '',
+                delayedStartTime: seq.origin.delayedStartTime || '',
+                delayedDateTime: toDelayedDateTime(seq.origin.scheduledStartTime, seq.origin.departureDelay),
+                departureDelay: seq.origin.departureDelay ?? 0,
+                serviceDay: DateTime.now().toUTC().startOf('day').toMillis(),
+                from: {
+                    name: seq.origin.name,
+                    lat: seq.origin.geometry.coordinates[0],
+                    lon: seq.origin.geometry.coordinates[1],
+                    stop: { gtfsId: seq.origin.gtfsId || '' }
+                },
+                to: {
+                    name: seq.destination.name,
+                    lat: seq.destination.geometry.coordinates[0],
+                    lon: seq.destination.geometry.coordinates[1],
+                    stop: { gtfsId: seq.destination.gtfsId || '' }
+                },
+                route: {
+                    id: seq.transportInfo?.routeId || '',
+                    mode: seq.mode,
+                    shortName: seq.transportInfo?.shortName || '',
+                    longName: seq.transportInfo?.longName || '',
+                    color: seq.transportInfo?.backgroundColor || '',
+                    textColor: seq.transportInfo?.textColor || ''
+                },
+                trip: {
+                    gtfsId: seq.transportInfo?.gtfsId || '',
+                    id: seq.transportInfo?.tripId || '',
+                    tripHeadsign: seq.transportInfo?.headSign || '',
+                    route: {
+                        color: seq.transportInfo?.backgroundColor || '',
+                        shortName: seq.transportInfo?.shortName || ''
                     }
+                },
+                intermediateStops: (seq.stops?.slice?.(1, -1) ?? []).map((s) => ({
+                    id: s.id,
+                    name: s.name,
+                    geometry: s.geometry
+                })),
+                sequenceGeometry: {
+                    length: seq.sequenceGeometry.length,
+                    points: seq.sequenceGeometry.points
                 }
-            })
+            }))
         };
     }
 }

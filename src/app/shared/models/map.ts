@@ -27,14 +27,14 @@ export interface CircleMarkerDrawOptions {
 export interface DivIconDrawOptions {
     type: 'transport' | 'stop' | 'transfer' | 'icon';
     point: L.LatLngExpression;
-    label?: string;
+    label?: string | null;
     color?: string;
     lightColor?: boolean;
     icon?: string;
     heading?: number;
     status?: 'early' | 'late' | 'on time' | null;
-    delayedStartTime?: string;
-    line?: string | null;
+    delayedStartTime?: string | null;
+    transportName?: string | null;
     className?: string;
     html?: string;
     iconAnchor?: [number, number];

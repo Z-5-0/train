@@ -75,6 +75,7 @@ export const ROUTE_QUERY: string = `
             tripHeadsign
           }
           route {
+            id
             shortName
             longName
             color

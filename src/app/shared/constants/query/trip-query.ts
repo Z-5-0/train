@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon';
 
-export function createPlanQuery(gtfsId: string, day: string = DateTime.now().toFormat('yyyy-MM-dd')) {
+export function createTripQuery(gtfsId: string, day: string = DateTime.now().toFormat('yyyy-MM-dd')) {
   return `
     query {
       trip(id: "${gtfsId}", serviceDay: "${day}") {

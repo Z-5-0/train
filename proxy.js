@@ -129,6 +129,33 @@ app.post('/get-trip', async (req, res) => {
   }
 });
 
+app.post('/get-trip-path', async (req, res) => {
+  try {
+    const mavResponse = await axios.post(
+      'https://emma.mav.hu/otp2-backend/otp/routers/default/index/graphql',
+      {
+        query: req.body.query,
+        variables: req.body.variables
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "*/*",
+          "User-Agent": "Mozilla/5.0"
+        }
+      }
+    );
+
+    res.json(mavResponse.data);
+  } catch (err) {
+    console.error('❌ API ERROR:', err.response?.data || err.message);
+    res.status(500).json({
+      error: 'GET trip path unsuccessful',
+      detail: err.response?.data || err.message
+    });
+  }
+});
+
 app.post('/get-vehicle-position', async (req, res) => {
   try {
     const mavResponse = await axios.post(

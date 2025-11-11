@@ -1,30 +1,27 @@
-import { Component, ElementRef, inject, NgZone, QueryList, ViewChild, ViewChildren } from '@angular/core';
-import { Route, RouteSequence, TransportInfo } from '../../../shared/models/route';
-import { RouteService } from '../../../services/route.service';
-import { TRANSPORT_MODE } from '../../../shared/constants/transport-mode';
 import { CommonModule } from '@angular/common';
+import { Component, ElementRef, inject, NgZone, ViewChild } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { DateTime } from 'luxon';
 import { NzBadgeModule } from 'ng-zorro-antd/badge';
+import { NzCardModule } from 'ng-zorro-antd/card';
+import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzProgressModule } from 'ng-zorro-antd/progress';
+import { NzSegmentedModule } from 'ng-zorro-antd/segmented';
+import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzTabsModule } from 'ng-zorro-antd/tabs';
 import { NzTimelineModule } from 'ng-zorro-antd/timeline';
-import { NzIconModule } from 'ng-zorro-antd/icon';
-import { KmPipe } from '../../../shared/pipes/km.pipe';
-import { NzSegmentedModule } from 'ng-zorro-antd/segmented';
+import { BehaviorSubject, catchError, EMPTY, filter, map, merge, Observable, pairwise, startWith, Subject, Subscription, switchMap, take, takeUntil, takeWhile, tap } from 'rxjs';
+import { AppSettingsService } from '../../../services/app-settings.service';
 import { RestApiService } from '../../../services/rest-api.service';
-import { FormsModule } from '@angular/forms';
-import { createPlanQuery } from '../../../shared/constants/query/plan-query';
-import { BehaviorSubject, catchError, combineLatest, EMPTY, filter, finalize, interval, map, merge, Observable, pairwise, startWith, Subject, Subscription, switchMap, take, takeUntil, takeWhile, tap } from 'rxjs';
-import { Trip, TripResponse } from '../../../shared/models/api/response-trip';
-import { CurrentTrip, StopStatus, StopTime } from '../../../shared/models/trip';
-import { DelayStatus, PointGeometry } from '../../../shared/models/common';
-import { DateTime, Duration } from 'luxon';
-import { NzProgressModule } from 'ng-zorro-antd/progress';
-import { NzCardModule } from 'ng-zorro-antd/card';
+import { RouteService } from '../../../services/route.service';
+import { TripService } from '../../../services/trip.service';
+import { TRANSPORT_MODE } from '../../../shared/constants/transport-mode';
 import { TRIP_ALERT } from '../../../shared/constants/trip-alert';
+import { Route, RouteSequence, TransportInfo } from '../../../shared/models/route';
+import { CurrentTrip, StopTime } from '../../../shared/models/trip';
+import { KmPipe } from '../../../shared/pipes/km.pipe';
 import { SafeHtmlPipe } from '../../../shared/pipes/safe-html-pipe';
 import { StopStatusPipe } from '../../../shared/pipes/stop-status.pipe';
-import { TripService } from '../../../services/trip.service';
-import { AppSettingsService } from '../../../services/app-settings.service';
-import { NzSpinModule } from 'ng-zorro-antd/spin';
 
 
 @Component({

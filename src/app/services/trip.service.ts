@@ -1,6 +1,6 @@
 import { inject, Injectable } from "@angular/core";
 import { catchError, debounceTime, distinctUntilChanged, EMPTY, interval, map, Observable, of, shareReplay, startWith, switchMap, takeUntil, tap, throwError } from "rxjs";
-import { createPlanQuery } from "../shared/constants/query/plan-query";
+import { createTripQuery } from "../shared/constants/query/trip-query";
 import { Trip, TripResponse } from "../shared/models/api/response-trip";
 import { CurrentTrip, ServiceStatusKey, StopStatus } from "../shared/models/trip";
 import { DelayStatus, PointGeometry } from "../shared/models/common";
@@ -40,7 +40,7 @@ export class TripService {
 
         return this.restApi.getTrip({
             body: {
-                query: createPlanQuery(gtfsId),
+                query: createTripQuery(gtfsId),
                 variables: {}
             },
             debounceTime: false

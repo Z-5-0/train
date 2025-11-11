@@ -3,6 +3,7 @@ import { BehaviorSubject } from "rxjs";
 import { Place, PlaceGroup, TravelDirectionsKeys } from "../shared/models/place";
 import { Route, RouteSequence } from "../shared/models/route";
 import { DateTime } from 'luxon';
+import { RoutePath } from "../shared/models/path";
 
 @Injectable({
     providedIn: 'root',
@@ -29,26 +30,13 @@ export class RouteService {
     private _routeSearchDateTime$ = new BehaviorSubject<string | null>(null);
     readonly routeSearchDateTime$ = this._routeSearchDateTime$.asObservable();
 
-    private _routePath$ = new BehaviorSubject<any>(null);       // TODO TYPE
-    readonly routePath$ = this._routePath$.asObservable();       // TODO TYPE
+    private _routePath$ = new BehaviorSubject<RoutePath | null>(null);
+    readonly routePath$ = this._routePath$.asObservable();
 
-    private readonly _selectedRouteKey$ = new BehaviorSubject<string | null>(null);
-    readonly selectedRouteKey$ = this._selectedRouteKey$.asObservable();
+    private _selectedTripIds$ = new BehaviorSubject<string[]>([]);
+    readonly selectedTripIds$ = this._selectedTripIds$.asObservable();
 
     constructor() {
-        /* const stored = localStorage.getItem('selectedPlaces');
-        if (stored) {
-            try {
-                const parsed = JSON.parse(stored);
-                this._selectedPlaces$.next(parsed);
-            } catch (e) {
-                console.warn('Invalid localStorage state');
-            }
-        }
-
-        this.selectedPlaces$.subscribe(state => {
-            localStorage.setItem('selectedPlaces', JSON.stringify(state));
-        }); */
     }
 
     setRouteSearchDateTime() {
@@ -90,8 +78,8 @@ export class RouteService {
     }
 
     setSelectedRoute(route: Route | null) {
-        this.setRoutePath(route?.sequences);
-        this.setSelectedRouteKey(route || null);
+        this.setSelectedTripIds(route?.sequences ?? []);
+        // this.setSelectedRouteKey(route || null);
         this._selectedRoute$.next(route);
     }
 
@@ -99,40 +87,25 @@ export class RouteService {
         return this._selectedRoute$.getValue();
     }
 
-    getRoutePath() {        // TODO TYPE
-        return this._routePath$.getValue();
-    }
-
-    setRoutePath(sequences: any | null) {      // TODO TYPE
-        if (!sequences) {
+    setSelectedTripIds(sequences: RouteSequence[]): void {
+        if (!sequences?.length) {
+            this._selectedTripIds$.next([]);
             return;
         }
 
-        // TODO STATIC ROUTE PATH FROM get-route API
+        const ids = sequences
+            .map(seq => seq.transportInfo?.gtfsId)
+            .filter((id): id is string => Boolean(id));     // filters all falsy values and guarantees string values
 
-        console.log('setRoutePath sequences: ', sequences);
+        this._selectedTripIds$.next(ids);
     }
 
-    setSelectedRouteKey(route: Route | null) {
-        if (!route || !route?.sequences.length) {
-            this._selectedRouteKey$.next(null);
-            return;
-        }
-
-        const key = `${route.sequences.length}_` + route.sequences
-            .map(seq => seq.transportInfo?.id ?? '0')
-            .join('_');
-        this._selectedRouteKey$.next(key);
-    }
-
-    getSelectedRouteKey(): string | null {
-        return this._selectedRouteKey$.getValue();
+    getSelectedTripIds(): string[] {
+        return this._selectedTripIds$.getValue();
     }
 
     getSelectedTransportGtfsIds() {
         const route = this._selectedRoute$.getValue();
-
-        // if (route?.sequences) return [];
 
         const routeGtfsIds = route?.sequences
             .filter(seq => seq.mode !== 'WALK')

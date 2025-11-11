@@ -1,18 +1,13 @@
 import { inject, Injectable } from "@angular/core";
-import * as L from 'leaflet';
 import { IntermediateStop, RoutePathSequence } from "../shared/models/path";
-import { TransportLocation } from "../shared/models/transport-location";
 import { MapService } from "./map.service";
-import { GeolocationService } from "./geolocation.service";
-import { Observable } from "rxjs";
 import { TRANSPORT_MODE } from "../shared/constants/transport-mode";
 import { TransportMode } from "../shared/models/common";
+import { RealtimeTripPathOriginData, RealtimeTripPathTransportData } from "../shared/models/realtime-trip-path";
 
 @Injectable({ providedIn: 'root' })
 export class MapTripService {
     private mapService: MapService = inject(MapService);
-
-    private transportMode = TRANSPORT_MODE;
 
     createTripLayers(layerGroup: L.LayerGroup, sequences: RoutePathSequence[]) {
         layerGroup.clearLayers();
@@ -20,7 +15,6 @@ export class MapTripService {
         sequences
             .forEach((seq: RoutePathSequence, index: number) => {
                 if (index === 0) {
-                    console.log('index === 0');
                     layerGroup.addLayer(this.mapService.drawDivIcon({
                         type: 'icon',
                         point: [seq.from.lat, seq.from.lon],
@@ -102,24 +96,24 @@ export class MapTripService {
         return layerGroup;
     }
 
-    updateTripOriginsLayer(layerGroup: L.LayerGroup | null, sequences: RoutePathSequence[]) {
+    updateTripOriginsLayer(layerGroup: L.LayerGroup | null, sequences: RealtimeTripPathOriginData[]) {
         if (!layerGroup) return null;
 
         layerGroup.clearLayers();
 
         sequences
-            .forEach((seq: RoutePathSequence, index: number) => {
+            .forEach((origin: RealtimeTripPathOriginData) => {
                 layerGroup.addLayer(this.mapService.drawDivIcon(
                     {
                         type: 'transfer',
-                        point: [seq.from.lat, seq.from.lon],
-                        label: seq.from.name,
-                        icon: seq.modeData.icon,
-                        color: seq.modeData.color,
-                        lightColor: TRANSPORT_MODE[seq.mode].lightColor,
-                        status: seq.status,
-                        delayedStartTime: seq.delayedStartTime,
-                        line: seq.route ? seq.route[(seq.modeData.name as 'longName' | 'shortName')] : null,
+                        point: [origin.lat, origin.lon],
+                        label: origin.label,
+                        icon: origin.modeData.icon,
+                        color: origin.modeData.color,
+                        lightColor: TRANSPORT_MODE[origin.mode].lightColor,
+                        status: origin.status,
+                        delayedStartTime: origin.delayedStartTime,
+                        transportName: origin.transportName,
                         className: 'map-stop-label',
                         iconAnchor: [0, 0]
                     }
@@ -128,21 +122,21 @@ export class MapTripService {
         return layerGroup;
     }
 
-    updateTransportLayer(layerGroup: L.LayerGroup, transportLocations: TransportLocation | null): L.LayerGroup<L.Marker> | null {
+    updateTransportLayer(layerGroup: L.LayerGroup, transportLocations: RealtimeTripPathTransportData[] | null): L.LayerGroup<L.Marker> | null {
         if (!layerGroup) return null;
         if (!transportLocations) return null;
 
         layerGroup.clearLayers();
 
-        transportLocations.forEach((vehicle: TransportLocation[number]) => {
+        transportLocations.forEach((vehicle: RealtimeTripPathTransportData) => {
             layerGroup.addLayer(this.mapService.drawDivIcon(
                 {
                     type: 'transport',
-                    point: vehicle.point as [number, number],
+                    point: [vehicle.lat, vehicle.lon],
                     label: vehicle.label,
                     color: vehicle.modeData.color,
-                    lightColor: TRANSPORT_MODE[vehicle.mode].lightColor,
-                    icon: this.transportMode[vehicle.mode].icon,
+                    lightColor: TRANSPORT_MODE[vehicle.mode as TransportMode].lightColor,
+                    icon: TRANSPORT_MODE[vehicle.mode as TransportMode].icon,
                     heading: vehicle.heading,
                     className: 'map-vehicle-label',
                     iconAnchor: [12, 13],

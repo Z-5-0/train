@@ -18,7 +18,7 @@ export const TRANSPORT_MODE: Record<TransportMode, { name: string; label: string
     BUS: {
         name: 'shortName',
         label: 'Bus',
-        icon: 'transport-icon fa-fw fa-solid  fa-bus-simple text-blue-600',
+        icon: 'transport-icon fa-fw fa-solid fa-bus-simple text-blue-600',
         color: '#2563EB',
         lightColor: false
     },

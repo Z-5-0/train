@@ -1,7 +1,7 @@
 import { PointGeometry, TransportMode } from "../common";
 
 export interface RealtimeTripResponse {
-    data: Record<string, RealtimeTripData> | null;
+    data: Record<string, RealtimeTripData | null> | null;
 }
 
 export interface RealtimeTripData {
@@ -28,6 +28,12 @@ export interface RealtimeVehiclePosition {
             shortName: string | null;
             longName: string | null;
             mode: TransportMode
+        }
+    },
+    stopRelationship: {
+        stop: {
+            gtfsId: string,
+            name: string
         }
     }
 }

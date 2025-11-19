@@ -3,7 +3,7 @@ import { IntermediateStop, RoutePathSequence } from "../shared/models/path";
 import { MapService } from "./map.service";
 import { TRANSPORT_MODE } from "../shared/constants/transport-mode";
 import { TransportMode } from "../shared/models/common";
-import { RealtimeTripPathOriginData, RealtimeTripPathTransportData } from "../shared/models/realtime-trip-path";
+import { TripPathOriginData, TripPathTransportData } from "../shared/models/trip-path";
 
 @Injectable({ providedIn: 'root' })
 export class MapTripService {
@@ -83,10 +83,12 @@ export class MapTripService {
 
                 if (index !== (sequences.length - 1)) return;
 
+                console.log(seq);
+
                 layerGroup.addLayer(this.mapService.drawDivIcon({
                     type: 'stop',
                     point: [seq.to.lat, seq.to.lon],
-                    label: seq.to.name,
+                    label: ' > > > ' + seq.to.name + ' < < < ',
                     color: seq.modeData.color,
                     lightColor: TRANSPORT_MODE[seq.mode].lightColor,
                     className: 'map-stop-label',
@@ -96,13 +98,15 @@ export class MapTripService {
         return layerGroup;
     }
 
-    updateTripOriginsLayer(layerGroup: L.LayerGroup | null, sequences: RealtimeTripPathOriginData[]) {
+    updateTripOriginsLayer(layerGroup: L.LayerGroup | null, sequences: TripPathOriginData[]) {
         if (!layerGroup) return null;
 
         layerGroup.clearLayers();
 
-        sequences
-            .forEach((origin: RealtimeTripPathOriginData) => {
+        return;
+
+        /* sequences
+            .forEach((origin: TripPathOriginData) => {
                 layerGroup.addLayer(this.mapService.drawDivIcon(
                     {
                         type: 'transfer',
@@ -112,6 +116,7 @@ export class MapTripService {
                         color: origin.modeData.color,
                         lightColor: TRANSPORT_MODE[origin.mode].lightColor,
                         status: origin.status,
+                        passed: origin.isPassed,
                         delayedStartTime: origin.delayedStartTime,
                         transportName: origin.transportName,
                         className: 'map-stop-label',
@@ -119,25 +124,25 @@ export class MapTripService {
                     }
                 ));
             });
-        return layerGroup;
+        return layerGroup; */
     }
 
-    updateTransportLayer(layerGroup: L.LayerGroup, transportLocations: RealtimeTripPathTransportData[] | null): L.LayerGroup<L.Marker> | null {
+    updateTransportLayer(layerGroup: L.LayerGroup, transportLocations: TripPathTransportData[] | null): L.LayerGroup<L.Marker> | null {
         if (!layerGroup) return null;
         if (!transportLocations) return null;
 
         layerGroup.clearLayers();
 
-        transportLocations.forEach((vehicle: RealtimeTripPathTransportData) => {
+        transportLocations.forEach((vehicle: TripPathTransportData) => {
             layerGroup.addLayer(this.mapService.drawDivIcon(
                 {
                     type: 'transport',
-                    point: [vehicle.lat, vehicle.lon],
+                    point: [vehicle.geometry.coordinates[0], vehicle.geometry.coordinates[1]],
                     label: vehicle.label,
                     color: vehicle.modeData.color,
                     lightColor: TRANSPORT_MODE[vehicle.mode as TransportMode].lightColor,
                     icon: TRANSPORT_MODE[vehicle.mode as TransportMode].icon,
-                    heading: vehicle.heading,
+                    heading: vehicle.heading || null,
                     className: 'map-vehicle-label',
                     iconAnchor: [12, 13],
                     iconSize: [24, 26]

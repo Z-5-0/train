@@ -31,8 +31,18 @@ export interface DivIconDrawOptions {
     color?: string;
     lightColor?: boolean;
     icon?: string;
-    heading?: number;
+    heading?: number | null;
     status?: 'early' | 'late' | 'on time' | null;
+    passed?: {
+        origin?: {
+            gtfsId: string,
+            done: boolean
+        },
+        destination?: {
+            gtfsId: string,
+            done: boolean
+        },
+    } | null,
     delayedStartTime?: string | null;
     transportName?: string | null;
     className?: string;

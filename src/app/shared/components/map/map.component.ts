@@ -11,7 +11,7 @@ import { MapMode } from '../../models/map';
 import { CurrentAppSettings } from '../../models/settings';
 import { GeolocationService } from '../../../services/geolocation.service';
 import { RealtimeService } from '../../../services/realtime.service';
-import { RealtimeTripPath, RealtimeTripPathOriginData, RealtimeTripPathTransportData } from '../../models/realtime-trip-path';
+import { TripPath, TripPathOriginData, TripPathTransportData } from '../../models/trip-path';
 
 @Component({
   selector: 'map',
@@ -229,19 +229,19 @@ export class MapComponent {
             ? this.realtimeService.startRealtimeDataPolling()
             : this.realtimeService.getRealtimeData(),
         ),
-        tap((data: RealtimeTripPath) => this.updateOriginLayers(data?.originData || [])),
-        tap((data: RealtimeTripPath) => this.updateTransportLocation(data?.transportData || [])),
+        tap((data: TripPath) => this.updateOriginLayers(data?.originData || [])),
+        tap((data: TripPath) => this.updateTransportLocation(data?.transportData || [])),
         takeUntil(this.destroy$)
       )
       .subscribe();
   }
 
-  updateOriginLayers(originData: RealtimeTripPathOriginData[] | null) {
+  updateOriginLayers(originData: TripPathOriginData[] | null) {
     this.mapTripService.updateTripOriginsLayer(this.tripOriginLayers, originData || []);
     this.updateMapLabelsVisibility();
   }
 
-  updateTransportLocation(transportLocations: RealtimeTripPathTransportData[]) {
+  updateTransportLocation(transportLocations: TripPathTransportData[]) {
     if (this.transportLocationLayers) this.mapService.removeLayer(this.map, this.transportLocationLayers);
     this.transportLocationLayers = this.mapService.addLayer(this.map);
     this.mapTripService.updateTransportLayer(this.transportLocationLayers, transportLocations);

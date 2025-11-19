@@ -33,7 +33,7 @@ export class RouteService {
     private _routePath$ = new BehaviorSubject<RoutePath | null>(null);
     readonly routePath$ = this._routePath$.asObservable();
 
-    private _selectedTripIds$ = new BehaviorSubject<string[]>([]);
+    private _selectedTripIds$ = new BehaviorSubject<(string | null)[]>([]);
     readonly selectedTripIds$ = this._selectedTripIds$.asObservable();
 
     constructor() {
@@ -94,13 +94,13 @@ export class RouteService {
         }
 
         const ids = sequences
-            .map(seq => seq.transportInfo?.gtfsId)
-            .filter((id): id is string => Boolean(id));     // filters all falsy values and guarantees string values
+            .map(seq => seq.transportInfo?.gtfsId ?? null)
+            // .filter((id): id is string => Boolean(id));     // filters all falsy values and guarantees string values
 
         this._selectedTripIds$.next(ids);
     }
 
-    getSelectedTripIds(): string[] {
+    getSelectedTripIds(): (string| null)[] {
         return this._selectedTripIds$.getValue();
     }
 

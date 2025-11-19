@@ -17,6 +17,13 @@ export type TransportMode =
 
 export type DelayStatus = 'on time' | 'late' | 'early' | null;
 
+export type ModeData = {
+    name: string;
+    label: string;
+    icon: string;
+    color: string;
+    lightColor: boolean
+}
 
 export interface SelectableRoute {
     originPlace: Place | null;

@@ -1,5 +1,5 @@
 import { DateTime } from "luxon";
-import { DelayStatus, TransportMode } from "./common";
+import { DelayStatus, ModeData, TransportMode } from "./common";
 
 export interface RoutePath {
     startTime: string;           // 'HH:mm' format
@@ -21,12 +21,7 @@ export interface RoutePathSequence {
     delayedDateTime: DateTime;
     status: DelayStatus;
     mode: TransportMode;
-    modeData: {
-        name: string;
-        label: string;
-        icon: string;
-        color: string
-    };
+    modeData: ModeData;
     realTime: boolean;
     serviceDay: number;         // UNIX timestamp
     from: RoutePathLocation,

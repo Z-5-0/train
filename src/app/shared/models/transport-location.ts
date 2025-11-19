@@ -1,4 +1,4 @@
-import { TransportMode } from "./common";
+import { ModeData, TransportMode } from "./common";
 
 export type TransportLocation = {
     gtfsId: string;
@@ -7,11 +7,6 @@ export type TransportLocation = {
     label: string;
     lastUpdated: string;
     mode: TransportMode;
-    modeData: {
-        name: string;
-        label: string;
-        icon: string;
-        color: string;
-    };
+    modeData: ModeData;
     point: L.LatLngExpression; 
 }[];

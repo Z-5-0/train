@@ -117,12 +117,13 @@ export class MapService {
         icon,
         heading,
         status,
+        passed,
         delayedStartTime,
         transportName,
         className,
         iconAnchor = [0, 0],
         iconSize = undefined,
-        interactive = false
+        interactive = true     // TODO = false
     }: DivIconDrawOptions
     ): L.Marker {
         let divIcon: L.DivIcon;
@@ -164,7 +165,15 @@ export class MapService {
                     ...settings,
                     html: `
                         <div class="dark-map-label ${lightColor ? 'light' : ''}">
-                            <div style="color: ${color}">${label}</div>
+                            <div style="color: ${color}">
+                                <span>${label}</span>
+                                ${passed?.origin?.done ? `
+                                    <i class="fa-fw fa-solid fa-ban text-[var(--color-error)]"></i>
+                                ` : ''}
+                                ${passed?.destination?.done ? `
+                                    <i class="fa-fw fa-solid fa-check text-[var(--color-success)]"></i>
+                                ` : ''}
+                            </div>
                             <div class="flex gap-x-4 justify-between">
                                 <div class="flex gap-x-1 items-center">
                                     <i class="${icon}"></i>

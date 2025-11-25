@@ -16,25 +16,23 @@ map {
 
             >div {
                 background: color.$map-label-background-color;
-                text-shadow: 0 1px 2px rgba(255, 255, 255, .8);
                 padding: 5px;
                 border-radius: 5px;
 
-                &.light {
-                    text-shadow: 0 1px 2px rgba(0, 0, 0, .8);
-                }
-
-                .start-time {
-                    color: color.$success-color;
-                    text-shadow: 0 1px 2px rgba(0, 0, 0, .8);
+                &:first-child {
+                    text-shadow: 0 1px 2px rgba(255, 255, 255, .8);
 
 
-                    &.early {
-                        color: color.$warning-color;
+                    &.light {
+                        text-shadow: 0 1px 2px rgba(0, 0, 0, .8);
                     }
 
-                    &.late {
-                        color: color.$error-color;
+                    .data.lightText {
+                        text-shadow: 0 1px 2px rgba(0, 0, 0, .8);
+                    }
+
+                    .data.darkText {
+                        text-shadow: 0 1px 2px rgba(255, 255, 255, .8);
                     }
                 }
             }

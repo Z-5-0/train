@@ -95,7 +95,7 @@ export class RoutePlanSearchComponent {
   }
 
   getGpsPosition() {
-    console.log('getGps');
+    // console.log('getGps');
     this.gpsIsLoading = true;
     this.originIsCurrentLocation = true;
     this.geolocationService.getCurrentLocationInfo$().subscribe(data => {

@@ -27,7 +27,7 @@ export interface RouteSequence {
   };
 }
 
-interface OriginOrDestination {
+export interface OriginOrDestination {
   gtfsId?: string;
   name: string;
   geometry: PointGeometry;

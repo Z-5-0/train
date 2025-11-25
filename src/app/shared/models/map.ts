@@ -1,3 +1,6 @@
+import { DelayStatus } from "./common";
+import { TripPathOriginTransportData } from "./trip-path";
+
 export type MapMode = 'FREE' | 'TRIP';
 
 export interface ActiveMap {
@@ -25,29 +28,53 @@ export interface CircleMarkerDrawOptions {
 }
 
 export interface DivIconDrawOptions {
-    type: 'transport' | 'stop' | 'transfer' | 'icon';
+    type: 'transport' | 'stop' | 'transfer' | 'location' | 'icon';
     point: L.LatLngExpression;
-    label?: string | null;
-    color?: string;
-    lightColor?: boolean;
-    icon?: string;
-    heading?: number | null;
-    status?: 'early' | 'late' | 'on time' | null;
-    passed?: {
-        origin?: {
-            gtfsId: string,
-            done: boolean
-        },
-        destination?: {
-            gtfsId: string,
-            done: boolean
-        },
-    } | null,
-    delayedStartTime?: string | null;
-    transportName?: string | null;
-    className?: string;
-    html?: string;
+    label?: DivIconDrawOptionsLabel;
+    color?: {
+        textColor: string,
+        lightTextColor?: boolean | null
+    };
+    icon?: {
+        class: string,
+        color?: string,
+        heading?: number | null
+    };
+    data?: DivIconDrawOptionsData[];
+    containerClass: string;
     iconAnchor?: [number, number];
     iconSize?: [number, number] | undefined;
-    interactive?: boolean;
+    interactive?: boolean
+}
+
+interface DivIconDrawOptionsLabel {
+    name: string | null;
+    description?: {
+        text: string;
+        color?: string
+    };
+    preIcon?: DivIconDrawOptionsColoredIcon,
+    postIcon?: DivIconDrawOptionsColoredIcon,
+}
+
+export interface DivIconDrawOptionsData {
+    class?: string,
+    status?: DelayStatus,
+    time?: string | null,
+    label: DivIconDrawOptionsDataLabel
+}
+
+interface DivIconDrawOptionsDataLabel {
+    name: string | null,
+    color?: {
+        textColor?: string,
+        lightTextColor?: boolean
+    },
+    preIcon?: DivIconDrawOptionsColoredIcon,
+    postIcon?: DivIconDrawOptionsColoredIcon
+}
+
+interface DivIconDrawOptionsColoredIcon {
+    class: string;
+    color?: string
 }

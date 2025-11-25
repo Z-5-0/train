@@ -8,11 +8,10 @@ import { catchError, interval, map, Observable, of, startWith, switchMap, throwE
 import { DelayStatus, PointGeometry, TransportMode } from "../shared/models/common";
 import polyline from '@mapbox/polyline';
 import { MessageService } from "./message.service";
-import { RouteSequence } from "../shared/models/route";
+import { OriginOrDestination, Route, RouteSequence } from "../shared/models/route";
 import { createTripPathQuery } from "../shared/constants/query/trip-path-query";
-import { RealtimeStopTime, RealtimeTripData, RealtimeTripResponse, RealtimeVehiclePosition } from "../shared/models/api/response-realtime";
+import { RealtimeStoptime, RealtimeTripData, RealtimeTripResponse, RealtimeVehiclePosition } from "../shared/models/api/response-realtime";
 import { ArrivalInfo, DepartureInfo, ExtendedVehiclePosition, TripPath, TripPathOriginData } from "../shared/models/trip-path";
-
 
 @Injectable({
     providedIn: 'root',
@@ -49,7 +48,7 @@ export class RealtimeService {
             },
             debounceTime: false
         }).pipe(
-            map((resp: RealtimeTripResponse) => this.createRealtimeData(resp)),
+            map((response: RealtimeTripResponse) => this.createRealtimeData(response)),
             catchError(err => {
                 // TODO MESSAGE
                 return throwError(() => err);       // pushes error towards components
@@ -58,14 +57,18 @@ export class RealtimeService {
         )
     }
 
-    createRealtimeData(resp: RealtimeTripResponse): TripPath {
-        if (!resp?.data) return null;
+    createRealtimeData(response: RealtimeTripResponse): TripPath {
+        if (!response?.data) return null;
 
-        const realtimeTrips: (RealtimeTripData | null)[] = resp.data ? Object.values(resp.data) : [];
+        const realtimeTrips: (RealtimeTripData | null)[] = response.data ? Object.values(response.data) : [];
         const nonWalkRealtimeTrips = realtimeTrips.filter((t): t is RealtimeTripData => t !== null);
 
-        const tripsStoptimes = realtimeTrips
-            .map((trip: RealtimeTripData | null) => trip?.stoptimes || []);
+        const tripStatusData = realtimeTrips.map((trip: RealtimeTripData | null) => {
+            return {
+                tripsStoptimes: trip ? trip.stoptimes : [],
+                currentStopGtfsId: trip ? trip.vehiclePositions[trip.vehiclePositions.length - 1]?.stopRelationship.stop.gtfsId : null
+            }
+        });
 
         const extendedVehicleData = nonWalkRealtimeTrips
             .flatMap((trip: RealtimeTripData) =>
@@ -77,57 +80,49 @@ export class RealtimeService {
                     }))
             );
 
-        console.log('tripsStoptimes: ', tripsStoptimes);
-        // console.log('2) ', extendedVehicleData);
-
-        const originData = this.createOriginStopData(tripsStoptimes);
+        const originData = this.createOriginStopData(tripStatusData);
         const transportData = this.createTransportData(extendedVehicleData);
-
-        console.log('3) ', { originData, transportData });
 
         return { originData, transportData };
     }
 
-    createOriginStopData(tripsStoptimes: RealtimeStopTime[][]): TripPathOriginData[] {
-        const route = this.routeService.getSelectedRoute();
-        let previousDestinationPassed: boolean = false;
+    createOriginStopData(tripsData: { tripsStoptimes: RealtimeStoptime[]; currentStopGtfsId: string | null }[]): TripPathOriginData[] {
+        // ha nincs sequences, vagy más egyéb, vissza kellene térni
 
-        const testing = (route?.sequences ?? []).map((seq: RouteSequence, index: number): TripPathOriginData => {
+        const route: Route | null = this.routeService.getSelectedRoute();
+        let previousTransportFinished: boolean = false;
+
+        const tripPath = (route?.sequences ?? []).map((seq: RouteSequence, index: number): TripPathOriginData => {
             const firstSequence = index === 0;
-            // const lastSequence = index === (route?.sequences.length ? route.sequences.length - 1 : 0);
-            const lastSequence = index === ((route?.sequences.length ?? 0) - 1);
+            const prevSequence = index > 0 ? route?.sequences[index - 1] : null;
+            const prevTransportModeData = prevSequence ? TRANSPORT_MODE[prevSequence?.mode as TransportMode] : null;
 
-            const prevSequence = route?.sequences[index - 1];
-            const prevTransportModeData = TRANSPORT_MODE[prevSequence?.mode ?? 'WALK' as TransportMode];
+            const previousTrip = index > 0 ? tripsData[index - 1] : null;
+            const currentTrip = tripsData[index];
 
-            const arrivalStopInfo = tripsStoptimes[index - 1]?.find(f => f.stop.gtfsId == route?.sequences[index - 1].destination.gtfsId);
-            const departureStopInfo = tripsStoptimes[index]?.find(f => f.stop.gtfsId === seq.origin.gtfsId) ?? null;
+            const arrivalStopInfo: RealtimeStoptime | null = previousTrip
+                ? previousTrip.tripsStoptimes.find((tripStop: RealtimeStoptime) => tripStop.stop.gtfsId === prevSequence?.destination.gtfsId) ?? null
+                : null;
+            const departureStopInfo: RealtimeStoptime | null = currentTrip.tripsStoptimes.find((tripStop: RealtimeStoptime) => tripStop.stop.gtfsId === seq.origin.gtfsId
+            ) ?? null;
 
             const arrivingStopData = this.formatStoptimes(arrivalStopInfo, 'arrival');
             const leavingStopData = this.formatStoptimes(departureStopInfo, 'departure');
 
-            const stopPassStatus = this.checkStopPassStatus(       // return {arrivalTransportIsPassed + departureTransportIsPassed}
-                route?.sequences[index].transportInfo?.shortName || route?.sequences[index].transportInfo?.longName || '',
-                index,
-                tripsStoptimes[index],
-                seq.origin, seq.destination,
-                tripsStoptimes[index].at(-1)
-            );
+            const stopPassStatus = this.checkStopPassStatus(currentTrip, seq.origin, seq.destination);
 
-            console.log('stopPass: ', stopPassStatus);
-
-            previousDestinationPassed = stopPassStatus.destinationStopPassed;
+            previousTransportFinished = stopPassStatus.destinationStopPassed;
 
             return {
                 label: seq.origin.name,
                 arrivingTransportData: firstSequence
                     ? null
                     : {
-                        transportName: prevSequence?.transportInfo?.[prevTransportModeData.name] ?? null,
+                        transportName: prevSequence?.transportInfo?.[prevTransportModeData?.name as TransportMode] ?? null,
                         mode: prevSequence?.mode ?? 'WALK',
                         modeData: prevTransportModeData,
                         ...arrivingStopData,
-                        isPassed: previousDestinationPassed
+                        isPassed: previousTransportFinished
 
                     },
                 leavingTransportData:
@@ -142,31 +137,33 @@ export class RealtimeService {
             }
         });
 
-        testing.push({
+        const destinationStopGtfsId = route?.sequences.at(-1)?.destination.gtfsId;
+        const destinationStopData = tripsData
+            .at(-1)?.tripsStoptimes
+            .find((stop: RealtimeStoptime) => stop.stop.gtfsId === destinationStopGtfsId) ?? null;
+        this.formatStoptimes(destinationStopData, 'arrival');
+
+        const lastStopTransportArrivalData = this.formatStoptimes(destinationStopData, 'arrival') as ArrivalInfo;
+
+        tripPath.push({
             label: route?.sequences[route?.sequences.length - 1].destination.name ?? null,
-            leavingTransportData: {
-                mode: route?.sequences[route?.sequences.length - 1].mode ?? 'WALK',
-                modeData: TRANSPORT_MODE[route?.sequences[route?.sequences.length - 1].mode as TransportMode ?? 'WALK'],
-                isPassed: previousDestinationPassed
-            },
+            leavingTransportData: null,
             arrivingTransportData: {
                 transportName: route?.sequences[route?.sequences.length - 1].transportInfo?.[
                     TRANSPORT_MODE[route?.sequences[route?.sequences.length - 1].mode as TransportMode].name
                 ] ?? null,
                 mode: (route?.sequences[route?.sequences.length - 1].mode) as TransportMode,
                 modeData: TRANSPORT_MODE[route?.sequences[route?.sequences.length - 1].mode as TransportMode],
-                scheduledEndTime: null,
-                delayedEndTime: null,
-                arrivalDelay: null,
-                status: null,
-                isPassed: previousDestinationPassed
+                scheduledEndTime: lastStopTransportArrivalData.scheduledEndTime,
+                delayedEndTime: lastStopTransportArrivalData.delayedEndTime,
+                arrivalDelay: lastStopTransportArrivalData.arrivalDelay,
+                status: lastStopTransportArrivalData.status,
+                isPassed: previousTransportFinished
             },
             geometry: route?.sequences[route?.sequences.length - 1].destination.geometry ?? null
         });
 
-        console.log('TESTING --> ', testing);
-
-        return testing;
+        return tripPath;
     }
 
     createTransportData(vehiclePositions: ExtendedVehiclePosition[]) {
@@ -189,7 +186,7 @@ export class RealtimeService {
         })
     }
 
-    formatStoptimes(stopInfo: any, mode: 'arrival' | 'departure'): ArrivalInfo | DepartureInfo {
+    formatStoptimes(stopInfo: RealtimeStoptime | null, mode: 'arrival' | 'departure'): ArrivalInfo | DepartureInfo {
         const objs: { arrival: ArrivalInfo; departure: DepartureInfo } = {
             arrival: {
                 scheduledEndTime: null,
@@ -254,48 +251,54 @@ export class RealtimeService {
         return objs[mode];
     }
 
-    checkStopPassStatus(name: string, i: number, allStops: any, originStop: any, destnationStop: any, currentStop: any) {
-        console.log('name: ', name,);
-        console.log('i: ', i);
-        console.log('allStops: ', allStops);
-        console.log('originStop: ', originStop);
-        console.log('destnationStop: ', destnationStop);
-        console.log('stop: ', currentStop);
+    checkStopPassStatus(
+        tripData: { tripsStoptimes: RealtimeStoptime[]; currentStopGtfsId: string | null },
+        originStop: OriginOrDestination,
+        destinationStop: OriginOrDestination
+    ) {
+        const { tripsStoptimes, currentStopGtfsId } = tripData;
 
-        if (!allStops.length) {
+        // if (!tripsStoptimes.length || !tripData.currentStopGtfsId) {
+        if (!tripsStoptimes.length) {
             return { originStopPassed: false, destinationStopPassed: false }
         }
 
+        const lastTripStop = tripsStoptimes.at(-1);
+        if (!lastTripStop) return { originStopPassed: false, destinationStopPassed: false };
+
         const transportFinished = DateTime.fromSeconds(
-            currentStop.realtime
-                ? currentStop.serviceDay + currentStop.realtimeDeparture
-                : currentStop.serviceDay + currentStop.scheduledDeparture + currentStop.departureDelay
+            lastTripStop.realtime
+                ? lastTripStop.serviceDay + lastTripStop.realtimeDeparture
+                : lastTripStop.serviceDay + lastTripStop.scheduledDeparture + lastTripStop.departureDelay
         )
 
-        if (transportFinished < DateTime.now().setZone('Europe/Budapest')) {
+        const now = DateTime.now().setZone('Europe/Budapest');
+
+        if (transportFinished < now) {
             return { originStopPassed: true, destinationStopPassed: true };
         }
 
-        const currentStopGtfsId = allStops.currentStopGtfsId;
         const originStopGtfsId = originStop.gtfsId;
-        const destnationStopGtfsId = destnationStop.gtfsId;
+        const destnationStopGtfsId = destinationStop.gtfsId;
 
-        let currentStopIndex = null;
-        let originStopIndex!: number;
-        let destinationStopIndex!: number;
+        let currentStopIndex: number | null = null;
+        let originStopIndex: number | null = null;
+        let destinationStopIndex: number | null = null;
 
-        allStops.forEach((stop: any, stopIndex: number) => {
-            if (stop.stop.gtfsId === currentStopGtfsId) currentStopIndex = stopIndex;
-            if (stop.stop.gtfsId === originStopGtfsId) originStopIndex = stopIndex;
-            if (stop.stop.gtfsId === destnationStopGtfsId) destinationStopIndex = stopIndex;
-        });
+        for (let i = 0; i < tripsStoptimes.length; i++) {
+            const id = tripsStoptimes[i].stop.gtfsId;
+            if (id === currentStopGtfsId) currentStopIndex = i;
+            if (id === originStopGtfsId) originStopIndex = i;
+            if (id === destnationStopGtfsId) destinationStopIndex = i;
+        }
 
-        console.log('INDEXES: ', currentStopIndex, originStopIndex, destinationStopIndex);
-        console.log('stopPasses: ', stop);
-
-        return {        // ha a menetidő letelt, mindkettő true mindig !
-            originStopPassed: currentStopIndex !== null ? currentStopIndex > originStopIndex : false,
-            destinationStopPassed: currentStopIndex !== null ? currentStopIndex > destinationStopIndex : false,
+        return {
+            originStopPassed: currentStopIndex != null && originStopIndex != null
+                ? currentStopIndex > originStopIndex
+                : false,
+            destinationStopPassed: currentStopIndex != null && destinationStopIndex != null
+                ? currentStopIndex > destinationStopIndex
+                : false,
         }
     }
 }

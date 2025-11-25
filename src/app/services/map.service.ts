@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
 import * as L from 'leaflet';
-import { CircleMarkerDrawOptions, DivIconDrawOptions, PolylineDrawOptions } from "../shared/models/map";
+import { CircleMarkerDrawOptions, DivIconDrawOptions, DivIconDrawOptionsData, PolylineDrawOptions } from "../shared/models/map";
 
 @Injectable({ providedIn: 'root' })
 export class MapService {
@@ -113,39 +113,29 @@ export class MapService {
         point,
         label,
         color,
-        lightColor,
         icon,
-        heading,
-        status,
-        passed,
-        delayedStartTime,
-        transportName,
-        className,
-        iconAnchor = [0, 0],
-        iconSize = undefined,
+        data,
+        containerClass,      // MUST
+        iconAnchor = [0, 0],        // MUST
+        iconSize = undefined,       // MUST
         interactive = true     // TODO = false
     }: DivIconDrawOptions
     ): L.Marker {
         let divIcon: L.DivIcon;
-        const settings = { className, iconAnchor, iconSize };
-        const delayClass = status === 'early' ? 'early' : status === 'late' ? 'late' : null;
+        const settings = { className: containerClass, iconAnchor, iconSize };
+        // const delayClass = status === 'early' ? 'early' : status === 'late' ? 'late' : null;
 
         switch (type) {
             case 'transport':
                 divIcon = L.divIcon({
                     ...settings,
                     html: `
-                        <div class="dark-map-label name ${lightColor ? 'light' : ''}" style="color: ${color}">${label}</div>
-                        <i class="${icon}"></i>
+                        <div class="dark-map-label name ${color?.lightTextColor ? 'light' : ''}" style="color: ${color?.textColor}">${label?.name}</div>
+                        <i class="${icon?.class}"></i>
 
-                        <!--div class="status">
-                            <i class="fa-fw fa-solid fa-rotate"></i>
-                            <span>${status}</span>
-                        </!--div-->
-                        
-                        <div class="direction-container -translate-x-1/2" style="transform: rotate(${heading}deg)">
-                            <div class="inner-circle" style="border-color: ${color}"></div>
-                            <div class="arrow" style="background: ${color}"></div>
+                        <div class="direction-container -translate-x-1/2" style="transform: rotate(${icon?.heading}deg)">
+                            <div class="inner-circle" style="border-color: ${color?.textColor}"></div>
+                            <div class="arrow" style="background: ${color?.textColor}"></div>
                         </div>
                     `
                 });
@@ -154,8 +144,8 @@ export class MapService {
                 divIcon = L.divIcon({
                     ...settings,
                     html: `
-                        <div class="dark-map-label ${lightColor ? 'light' : ''}">
-                            <div style="color: ${color}">${label}</div>
+                        <div class="dark-map-label ${color?.lightTextColor ? 'light' : ''}">
+                            <div style="color: ${color?.textColor}">${label?.name}</div>
                         </div>
                     `
                 });
@@ -163,31 +153,53 @@ export class MapService {
             case 'transfer':        // TODO status: 'on time' not too elegant for className (start-time ...)
                 divIcon = L.divIcon({
                     ...settings,
+                    // <div class="dark-map-label ${color?.lightTextColor ? 'light' : ''}">
                     html: `
-                        <div class="dark-map-label ${lightColor ? 'light' : ''}">
-                            <div style="color: ${color}">
-                                <span>${label}</span>
-                                ${passed?.origin?.done ? `
-                                    <i class="fa-fw fa-solid fa-ban text-[var(--color-error)]"></i>
-                                ` : ''}
-                                ${passed?.destination?.done ? `
-                                    <i class="fa-fw fa-solid fa-check text-[var(--color-success)]"></i>
-                                ` : ''}
-                            </div>
-                            <div class="flex gap-x-4 justify-between">
-                                <div class="flex gap-x-1 items-center">
-                                    <i class="${icon}"></i>
-                                    ${transportName ? `
-                                        <div style="color: ${color}">${transportName}</div>
-                                    ` : ''}
-                                </div>
-                                ${status ? `
-                                <div class="flex gap-x-1 items-center start-time ${status}">
-                                    <i class="fa-fw fa-solid fa-clock"></i>
-                                    <span>${delayedStartTime}</span>
-                                </div>
-                                ` : ''}
-                            </div>
+        <div class="dark-map-label">
+            <div class="${color?.lightTextColor ? 'light' : ''}" style="color: ${color?.textColor}">
+                <span>${label?.name ?? ''}</span>
+            </div>
+            <div class="grid grid-cols-[1fr_1fr_1fr] gap-x-4 items-center justify-between">
+                    ${data?.map((d: DivIconDrawOptionsData, index: number) => `
+                    <div class="${d.class ?? ''}">
+                        <div class="data ${d.label.color?.lightTextColor ? 'lightText' : 'darkText'}" style="color: ${d.label.color?.textColor}">
+                            ${d.label.preIcon
+                            ? `<i class="${d.label.preIcon.class}" style="color: ${d.label.preIcon.color ?? ''}"></i>`
+                            : ''}
+
+                                ${d.label
+                            ? `<span style="color: ${d.label.color?.textColor ?? ''}">${d.label.name ?? ''}</span>`
+                            : ''}
+
+                            ${d.label.postIcon
+                            ? `<i class="${d.label.postIcon.class}" style="color: ${d.label.postIcon.color ?? ''}"></i>`
+                            : ''}
+                        </div>
+                        ${d.time ? `<span class="${d.status === 'early' ? 'text-[var(--color-warning)]' :
+                            d.status === 'on time' ? 'text-[var(--color-success)]' :
+                                d.status === 'late' ? 'text-[var(--color-error)]' : ''
+                            }" style="text-shadow: 1px 1px 2px var(--color-black)">${d.time}</span>` : ''}
+                    </div>
+                    ${index === 0 ? `
+                        <div class="justify-self-center">
+                            ${data[0].label.preIcon?.class && data[1].label.preIcon?.class
+                                ? `
+                                <i class="fa-solid fa-angle-right text-[20px]"></i>`
+                                : ''}
+                        </div>
+                    ` : ''}
+            `).join('')}
+            </div>
+        </div>
+    `
+                });
+                break;
+            case 'location':
+                divIcon = L.divIcon({
+                    ...settings,
+                    html: `
+                        <div class="${containerClass}">
+                            <i class="${icon?.class}" ${icon?.heading ? `style="transform: rotate(${icon.heading}deg);"` : ''}></i>
                         </div>
                     `
                 });
@@ -196,10 +208,10 @@ export class MapService {
                 divIcon = L.divIcon({
                     ...settings,
                     html: `
-            <div class="${className}">
-                <i class="${icon}" ${heading ? `style="transform: rotate(${heading}deg);"` : ''}></i>
-            </div>
-        `
+                        <div class="${containerClass}">
+                            <i class="${icon?.class}"></i>
+                        </div>
+                    `
                 });
                 break;
             default:

@@ -6,7 +6,7 @@ export interface RealtimeTripResponse {
 
 export interface RealtimeTripData {
     id: string;
-    stoptimes: RealtimeStopTime[];
+    stoptimes: RealtimeStoptime[];
     tripGeometry: RealtimeTripGeometry;
     vehiclePositions: RealtimeVehiclePosition[];
 }
@@ -38,7 +38,7 @@ export interface RealtimeVehiclePosition {
     }
 }
 
-export interface RealtimeStopTime {
+export interface RealtimeStoptime {
     realtime: boolean;
     arrivalDelay: number;
     departureDelay: number;

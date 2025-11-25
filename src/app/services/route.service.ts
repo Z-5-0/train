@@ -95,12 +95,12 @@ export class RouteService {
 
         const ids = sequences
             .map(seq => seq.transportInfo?.gtfsId ?? null)
-            // .filter((id): id is string => Boolean(id));     // filters all falsy values and guarantees string values
+        // .filter((id): id is string => Boolean(id));     // filters all falsy values and guarantees string values
 
         this._selectedTripIds$.next(ids);
     }
 
-    getSelectedTripIds(): (string| null)[] {
+    getSelectedTripIds(): (string | null)[] {
         return this._selectedTripIds$.getValue();
     }
 

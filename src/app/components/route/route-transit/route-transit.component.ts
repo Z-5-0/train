@@ -128,7 +128,6 @@ export class RouteTransitComponent {
       startWith(null),
       pairwise(),
       tap(([prev, curr]) => {
-        console.log(prev, curr);
         if (prev?.gtfsId !== curr?.gtfsId) {
           this.ngZone.onStable.pipe(take(1)).subscribe(() => this.onTabChange());
         }

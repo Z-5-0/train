@@ -8,25 +8,25 @@ export type TripPath = {
 export interface TripPathOriginData {
     label: string | null;
     arrivingTransportData: TripPathOriginTransportData | null;
-    leavingTransportData: TripPathOriginTransportData;
+    leavingTransportData: TripPathOriginTransportData | null;
     geometry: PointGeometry | null
 }
 
 export interface TripPathOriginTransportData {
-    transportName?: string | null;
-    status?: string | null;
+    transportName: string | null;
+    status: string | null;
 
     scheduledStartTime?: string | null;
     delayedStartTime?: string | null;
     departureDelay?: number | null;
 
     scheduledEndTime?: string | null;
-    arrivalDelay?: number | null;
     delayedEndTime?: string | null;
+    arrivalDelay?: number | null;
 
     isPassed: boolean;
     mode: string;
-    modeData: ModeData;
+    modeData: ModeData | null;
 }
 
 export interface TripPathTransportData {

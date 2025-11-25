@@ -142,8 +142,8 @@ export class MapComponent {
       this.map?.getZoom(),
       [
         '.map-stop-label',
-        '.map-vehicle-label > div:first-child',
-        '.map-vehicle-label > div:last-child'
+        '.map-vehicle-label .name',
+        '.map-vehicle-label .direction-container'
       ],
       [
         { 'display': ['none', 'grid'] }
@@ -231,6 +231,7 @@ export class MapComponent {
         ),
         tap((data: TripPath) => this.updateOriginLayers(data?.originData || [])),
         tap((data: TripPath) => this.updateTransportLocation(data?.transportData || [])),
+        tap(() => this.updateMapLabelsVisibility()),
         takeUntil(this.destroy$)
       )
       .subscribe();
@@ -238,7 +239,6 @@ export class MapComponent {
 
   updateOriginLayers(originData: TripPathOriginData[] | null) {
     this.mapTripService.updateTripOriginsLayer(this.tripOriginLayers, originData || []);
-    this.updateMapLabelsVisibility();
   }
 
   updateTransportLocation(transportLocations: TripPathTransportData[]) {

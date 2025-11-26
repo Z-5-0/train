@@ -1,9 +1,9 @@
-<place-field [name]="'originPlaces'" [placeholder]="'Origin'" [collection]="originPlaces"
+<place-field #field [name]="'originPlaces'" [placeholder]="'Origin'" [collection]="originPlaces"
     [selectedPlace]="originPlace()" [disabled]="routeIsLoading || originIsCurrentLocation" [loading]="gpsIsLoading"
     [postButton]="originPlaceFieldPostButton" (inputChanged)="getPlaces($event)"
     (selectionChanged)="onPlaceSelect($event)"></place-field>
 
-<place-field [name]="'destinationPlaces'" [placeholder]="'Destination'" [collection]="destinationPlaces"
+<place-field #field [name]="'destinationPlaces'" [placeholder]="'Destination'" [collection]="destinationPlaces"
     [selectedPlace]="destinationPlace()" [disabled]="routeIsLoading" [postButton]="destinationPlaceFieldPostButton"
     (inputChanged)="getPlaces($event)" (selectionChanged)="onPlaceSelect($event)"></place-field>
 

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, inject, Output, signal } from '@angular/core';
+import { Component, EventEmitter, inject, Output, QueryList, signal, ViewChildren } from '@angular/core';
 import { PlaceFieldComponent } from '../../../../shared/components/autocomplete-input/place-field.component';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { RestApiService } from '../../../../services/rest-api.service';
@@ -33,6 +33,8 @@ import { SearchButtonComponent } from './search-button/search-button.component';
   styleUrl: './route-plan-search.component.scss'
 })
 export class RoutePlanSearchComponent {
+  @ViewChildren('field') fields!: QueryList<PlaceFieldComponent>
+
   @Output() routeOptionsChange: EventEmitter<Route[]> = new EventEmitter<Route[]>;
   @Output() routeIsLoadingChange: EventEmitter<boolean> = new EventEmitter<boolean>;
 
@@ -154,6 +156,12 @@ export class RoutePlanSearchComponent {
   getPlaces(event: PlaceSearchEvent) {
     const { name: streamName, value } = event;
 
+    const field = streamName === 'originPlaces'
+      ? this.fields.first
+      : this.fields.last;
+
+    field.loading = true;
+
     this.restApi.getPlaces(
       {
         params: { q: value, limit: '10' },
@@ -167,6 +175,8 @@ export class RoutePlanSearchComponent {
       tap((placesByMode) => {
         this.routeService.setPlaceCollection(streamName, placesByMode);
         this.updatePlaceProperty(streamName, placesByMode);
+
+        field.loading = false;
       })
     ).subscribe();
   }

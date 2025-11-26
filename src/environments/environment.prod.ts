@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: ''
+  apiUrl: 'https://avalonium.asuscomm.com:8443/'
 };

@@ -125,7 +125,7 @@ export class MapTripService {
                                     },
                                     postIcon: {
                                         class: origin.arrivingTransportData?.isPassed
-                                            ? 'fa-fw fa-solid fa-circle-check text-[var(--color-error)]'
+                                            ? 'fa-fw fa-solid fa-circle-check text-[var(--color-success)]'
                                             : ''
                                     }
                                     // postIcon?: DivIconDrawOptionsColoredIcon
@@ -143,7 +143,7 @@ export class MapTripService {
                                     },
                                     preIcon: {
                                         class: origin.leavingTransportData?.isPassed
-                                            ? 'fa-fw fa-regular fa-ban text-[var(--color-success)]'
+                                            ? 'fa-fw fa-solid fa-ban text-[var(--color-error)]'
                                             : ''
                                     },
                                     postIcon: {

@@ -123,6 +123,11 @@ export class MapTripService {
                                         class: origin.arrivingTransportData?.modeData?.icon ?? '',
                                         color: origin.arrivingTransportData?.modeData?.color
                                     },
+                                    postIcon: {
+                                        class: origin.arrivingTransportData?.isPassed
+                                            ? 'fa-fw fa-solid fa-circle-check text-[var(--color-error)]'
+                                            : ''
+                                    }
                                     // postIcon?: DivIconDrawOptionsColoredIcon
                                 },
                                 time: origin.arrivingTransportData?.delayedEndTime ?? null,
@@ -137,9 +142,14 @@ export class MapTripService {
                                         lightTextColor: origin.leavingTransportData?.modeData?.lightColor
                                     },
                                     preIcon: {
+                                        class: origin.leavingTransportData?.isPassed
+                                            ? 'fa-fw fa-regular fa-ban text-[var(--color-success)]'
+                                            : ''
+                                    },
+                                    postIcon: {
                                         class: origin.leavingTransportData?.modeData?.icon ?? '',
                                         color: origin.leavingTransportData?.modeData?.color
-                                    },
+                                    }
                                     // postIcon?: DivIconDrawOptionsColoredIcon
                                 },
                                 time: origin.leavingTransportData?.delayedStartTime ?? null,

@@ -155,8 +155,8 @@ export class MapService {
                     ...settings,
                     // <div class="dark-map-label ${color?.lightTextColor ? 'light' : ''}">
                     html: `
-        <div class="dark-map-label">
-            <div class="${color?.lightTextColor ? 'light' : ''}" style="color: ${color?.textColor}">
+        <div class="dark-map-label ${color?.lightTextColor ? 'light' : ''}">
+            <div class="" style="color: ${color?.textColor}">
                 <span>${label?.name ?? ''}</span>
             </div>
             <div class="grid grid-cols-[1fr_1fr_1fr] gap-x-4 items-center justify-between">
@@ -182,7 +182,7 @@ export class MapService {
                     </div>
                     ${index === 0 ? `
                         <div class="justify-self-center">
-                            ${data[0].label.preIcon?.class && data[1].label.preIcon?.class
+                            ${data[0].label.preIcon?.class && data[1].label.postIcon?.class
                                 ? `
                                 <i class="fa-solid fa-angle-right text-[20px]"></i>`
                                 : ''}

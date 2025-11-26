@@ -37,7 +37,6 @@ export class MapTripService {
                     }));
                 }
 
-                console.log('reDraw');
                 if (index !== 0 && index !== sequences.length - 1) {
                     layerGroup.addLayer(this.mapService.drawCircleMarker(
                         {

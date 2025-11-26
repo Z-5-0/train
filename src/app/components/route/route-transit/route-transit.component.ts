@@ -182,6 +182,7 @@ export class RouteTransitComponent {
   // --------------------------------------------------------------------------------------------------------------------------------
 
   public onTransitChange(e: string | number) {
+    this.currentTrip = {} as CurrentTrip;
     this.selectedTransit$.next(e as number);
   }
 

@@ -125,7 +125,7 @@ export class MapTripService {
                                     },
                                     postIcon: {
                                         class: origin.arrivingTransportData?.isPassed
-                                            ? 'fa-fw fa-solid fa-circle-check text-[var(--color-success)]'
+                                            ? 'fa-fw fa-regular fa-circle-check text-[var(--color-success)]'
                                             : ''
                                     }
                                     // postIcon?: DivIconDrawOptionsColoredIcon

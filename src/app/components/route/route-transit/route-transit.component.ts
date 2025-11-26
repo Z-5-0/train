@@ -275,8 +275,8 @@ export class RouteTransitComponent {
     }
 
     if (this.currentOriginStop && currentStopIndex !== -1) {
-    this.currentDestinationStop.station.isArrived = currentStopIndex > destinationStopIndex;
-    } 
+      this.currentDestinationStop.station.isArrived = currentStopIndex > destinationStopIndex;
+    }
   }
 
   private getStopIndex(allStops: StopTime[], gtfsId: string | undefined): number {
@@ -297,8 +297,33 @@ export class RouteTransitComponent {
     const tripElement = this.transportCurrentPosition?.nativeElement as HTMLElement;
     const scrollableContainer = document.querySelector<HTMLElement>('.ant-tabs-content-holder');
 
-    if (!scrollableContainer) {
+    if (!scrollableContainer) return;
+
+    const tripIsFinished = this.currentTrip.transportInfo?.isFinished;
+    const isUpcomingTransite = this.currentTransitDataTabIndex === 1;
+    const isCurrentTransit = this.currentTransitDataTabIndex === 0;
+
+    if (tripIsFinished || isUpcomingTransite) {
+      scrollableContainer.scrollTo({ top: 0, behavior: 'smooth' });
       return;
+    }
+
+    if (isCurrentTransit && tripElement) {
+      const containerRect = scrollableContainer.getBoundingClientRect();
+      const targetRect = tripElement.getBoundingClientRect();
+      const offset = targetRect.top - containerRect.top + scrollableContainer.scrollTop;
+
+      scrollableContainer.scrollTo({
+        top: offset - 10,
+        behavior: 'smooth'
+      });
+    }
+
+    /* if (this.currentTrip.transportInfo?.isFinished) {    // TODO DELETE IF ABOVE IS WORKING
+      scrollableContainer.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
     }
 
     if (this.currentTransitDataTabIndex === 0) {
@@ -319,6 +344,6 @@ export class RouteTransitComponent {
 
     if (this.currentTransitDataTabIndex === 1) {
       scrollableContainer.scrollTo({ top: 0, behavior: 'smooth' });
-    };
+    }; */
   }
 }

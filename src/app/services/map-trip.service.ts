@@ -36,17 +36,19 @@ export class MapTripService {
                         iconSize: [24, 24],
                     }));
                 }
+
+                console.log('reDraw');
                 if (index !== 0 && index !== sequences.length - 1) {
                     layerGroup.addLayer(this.mapService.drawCircleMarker(
                         {
                             point: [seq.from.lat, seq.from.lon],
-                            color: '#000000',
+                            color: '#828282',
                         }
                     ));
                     layerGroup.addLayer(this.mapService.drawCircleMarker(
                         {
                             point: [seq.to.lat, seq.to.lon],
-                            color: '#000000',
+                            color: '#828282',
                         }
                     ));
                 }

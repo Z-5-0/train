@@ -229,9 +229,11 @@ export class MapComponent {
             ? this.realtimeService.startRealtimeDataPolling()
             : this.realtimeService.getRealtimeData(),
         ),
-        tap((data: TripPath) => this.updateOriginLayers(data?.originData || [])),
-        tap((data: TripPath) => this.updateTransportLocation(data?.transportData || [])),
-        tap(() => this.updateMapLabelsVisibility()),
+        tap((data: TripPath) => {
+          this.updateOriginLayers(data?.originData || []);
+          this.updateTransportLocation(data?.transportData || []);
+          this.updateMapLabelsVisibility();
+        }),
         takeUntil(this.destroy$)
       )
       .subscribe();

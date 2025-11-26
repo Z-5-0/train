@@ -66,18 +66,21 @@ export class RealtimeService {
         const tripStatusData = realtimeTrips.map((trip: RealtimeTripData | null) => {
             return {
                 tripsStoptimes: trip ? trip.stoptimes : [],
-                currentStopGtfsId: trip ? trip.vehiclePositions[trip.vehiclePositions.length - 1]?.stopRelationship.stop.gtfsId : null
+                currentStopGtfsId: trip?.vehiclePositions?.length
+                    ? trip.vehiclePositions[trip.vehiclePositions.length - 1].stopRelationship.stop.gtfsId
+                    : null
             }
         });
 
         const extendedVehicleData = nonWalkRealtimeTrips
             .flatMap((trip: RealtimeTripData) =>
-                trip.vehiclePositions
-                    .map((v: RealtimeVehiclePosition) => ({
+                trip.vehiclePositions?.length
+                    ? trip.vehiclePositions.map(v => ({
                         ...v,
                         id: trip.id,
-                        tripGeometry: trip.tripGeometry
+                        tripGeometry: trip.tripGeometry,
                     }))
+                    : []
             );
 
         const originData = this.createOriginStopData(tripStatusData);
@@ -166,7 +169,10 @@ export class RealtimeService {
         return tripPath;
     }
 
-    createTransportData(vehiclePositions: ExtendedVehiclePosition[]) {
+    createTransportData(vehiclePositions: ExtendedVehiclePosition[] | null) {
+        if (!vehiclePositions || vehiclePositions.length === 0) {
+            return [];
+        }
         return vehiclePositions.map((vehicle: ExtendedVehiclePosition) => {
             const vehicleMode = vehicle.trip.route.mode as TransportMode;
             const labelKey = TRANSPORT_MODE[vehicleMode].name as keyof typeof vehicle.trip.route;

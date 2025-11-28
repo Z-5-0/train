@@ -75,7 +75,6 @@ node proxy.js
 - Maintain a list of known issues
 - Create a full user manual
 - Option to show the entire trip path on the map for each vehicle
-- Persist map position and zoom level
 - Integrate a free/open map 
 
 <br>

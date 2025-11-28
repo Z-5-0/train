@@ -12,34 +12,34 @@ export const HOME_CARDS: HomeCard[] = [
     header: 'Route',
     details: 'selectedRoute',
     mapMode: 'TRIP',
-    footer: 'footer'
+    footer: 'beta_v_0.1'
   },
   {
     index: 1,
     header: 'Map',
     details: '',
     mapMode: 'FREE',
-    footer: 'footer'
+    footer: 'beta_v_0.1'
   },
   {
     index: 2,
     header: 'Settings',
     details: '',
     mapMode: null,
-    footer: 'footer'
+    footer: 'beta_v_0.1'
   },
   {
     index: 3,
     header: 'Welcome',
     details: '',
     mapMode: null,
-    footer: ''
+    footer: 'beta_v_0.1'
   },
   {
     index: 4,
     header: 'Info',
     details: '',
     mapMode: null,
-    footer: ''
+    footer: 'beta_v_0.1'
   },
 ]

@@ -1,59 +1,89 @@
-# Train
+# Real-Time Transit Viewer
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.6.
+A realtime transit route monitoring application built with modern Angular (v19) which visualizes planned routes, realtime vehicle positions, and trip origins using data from the OpenTripPlanner GraphQL API.
 
-## Development server
+[Train APP](https://z-5-0.github.io/train/)
 
-To start a local development server, run:
+<br>
+
+<p align="center">
+  <img src="https://z-5-0.github.io/train/imgs/app/app.png"
+       alt="Screenshot"
+       style="height: 500px;">
+</p>
+
+<br>
+
+## Features
+
+- Plan public transit routes between any two stops, with multiple alternative options based on user-configured search depth
+- Save, reorder, and remove favorite routes for quick access
+- View trip summaries, including estimated travel time and required transfers
+- Select a route option to access full itinerary details and the interactive map
+
+### Inspect each transit leg:
+- vehicle type  
+- real-time departure status (on time, delayed, accelerated)  
+- scheduled vs. actual times  
+- current vehicle position and heading  
+- accessibility details (bike allowed, wheelchair access, etc.)  
+- service alerts (delays, detours)
+
+### Interactive map view showing:
+- the full journey path  
+- all stops involved  
+- transfer points  
+- the user’s current location (if permitted)  
+- realtime vehicle locations with direction
+
+- User settings, such as dark/light theme  
+- Built-in documentation, legend, and known issues section
+
+<br>
+
+## Tech Stack
+
+- Angular 19
+- TypeScript / RxJS
+- Leaflet (interactive map)
+- TailwindCSS
+- SCSS
+- Ant Design
+- Luxon
+- OpenTripPlanner (OTP) GraphQL API
+- Node.js + Express proxy server
+
+<br>
+
+## Installation & Running
 
 ```bash
-ng serve
+npm install
+npx ng serve
+node proxy.js
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+(The proxy server is required for API communication.)
 
-## Code scaffolding
+<br>
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## TODO
+- Improve mobile layout and responsiveness
+- Add multi-language support
+- Minor style refinements
+- Update font-family
+- Fix route-planning anomalies around midnight
+- Add more contextual info messages
+- Maintain a list of known issues
+- Create a full user manual
+- Option to show the entire trip path on the map for each vehicle
+- Persist map position and zoom level
+- Integrate a free/open map 
 
-```bash
-ng generate component component-name
-```
+<br>
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## License
 
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+This project is licensed under the [GNU General Public License v3.0](./LICENSE).
+<br>
+Please note that all source code and content is subject to the terms of this license.

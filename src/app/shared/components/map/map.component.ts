@@ -7,7 +7,7 @@ import { PathService } from '../../../services/path.service';
 import { RoutePath, RoutePathSequence } from '../../models/path';
 import { MapTripService } from '../../../services/map-trip.service';
 import { MapService } from '../../../services/map.service';
-import { MapMode } from '../../models/map';
+import { MapMode, TripMapState } from '../../models/map';
 import { CurrentAppSettings } from '../../models/settings';
 import { GeolocationService } from '../../../services/geolocation.service';
 import { RealtimeService } from '../../../services/realtime.service';
@@ -36,6 +36,7 @@ export class MapComponent {
   private map!: L.Map;
 
   private mapType$ = new BehaviorSubject<'FREE' | 'TRIP'>('FREE');
+  private tripMapStatus: TripMapState | null = null;
 
   private currentTileLayer: L.TileLayer | null = null;
   private freeMapLayers: L.Layer | null = null;
@@ -50,15 +51,26 @@ export class MapComponent {
 
   // ----- ----- COMMON ----- ----- /
 
+  ngOnInit() {
+    this.mapTripService.mapCenterAndZoom$.subscribe((status: TripMapState | null) => {
+      this.tripMapStatus = status;
+    });
+
+    this.geolocationService.startTracking();
+  }
+
   ngOnChanges(changes: SimpleChanges) {
     if (changes['mapType']) {
       this.mapType$.next(this.mapType);
-    }
+    };
   }
 
   ngAfterViewInit() {
     this.initMap();
+    this.initIntersectionObserver();
+  }
 
+  initIntersectionObserver() {
     const observer = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
       const isVisible = entries.some((entry: IntersectionObserverEntry) => {
         return entry.isIntersecting
@@ -94,7 +106,7 @@ export class MapComponent {
   }
 
   initMap() {
-    this.map = this.mapService.initMap(this.mapContainer.nativeElement);
+    this.map = this.mapService.initMap(this.mapContainer.nativeElement, this.tripMapStatus);
   }
 
   updateMapContent(type: 'FREE' | 'TRIP') {
@@ -109,21 +121,30 @@ export class MapComponent {
     }
 
     if (type === 'FREE') {
-      this.freeMapLayers = L.circle([47.4979, 19.0402], {   // TODO LATER...
-        color: 'red',
-        radius: 500
-      }).addTo(this.map);
+      this.initFreeMap();
     }
 
     if (type === 'TRIP') {
       this.initRoutePath()
-        .pipe(takeUntil(this.destroy$))
-        .subscribe((routePath: RoutePath | null) => {
+        .pipe(
+          takeUntil(this.destroy$),
+          switchMap(routePath =>
+            this.initLocation().pipe(
+              map(position => ({ routePath, position }))
+            )
+          )
+        )
+        .subscribe(({ routePath, position }) => {
           this.initTripMap(routePath);
           this.initRealtimeData();
-          this.initLocation();
           this.updateMapLabelsVisibility();
+          this.locationMarker = this.mapService.updateLocationMarker(
+            this.map,
+            this.locationMarker,
+            position
+          );
         });
+
     }
 
     this.initMapEvents();
@@ -152,26 +173,21 @@ export class MapComponent {
   }
 
   initLocation() {
-    this.geolocationService.startTracking();
-
-    this.geolocationService.currentLocation$
+    return this.geolocationService.currentLocation$
       .pipe(
         takeUntil(this.destroy$),
         filter((pos): pos is { lat: number; lng: number; heading: number } => !!pos),
-        tap((pos) => {
-          this.locationMarker = this.mapTripService.updateLocationMarker(
-            this.map,
-            this.locationMarker,
-            pos
-          );
-        })
       )
-      .subscribe();
   }
 
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+
+    this.mapTripService.saveMapState({
+      center: this.map.getCenter(),
+      zoom: this.map.getZoom()
+    });
 
     if (this.map) {
       this.map.off();
@@ -202,7 +218,7 @@ export class MapComponent {
 
     const allPoints = selectedPath.sequences.flatMap((seq: RoutePathSequence) => seq.sequenceGeometry.points);
 
-    this.mapService.fitBounds(this.map, allPoints);
+    if (!this.tripMapStatus) this.mapService.fitBounds(this.map, allPoints);
 
     this.updateMapLabelsVisibility();
   }
@@ -253,13 +269,25 @@ export class MapComponent {
   // ----- ----- FREE ----- ----- /
 
   initFreeMap() {
-    console.log('init FREE map');
+    this.initLocation()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((
+        position: { lat: number; lng: number; heading: number }
+      ) => {
+        this.locationMarker = this.mapService.updateLocationMarker(
+          this.map,
+          this.locationMarker,
+          position
+        );
+        this.mapService.fitBounds(this.map, [L.latLng(position.lat, position.lng)]);
+        this.map.setZoom(15);
+      });
 
-    const circle = L.circle([47.497913, 19.040236], {
+    /* const circle = L.circle([47.497913, 19.040236], {
       color: 'red',
       fillColor: '#f03',
       fillOpacity: 0.5,
       radius: 500
-    }).addTo(this.map);
+    }).addTo(this.map); */
   }
 }

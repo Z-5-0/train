@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
 import * as L from 'leaflet';
-import { CircleMarkerDrawOptions, DivIconDrawOptions, DivIconDrawOptionsData, PolylineDrawOptions } from "../shared/models/map";
+import { CircleMarkerDrawOptions, DivIconDrawOptions, DivIconDrawOptionsData, PolylineDrawOptions, TripMapState } from "../shared/models/map";
 
 @Injectable({ providedIn: 'root' })
 export class MapService {
@@ -15,8 +15,14 @@ export class MapService {
         },
     ];
 
-    initMap(mapContainerNativeEl: HTMLDivElement) {
-        return L.map(mapContainerNativeEl, { center: [47.4979, 19.0402], zoom: 13, zoomControl: false });
+    initMap(mapContainerNativeEl: HTMLDivElement, mapStatus: TripMapState | null) {
+        const options: L.MapOptions = {
+            center: mapStatus ? L.latLng(mapStatus.center.lat, mapStatus.center.lng) : L.latLng(47.4979, 19.0402),
+            zoom: mapStatus?.zoom ?? 13,
+            zoomControl: false
+        };
+
+        return L.map(mapContainerNativeEl, options);
     }
 
     getTile(index: number) {
@@ -70,6 +76,29 @@ export class MapService {
         });
     }
 
+    updateLocationMarker(
+        map: L.Map,
+        marker: L.Marker | null, pos: { lat: number; lng: number; heading: number }
+    ): L.Marker {
+        const icon = this.drawDivIcon(
+            {
+                type: 'location',
+                point: [pos.lat, pos.lng],
+                icon: { class: 'fa-fw fa-solid fa-location-arrow', heading: pos.heading, },
+                containerClass: 'text-red-600 text-[24px] user-location',
+                iconAnchor: [12, 12],
+                iconSize: [24, 24]
+            }
+        )
+        if (marker) {
+            marker.setLatLng([pos.lat, pos.lng]);
+            marker.setIcon(icon.getIcon());
+            return marker;
+        }
+
+        return icon.addTo(map);
+    }
+
     drawPolyline({
         points,
         color,
@@ -115,15 +144,14 @@ export class MapService {
         color,
         icon,
         data,
-        containerClass,      // MUST
-        iconAnchor = [0, 0],        // MUST
-        iconSize = undefined,       // MUST
+        containerClass,
+        iconAnchor = [0, 0],
+        iconSize = undefined,
         interactive = true     // TODO = false
     }: DivIconDrawOptions
     ): L.Marker {
         let divIcon: L.DivIcon;
         const settings = { className: containerClass, iconAnchor, iconSize };
-        // const delayClass = status === 'early' ? 'early' : status === 'late' ? 'late' : null;
 
         switch (type) {
             case 'transport':

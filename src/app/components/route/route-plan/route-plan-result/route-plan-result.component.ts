@@ -8,6 +8,9 @@ import { NzTimelineModule } from 'ng-zorro-antd/timeline';
 import { RouteService } from '../../../../services/route.service';
 import { Route } from '../../../../shared/models/route';
 import { TRANSPORT_MODE } from '../../../../shared/constants/transport-mode';
+import { LocalStorageService } from '../../../../services/local-storage.service';
+import { TripMapState } from '../../../../shared/models/map';
+import { MapTripService } from '../../../../services/map-trip.service';
 
 
 @Component({
@@ -27,6 +30,8 @@ export class RoutePlanResultComponent {
   @Input() routeOptions: Route[] | null = null;
 
   routeService: RouteService = inject(RouteService);
+  localStorageService: LocalStorageService = inject(LocalStorageService);
+  mapTripService: MapTripService = inject(MapTripService);
 
   public transportMode = TRANSPORT_MODE as Record<string, { name: string; icon: string }>;
 
@@ -46,5 +51,6 @@ export class RoutePlanResultComponent {
     e.stopPropagation();
     this.selectedRoute = plan;
     this.routeService.setSelectedRoute(plan);
+    this.mapTripService.saveMapState(null);
   }
 }

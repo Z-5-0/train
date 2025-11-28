@@ -4,10 +4,47 @@ import { MapService } from "./map.service";
 import { TRANSPORT_MODE } from "../shared/constants/transport-mode";
 import { DelayStatus, TransportMode } from "../shared/models/common";
 import { TripPathOriginData, TripPathTransportData } from "../shared/models/trip-path";
+import { BehaviorSubject } from "rxjs";
+import { LocalStorageService } from "./local-storage.service";
+import * as L from 'leaflet';
+import { TripMapState } from "../shared/models/map";
 
 @Injectable({ providedIn: 'root' })
 export class MapTripService {
     private mapService: MapService = inject(MapService);
+    private localStorageService: LocalStorageService = inject(LocalStorageService);
+
+    private _mapCenterAndZoom$ = new BehaviorSubject<TripMapState | null>(null);
+    readonly mapCenterAndZoom$ = this._mapCenterAndZoom$.asObservable();
+
+    constructor() {
+        const saved = this.localStorageService.getItem<TripMapState>('tripMapStatus');
+
+        if (saved) {
+            this._mapCenterAndZoom$.next({
+                center: L.latLng(saved.center.lat, saved.center.lng),
+                zoom: saved.zoom
+            });
+        }
+    }
+
+    saveMapState(state: TripMapState | null) {
+        if (!state) {
+            this._mapCenterAndZoom$.next(null);
+            return;
+        }
+
+        this.localStorageService.setItem('tripMapStatus', {
+            center: { lat: state.center.lat, lng: state.center.lng },
+            zoom: state.zoom
+        });
+
+        this._mapCenterAndZoom$.next({ center: state.center, zoom: state.zoom });
+    }
+
+    getMapState(): TripMapState | null {
+        return this._mapCenterAndZoom$.getValue();
+    }
 
     createTripLayers(layerGroup: L.LayerGroup, sequences: RoutePathSequence[]) {
         layerGroup.clearLayers();
@@ -189,7 +226,7 @@ export class MapTripService {
         return layerGroup;
     }
 
-    updateLocationMarker(map: L.Map, marker: L.Marker | null, pos: { lat: number; lng: number; heading: number }): L.Marker {
+    /* updateLocationMarker(map: L.Map, marker: L.Marker | null, pos: { lat: number; lng: number; heading: number }): L.Marker {
         const icon = this.mapService.drawDivIcon(
             {
                 type: 'location',
@@ -207,5 +244,5 @@ export class MapTripService {
         }
 
         return icon.addTo(map);
-    }
+    } */
 }

@@ -64,11 +64,11 @@ export class RealtimeService {
         const nonWalkRealtimeTrips = realtimeTrips.filter((t): t is RealtimeTripData => t !== null);
 
         const tripStatusData = realtimeTrips.map((trip: RealtimeTripData | null) => {
+            const lastVehiclePosition = trip?.vehiclePositions?.[trip.vehiclePositions.length - 1];
+
             return {
                 tripsStoptimes: trip ? trip.stoptimes : [],
-                currentStopGtfsId: trip?.vehiclePositions?.length
-                    ? trip.vehiclePositions[trip.vehiclePositions.length - 1].stopRelationship.stop.gtfsId
-                    : null
+                currentStopGtfsId: lastVehiclePosition?.stopRelationship?.stop?.gtfsId ?? null
             }
         });
 
@@ -278,7 +278,7 @@ export class RealtimeService {
                 : lastTripStop.serviceDay + lastTripStop.scheduledDeparture + lastTripStop.departureDelay
         )
 
-        const now = DateTime.now().setZone('Europe/Budapest');
+        const now = DateTime.now().setZone('Europe/Budapest').plus({ minutes: 1 });
 
         if (transportFinished < now) {
             return { originStopPassed: true, destinationStopPassed: true };

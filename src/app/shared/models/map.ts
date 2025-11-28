@@ -78,3 +78,8 @@ interface DivIconDrawOptionsColoredIcon {
     class: string;
     color?: string
 }
+
+export interface TripMapState {
+    center: { lat: number; lng: number };
+    zoom: number;
+}

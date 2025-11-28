@@ -1,15 +1,49 @@
+<div class="p-4">
+    <nz-segmented [nzOptions]="tabs" [ngClass]="'w-full'" [nzBlock]="true" [nzSize]="'default'" [(ngModel)]="infoIndex"
+        (nzValueChange)="infoIndex = $event">
+    </nz-segmented>
+</div>
+
 <div class="h-full overflow-auto p-4 grid gap-4">
     <div class="">
-        <h3 class="dark-mode-text">Legend</h3>
+        @switch (infoIndex) {
+        @case (0) {
+        <h3 class="dark-mode-text">{{tabs[infoIndex].label}}</h3>
+        <div></div>
+        }
+        @case (1) {
+        <h3>{{tabs[infoIndex].label}}</h3>
+        <div>
+            <ul>
+                <li>Midnight trips sometimes show as 'Trip has finished' even though the trip is scheduled for the next
+                    day</li>
+                <li>Circles and heading indicators around vehicles sometimes remain visible when 'vehiclePosition' or
+                    'heading' is null</li>
+                <li>When all vehicles reach their final stop, the map does not always indicate 'All trips have been
+                    finished'</li>
+                <li>On initial map load, the circle around a vehicle can occasionally shift slightly to the left</li>
+                <li>Zoom level and map position are not persisted when returning to the map component</li>
+                <li>Error messages do not always appear consistently</li>
+                <li>Mobile layout issues: the URL bar may cause content to overflow</li>
+                <li>On mobile, route list item details can overflow horizontally</li>
+                <li>CORS errors may occur under certain configurations</li>
+                <li>Footer gradient is currently displayed on all views; it should only appear on Route and Transit
+                    views</li>
+                <li>User guide missing</li>
+                <li>API requests are handled by my own server; response times may be slow and occasionally delayed
+                    depending on network and device load</li>
+            </ul>
+        </div>
+        }
+        @case (2) {
+        <h3 class="dark-mode-text">{{tabs[infoIndex].label}}</h3>
         @for (mode of transportMode | keyvalue; track mode.key) {
         <div class="grid grid-cols-[auto_1fr] gap-x-2 items-center">
             <i [ngClass]="mode.value.icon"></i>
             <div>{{mode.value.label}}</div>
         </div>
         }
-    </div>
-    <div class="">
-        <h3 class="dark-mode-text">TODO</h3>
-        <div style="height: 1000px;"></div>
+        }
+        }
     </div>
 </div>

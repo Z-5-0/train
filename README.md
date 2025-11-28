@@ -20,24 +20,21 @@ A realtime transit route monitoring application built with modern Angular (v19) 
 - Save, reorder, and remove favorite routes for quick access
 - View trip summaries, including estimated travel time and required transfers
 - Select a route option to access full itinerary details and the interactive map
+- **Inspect each transit leg:**
+    - vehicle type
+    - real-time departure status
+    - scheduled vs. actual times
+    - current vehicle position and heading
+    - accessibility details
+    - service alerts
+- **Interactive map view showing:**
+    - full journey path
+    - all stops involved
+    - transfer points
+    - realtime vehicle positions
+- User settings (dark/light theme)
+- Documentation, legend, known issues
 
-### Inspect each transit leg:
-- vehicle type  
-- real-time departure status (on time, delayed, accelerated)  
-- scheduled vs. actual times  
-- current vehicle position and heading  
-- accessibility details (bike allowed, wheelchair access, etc.)  
-- service alerts (delays, detours)
-
-### Interactive map view showing:
-- the full journey path  
-- all stops involved  
-- transfer points  
-- the user’s current location (if permitted)  
-- realtime vehicle locations with direction
-
-- User settings, such as dark/light theme  
-- Built-in documentation, legend, and known issues section
 
 <br>
 

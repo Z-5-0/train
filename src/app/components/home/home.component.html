@@ -55,8 +55,9 @@
                         }
                     </div>
                     @if (card.footer) {
-                    <div class="footer relative p-4 has-before-gradient">
-                        <div class="text-sm tracking-wide">{{card.footer}}</div>
+                    <div class="footer relative p-4 text-{{card.footer.alignment}}"
+                        [ngClass]="{ 'has-before-gradient': card.footer.gradient }">
+                        <div class="text-sm tracking-wide">{{card.footer.text}}</div>
                     </div>
                     }
                 </div>

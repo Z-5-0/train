@@ -3,8 +3,14 @@ type HomeCard = {
   header: string;
   details: string;
   mapMode: 'FREE' | 'TRIP' | null;
-  footer: string;
+  footer: HomeCardFooter;
 };
+
+interface HomeCardFooter {
+  text: string,
+  alignment: 'left' | 'right' | 'center',
+  gradient: boolean
+}
 
 export const HOME_CARDS: HomeCard[] = [
   {
@@ -12,34 +18,54 @@ export const HOME_CARDS: HomeCard[] = [
     header: 'Route',
     details: 'selectedRoute',
     mapMode: 'TRIP',
-    footer: 'beta_v_0.1'
+    footer: {
+      text: 'beta v0.1',
+      alignment: 'right',
+      gradient: true
+    }
   },
   {
     index: 1,
     header: 'Map',
     details: '',
     mapMode: 'FREE',
-    footer: 'beta_v_0.1'
+    footer: {
+      text: 'beta v0.1',
+      alignment: 'right',
+      gradient: false
+    }
   },
   {
     index: 2,
     header: 'Settings',
     details: '',
     mapMode: null,
-    footer: 'beta_v_0.1'
+    footer: {
+      text: 'beta v0.1',
+      alignment: 'right',
+      gradient: false
+    }
   },
   {
     index: 3,
     header: 'Welcome',
     details: '',
     mapMode: null,
-    footer: 'beta_v_0.1'
+    footer: {
+      text: 'beta v0.1',
+      alignment: 'right',
+      gradient: false
+    }
   },
   {
     index: 4,
     header: 'Info',
     details: '',
     mapMode: null,
-    footer: 'beta_v_0.1'
+    footer: {
+      text: 'beta v0.1',
+      alignment: 'right',
+      gradient: false
+    }
   },
 ]

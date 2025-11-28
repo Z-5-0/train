@@ -41,8 +41,9 @@ A realtime transit route monitoring application built with modern Angular (v19) 
 ## Tech Stack
 
 - Angular 19
-- TypeScript / RxJS
-- Leaflet (interactive map)
+- TypeScript
+- RxJS
+- Leaflet
 - TailwindCSS
 - SCSS
 - Ant Design

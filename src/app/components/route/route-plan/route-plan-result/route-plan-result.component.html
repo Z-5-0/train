@@ -1,5 +1,5 @@
 <nz-collapse [nzExpandIconPosition]="'start'" class="dark-mode-background">
-    @for (route of routeOptions; track route; let routeIndex = $index) {
+    @for (route of routeOptions; track route.index; let routeIndex = $index) {
     <ng-template #headerTemplate let-index=index>
         <div
             class="absolute text-[20px] top-0 bottom-0 flex items-center text-[var(--color-mid-opacity-black)] blur-[1px]">

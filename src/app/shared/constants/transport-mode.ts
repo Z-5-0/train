@@ -87,7 +87,7 @@ export const TRANSPORT_MODE: Record<TransportMode, { name: string; label: string
     },
     ERROR: {
         name: '',
-        label: 'Error',
+        label: 'Missing/Error',
         icon: 'transport-icon fa-fw fa-solid fa-xmark text-violet-600',
         color: '#8B5CF6',
         lightColor: false

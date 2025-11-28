@@ -1,5 +1,5 @@
-<div class="h-full overflow-auto p-4 grid gap-4">
-    <div class="grid grid-cols-[1fr_1fr] gap-4 p-4">
+<div class="h-full overflow-auto px-4 pb-5 grid">
+    <div class="grid grid-cols-[1fr_1fr] pb-5 gap-4">
         <ng-container *ngFor="let setting of APP_SETTINGS | keyvalue: orderByIndex; trackBy: trackSetting">
             <div class="self-center">{{setting.value.label}}</div>
 
@@ -11,7 +11,7 @@
             </nz-segmented>
             }
             @case ('slider') {
-            <nz-slider [nzDots]="false" [nzMin]="setting.value.min" [nzMax]="setting.value.max"
+            <nz-slider [ngClass]="'!ml-5 !mr-5'" [nzDots]="false" [nzMin]="setting.value.min" [nzMax]="setting.value.max"
                 [nzStep]="setting.value.step" [nzMarks]="setting.value.marks" [ngModel]="settingsModel[setting.key]"
                 (nzOnAfterChange)="settingValueChange($event, setting.key)">
             </nz-slider>

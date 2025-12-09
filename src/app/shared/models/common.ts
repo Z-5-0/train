@@ -65,6 +65,17 @@ export interface GeometryCollection {
     geometries: Geometry[];
 }
 
+export interface MapTransportData {
+    vehicleId: string;
+    label: string | null;
+    heading: number | null;
+    speed: number | null;
+    mode: TransportMode;
+    modeData: ModeData;
+    geometry: PointGeometry,
+    tripGeometry: L.LatLngExpression[];
+}
+
 type Geometry =
     | PointGeometry
     | MultiPointGeometry

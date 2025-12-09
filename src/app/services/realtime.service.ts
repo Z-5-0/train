@@ -178,6 +178,7 @@ export class RealtimeService {
             const labelKey = TRANSPORT_MODE[vehicleMode].name as keyof typeof vehicle.trip.route;
             const vehicleLabel = vehicle.trip.route[labelKey];
             return {
+                vehicleId: vehicle.vehicleId,
                 label: vehicleLabel?.split(/[\/-]/)[0]?.replace(/\s/g, "")?.slice(0, 5) || null,
                 heading: vehicle.heading ?? null,
                 speed: vehicle.speed ?? null,

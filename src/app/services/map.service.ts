@@ -1,6 +1,8 @@
 import { Injectable } from "@angular/core";
 import * as L from 'leaflet';
 import { CircleMarkerDrawOptions, DivIconDrawOptions, DivIconDrawOptionsData, PolylineDrawOptions, TripMapState } from "../shared/models/map";
+import { TRANSPORT_MODE } from "../shared/constants/transport-mode";
+import { MapTransportData, TransportMode } from "../shared/models/common";
 
 @Injectable({ providedIn: 'root' })
 export class MapService {
@@ -15,14 +17,16 @@ export class MapService {
         },
     ];
 
-    initMap(mapContainerNativeEl: HTMLDivElement, mapStatus: TripMapState | null) {
+    private transportMarkers = new Map<string, L.Marker>();
+
+    initMap(container: HTMLDivElement) {
         const options: L.MapOptions = {
-            center: mapStatus ? L.latLng(mapStatus.center.lat, mapStatus.center.lng) : L.latLng(47.4979, 19.0402),
-            zoom: mapStatus?.zoom ?? 13,
+            center: L.latLng(47.4979, 19.0402),
+            zoom: 13,
             zoomControl: false
         };
 
-        return L.map(mapContainerNativeEl, options);
+        return L.map(container, options);
     }
 
     getTile(index: number) {
@@ -54,6 +58,77 @@ export class MapService {
         map.removeLayer(layer);
     }
 
+    updateTransportLayer(
+        layerGroup: L.LayerGroup,
+        transportLocations: MapTransportData[] | null
+    ): L.LayerGroup<L.Marker> | null {
+        if (!layerGroup || !transportLocations) return null;
+
+        const existingMarkers = this.transportMarkers;
+
+        transportLocations.forEach((vehicle: MapTransportData) => {
+            const id = vehicle.vehicleId;
+            const latlng: L.LatLngExpression = [
+                vehicle.geometry.coordinates[0],
+                vehicle.geometry.coordinates[1]
+            ];
+
+            if (existingMarkers.has(id)) {
+                const marker = existingMarkers.get(id)!;
+                this.animateMarker(marker, latlng, 500);
+                marker.setIcon(this.createTransportMarker(latlng, vehicle).getIcon());
+            } else {
+                const marker = this.createTransportMarker(latlng, vehicle).addTo(layerGroup);
+                existingMarkers.set(id, marker);
+            }
+        });
+
+        existingMarkers.forEach((marker: L.Marker, id: string) => {
+            if (!transportLocations.find((vehicle: MapTransportData) => vehicle.vehicleId === id)) {
+                layerGroup.removeLayer(marker);
+                existingMarkers.delete(id);
+            }
+        });
+
+        return layerGroup;
+    }
+
+    createTransportMarker(latlng: L.LatLngExpression, vehicle: MapTransportData) {
+        return this.drawDivIcon({
+            type: 'transport',
+            point: latlng,
+            label: { name: vehicle.label },
+            color: {
+                textColor: vehicle.modeData.color,
+                lightTextColor: TRANSPORT_MODE[vehicle.mode as TransportMode].lightColor
+            },
+            icon: {
+                class: TRANSPORT_MODE[vehicle.mode as TransportMode].icon,
+                heading: vehicle.heading || null
+            },
+            containerClass: 'map-vehicle-label',
+            iconAnchor: [12, 13],
+            iconSize: [24, 26]
+        })
+    }
+
+    animateMarker(marker: L.Marker, toLatLng: L.LatLngExpression, duration = 500) {
+        const from = marker.getLatLng();
+        const to = L.latLng(toLatLng);
+        const start = performance.now();
+
+        const step = (now: number) => {
+            const t = Math.min((now - start) / duration, 1);
+            const lat = from.lat + (to.lat - from.lat) * t;
+            const lng = from.lng + (to.lng - from.lng) * t;
+            marker.setLatLng([lat, lng]);
+
+            if (t < 1) requestAnimationFrame(step);
+        };
+
+        requestAnimationFrame(step);
+    }
+
     updateMapLabelsVisibility(
         zoom: number = 0,
         query: string[],
@@ -78,7 +153,8 @@ export class MapService {
 
     updateLocationMarker(
         map: L.Map,
-        marker: L.Marker | null, pos: { lat: number; lng: number; heading: number }
+        marker: L.Marker | null,
+        pos: { lat: number; lng: number; heading: number }
     ): L.Marker {
         const icon = this.drawDivIcon(
             {
@@ -147,7 +223,7 @@ export class MapService {
         containerClass,
         iconAnchor = [0, 0],
         iconSize = undefined,
-        interactive = true     // TODO = false
+        interactive = false
     }: DivIconDrawOptions
     ): L.Marker {
         let divIcon: L.DivIcon;
@@ -178,10 +254,9 @@ export class MapService {
                     `
                 });
                 break;
-            case 'transfer':        // TODO status: 'on time' not too elegant for className (start-time ...)
+            case 'transfer':
                 divIcon = L.divIcon({
                     ...settings,
-                    // <div class="dark-map-label ${color?.lightTextColor ? 'light' : ''}">
                     html: `
         <div class="dark-map-label ${color?.lightTextColor ? 'light' : ''}">
             <div class="" style="color: ${color?.textColor}">
@@ -226,7 +301,7 @@ export class MapService {
                 divIcon = L.divIcon({
                     ...settings,
                     html: `
-                        <div class="${containerClass}">
+                        <div>
                             <i class="${icon?.class}" ${icon?.heading ? `style="transform: rotate(${icon.heading}deg);"` : ''}></i>
                         </div>
                     `
@@ -236,7 +311,7 @@ export class MapService {
                 divIcon = L.divIcon({
                     ...settings,
                     html: `
-                        <div class="${containerClass}">
+                        <div>
                             <i class="${icon?.class}"></i>
                         </div>
                     `

@@ -108,6 +108,10 @@ export class RestApiService {
         return this.doRequest('post', `${this.apiUrl}get-route-path/`, event);
     }
 
+    public getNearbyVehicles(event: any): Observable<any> {    // TODO TYPES
+        return this.doRequest('post', `${this.apiUrl}get-nearby-vehicles/`, event);
+    }
+
     public getLocation(event: any): Observable<any> {    // TODO TYPES
         return this.doRequest('get', `${this.apiUrl}get-location`, event);
     }

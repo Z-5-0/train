@@ -1,8 +1,8 @@
-import { DelayStatus, ModeData, PointGeometry, TransportMode } from "./common";
+import { DelayStatus, MapTransportData, ModeData, PointGeometry, TransportMode } from "./common";
 
 export type TripPath = {
     originData: TripPathOriginData[];
-    transportData: TripPathTransportData[];
+    transportData: MapTransportData[];
 } | null;
 
 export interface TripPathOriginData {
@@ -27,16 +27,6 @@ export interface TripPathOriginTransportData {
     isPassed: boolean;
     mode: string;
     modeData: ModeData | null;
-}
-
-export interface TripPathTransportData {
-    label: string | null;
-    heading: number | null;
-    speed: number | null;
-    mode: TransportMode;
-    modeData: ModeData;
-    geometry: PointGeometry,
-    tripGeometry: L.LatLngExpression[];
 }
 
 export interface ExtendedVehiclePosition {

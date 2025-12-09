@@ -21,22 +21,22 @@ app.use((req, res, next) => {   // preflight OPTIONS response for all routes
 
 app.use(express.json());    // JSON body parse
 
+const MAVPLUSZ_GRAPHQL = 'https://mavplusz.hu/otp2-backend/otp/routers/default/index/graphql';
+const MAVPLUSZ_PLACES = 'https://mavplusz.hu/otp2-backend/otp/routers/default/geocode/stations';
+
 app.get('/get-places', async (req, res) => {
   try {
-    const mavResponse = await axios.get(
-      'https://emma.mav.hu/otp2-backend/otp/routers/default/geocode/stations',
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          "User-Agent": "Mozilla/5.0"
-        },
-        params: {
-          q: req.query.q,
-          limit: req.query.limit || 10
-        }
+    const mavResponse = await axios.get(MAVPLUSZ_PLACES, {
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "User-Agent": "Mozilla/5.0"
+      },
+      params: {
+        q: req.query.q,
+        limit: req.query.limit || 10
       }
-    );
+    });
 
     res.json(mavResponse.data);
   } catch (err) {
@@ -48,10 +48,10 @@ app.get('/get-places', async (req, res) => {
   }
 });
 
-app.post('/get-route', async (req, res) => {
+const graphqlProxy = async (req, res, errorMessage) => {
   try {
     const mavResponse = await axios.post(
-      'https://emma.mav.hu/otp2-backend/otp/routers/default/index/graphql',
+      MAVPLUSZ_GRAPHQL,
       {
         query: req.body.query,
         variables: req.body.variables
@@ -64,151 +64,24 @@ app.post('/get-route', async (req, res) => {
         }
       }
     );
-
     res.json(mavResponse.data);
   } catch (err) {
     console.error('❌ API ERROR:', err.response?.data || err.message);
     res.status(500).json({
-      error: 'GET routes unsuccessful',
+      error: errorMessage,
       detail: err.response?.data || err.message
     });
   }
-});
+};
 
-app.post('/get-train', async (req, res) => {
-  try {
-    const mavResponse = await axios.post(
-      'https://emma.mav.hu/otp2-backend/otp/routers/default/index/graphql',
-      {
-        query: req.body.query,
-        variables: req.body.variables
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "*/*",
-          "User-Agent": "Mozilla/5.0"
-        }
-      }
-    );
-
-    res.json(mavResponse.data);
-  } catch (err) {
-    console.error('❌ API ERROR:', err.response?.data || err.message);
-    res.status(500).json({
-      error: 'GET train unsuccessful',
-      detail: err.response?.data || err.message
-    });
-  }
-});
-
-app.post('/get-trip', async (req, res) => {
-  try {
-    const mavResponse = await axios.post(
-      'https://emma.mav.hu/otp2-backend/otp/routers/default/index/graphql',
-      {
-        query: req.body.query,
-        variables: req.body.variables
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "*/*",
-          "User-Agent": "Mozilla/5.0"
-        }
-      }
-    );
-
-    res.json(mavResponse.data);
-  } catch (err) {
-    console.error('❌ API ERROR:', err.response?.data || err.message);
-    res.status(500).json({
-      error: 'GET trip unsuccessful',
-      detail: err.response?.data || err.message
-    });
-  }
-});
-
-app.post('/get-trip-path', async (req, res) => {
-  try {
-    const mavResponse = await axios.post(
-      'https://emma.mav.hu/otp2-backend/otp/routers/default/index/graphql',
-      {
-        query: req.body.query,
-        variables: req.body.variables
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "*/*",
-          "User-Agent": "Mozilla/5.0"
-        }
-      }
-    );
-
-    res.json(mavResponse.data);
-  } catch (err) {
-    console.error('❌ API ERROR:', err.response?.data || err.message);
-    res.status(500).json({
-      error: 'GET trip path unsuccessful',
-      detail: err.response?.data || err.message
-    });
-  }
-});
-
-app.post('/get-vehicle-position', async (req, res) => {
-  try {
-    const mavResponse = await axios.post(
-      'https://emma.mav.hu/otp2-backend/otp/routers/default/index/graphql',
-      {
-        query: req.body.query,
-        variables: req.body.variables
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "*/*",
-          "User-Agent": "Mozilla/5.0"
-        }
-      }
-    );
-
-    res.json(mavResponse.data);
-  } catch (err) {
-    console.error('❌ API ERROR:', err.response?.data || err.message);
-    res.status(500).json({
-      error: 'GET vehicle location unsuccessful',
-      detail: err.response?.data || err.message
-    });
-  }
-});
-
-app.post('/get-route-path', async (req, res) => {
-  try {
-    const mavResponse = await axios.post(
-      'https://emma.mav.hu/otp2-backend/otp/routers/default/index/graphql',
-      {
-        query: req.body.query,
-        variables: req.body.variables
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "*/*",
-          "User-Agent": "Mozilla/5.0"
-        }
-      }
-    );
-
-    res.json(mavResponse.data);
-  } catch (err) {
-    console.error('❌ API ERROR:', err.response?.data || err.message);
-    res.status(500).json({
-      error: 'GET vehicle location unsuccessful',
-      detail: err.response?.data || err.message
-    });
-  }
-});
+// POST endpoints
+app.post('/get-route', (req, res) => graphqlProxy(req, res, 'GET routes unsuccessful'));
+app.post('/get-train', (req, res) => graphqlProxy(req, res, 'GET train unsuccessful'));
+app.post('/get-trip', (req, res) => graphqlProxy(req, res, 'GET trip unsuccessful'));
+app.post('/get-trip-path', (req, res) => graphqlProxy(req, res, 'GET trip path unsuccessful'));
+app.post('/get-vehicle-position', (req, res) => graphqlProxy(req, res, 'GET vehicle location unsuccessful'));
+app.post('/get-route-path', (req, res) => graphqlProxy(req, res, 'GET route path unsuccessful'));
+app.post('/get-nearby-vehicles', (req, res) => graphqlProxy(req, res, 'GET nearby vehicles unsuccessful'));
 
 app.get('/get-location', async (req, res) => {
   try {

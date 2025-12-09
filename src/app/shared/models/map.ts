@@ -83,3 +83,23 @@ export interface TripMapState {
     center: { lat: number; lng: number };
     zoom: number;
 }
+
+export interface CommonMapLayers {
+    userLocation: L.Marker | null;
+}
+
+export interface FreeMapLayers {
+    vehicles: L.LayerGroup;
+    // routePreview?: L.LayerGroup;
+    // ...
+}
+
+export interface TripMapLayers {
+    route: L.FeatureGroup;
+    stops: {
+        intermediate: L.LayerGroup;
+        boarding: L.LayerGroup;
+    };
+    vehicles: L.LayerGroup;
+    // routePreview?: L.LayerGroup;
+}

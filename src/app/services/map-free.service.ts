@@ -19,6 +19,7 @@ export class MapFreeService {
     readonly freeMapBounds$ = this._freeMapBounds$.asObservable();
 
     setBounds(bounds: L.LatLngBounds) {
+        // console.log('setBounds: ', bounds);
         this._freeMapBounds$.next(bounds);
     }
 

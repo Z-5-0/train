@@ -6,6 +6,9 @@ import { MapTransportData, TransportMode } from "../shared/models/common";
 
 @Injectable({ providedIn: 'root' })
 export class MapService {
+    private transportMarkersFree = new Map<string, L.Marker>();
+    private transportMarkersTrip = new Map<string, L.Marker>();
+
     tileTheme: { image: string; attribution: string }[] = [
         {
             image: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
@@ -60,34 +63,70 @@ export class MapService {
 
     updateTransportLayer(
         layerGroup: L.LayerGroup,
-        transportLocations: MapTransportData[] | null
+        transportLocations: MapTransportData[] | null,
+        options: { type: 'FREE' | 'TRIP' }
     ): L.LayerGroup<L.Marker> | null {
         if (!layerGroup || !transportLocations) return null;
 
-        const existingMarkers = this.transportMarkers;
+        const markersMap = options?.type === 'TRIP'
+            ? this.transportMarkersTrip
+            : this.transportMarkersFree;
 
-        transportLocations.forEach((vehicle: MapTransportData) => {
+        // *** NEW: TRIP-nél nézzük meg, hogy a layerGroup üres-e ***
+        const layerGroupIsEmpty = Object.keys((layerGroup as any)._layers).length === 0;
+
+        transportLocations.forEach(vehicle => {
             const id = vehicle.vehicleId;
             const latlng: L.LatLngExpression = [
                 vehicle.geometry.coordinates[0],
                 vehicle.geometry.coordinates[1]
             ];
 
-            if (existingMarkers.has(id)) {
-                const marker = existingMarkers.get(id)!;
+            const markerExists = markersMap.has(id);
+
+            // *** TRIP esetén: ha a layerGroup üres, akkor ÚJRA KELL rajzolni, nem smooth update-et futtatni ***
+            if (markerExists && !layerGroupIsEmpty) {
+                const marker = markersMap.get(id)!;
                 this.animateMarker(marker, latlng, 500);
                 marker.setIcon(this.createTransportMarker(latlng, vehicle).getIcon());
             } else {
                 const marker = this.createTransportMarker(latlng, vehicle).addTo(layerGroup);
-                existingMarkers.set(id, marker);
+                markersMap.set(id, marker);
             }
         });
 
-        existingMarkers.forEach((marker: L.Marker, id: string) => {
-            if (!transportLocations.find((vehicle: MapTransportData) => vehicle.vehicleId === id)) {
-                layerGroup.removeLayer(marker);
-                existingMarkers.delete(id);
-            }
+        if (options?.type === 'FREE') {
+            // csak a FREE map-nél tűnhetnek el a járművek
+            markersMap.forEach((marker, id) => {
+                if (!transportLocations.find(v => v.vehicleId === id)) {
+                    layerGroup.removeLayer(marker);
+                    markersMap.delete(id);
+                }
+            });
+        }
+
+        return layerGroup;
+    }
+
+    updateTransportLayerPlus(layerGroup: L.LayerGroup, transportLocations: MapTransportData[] | null): L.LayerGroup<L.Marker> | null {
+        if (!layerGroup) return null;
+        if (!transportLocations) return null;
+
+        layerGroup.clearLayers();
+
+        transportLocations.forEach((vehicle: MapTransportData) => {
+            layerGroup.addLayer(this.drawDivIcon(
+                {
+                    type: 'transport',
+                    point: [vehicle.geometry.coordinates[0], vehicle.geometry.coordinates[1]],
+                    label: { name: vehicle.label },
+                    color: { textColor: vehicle.modeData.color, lightTextColor: TRANSPORT_MODE[vehicle.mode as TransportMode].lightColor },
+                    icon: { class: TRANSPORT_MODE[vehicle.mode as TransportMode].icon, heading: vehicle.heading || null },
+                    containerClass: 'map-vehicle-label',
+                    iconAnchor: [12, 13],
+                    iconSize: [24, 26]
+                }
+            ));
         });
 
         return layerGroup;
@@ -127,6 +166,10 @@ export class MapService {
         };
 
         requestAnimationFrame(step);
+    }
+
+    clearFreeMapMarkers() {
+        this.transportMarkersFree.clear();
     }
 
     updateMapLabelsVisibility(

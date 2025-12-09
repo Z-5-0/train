@@ -112,7 +112,13 @@ export class MapComponent {
           .subscribe();
       }
 
+      if (this.mapType$.value === 'FREE') {
+        this.mapFreeService.setBounds(this.map.getBounds());    // TODO DELETE ???
+      }
+
       if (!isVisible && this.intersectionObserverSub) {
+        this.mapService.clearFreeMapMarkers();
+
         this.intersectionObserverSub.unsubscribe();
         this.intersectionObserverSub = undefined;
 
@@ -212,6 +218,7 @@ export class MapComponent {
   }
 
   ngOnDestroy() {
+    console.log('MAP DESTOYED !')
     this.destroy$.next();
     this.destroy$.complete();
 
@@ -265,7 +272,7 @@ export class MapComponent {
   updateFreeMapData(data: any) {
     if (!data || !this.freeMapLayers) return;
 
-    this.mapService.updateTransportLayer(this.freeMapLayers.vehicles, data || []);
+    this.mapService.updateTransportLayer(this.freeMapLayers.vehicles, data || [], { type: 'FREE' });
 
     this.updateMapLabelsVisibility();
   }
@@ -286,6 +293,8 @@ export class MapComponent {
   initTripMapLayers() {
     if (!this.map) return;    // TODO ERROR MESSAGE ?
     this.clearTripMapLayers();
+
+    console.log('initTripMapLayers');
 
     this.tripMapLayers = {
       route: L.featureGroup(),
@@ -349,16 +358,17 @@ export class MapComponent {
     if (!data || !this.tripMapLayers) return;
 
     this.mapTripService.updateTripOriginsLayer(this.tripMapLayers.stops.boarding, data.originData || []);
-    this.mapService.updateTransportLayer(this.tripMapLayers.vehicles, data.transportData || []);
+    this.mapService.updateTransportLayer(this.tripMapLayers.vehicles, data.transportData || [], { type: 'TRIP' });
 
     this.updateMapLabelsVisibility();
   }
 
   clearTripMapLayers() {
+    console.log('clearTripMapLayers');
     if (!this.tripMapLayers) return;
 
     this.map.removeLayer(this.tripMapLayers.route);
-    this.map.removeLayer(this.tripMapLayers.vehicles);
+    // this.map.removeLayer(this.tripMapLayers.vehicles);
     this.map.removeLayer(this.tripMapLayers.stops.intermediate);
     this.map.removeLayer(this.tripMapLayers.stops.boarding);
 

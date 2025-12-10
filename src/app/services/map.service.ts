@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
 import * as L from 'leaflet';
-import { CircleMarkerDrawOptions, DivIconDrawOptions, DivIconDrawOptionsData, PolylineDrawOptions, TripMapState } from "../shared/models/map";
+import { CircleMarkerDrawOptions, DivIconDrawOptions, DivIconDrawOptionsData, PolylineDrawOptions } from "../shared/models/map";
 import { TRANSPORT_MODE } from "../shared/constants/transport-mode";
 import { MapTransportData, TransportMode } from "../shared/models/common";
 
@@ -19,8 +19,6 @@ export class MapService {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         },
     ];
-
-    private transportMarkers = new Map<string, L.Marker>();
 
     initMap(container: HTMLDivElement) {
         const options: L.MapOptions = {
@@ -263,7 +261,7 @@ export class MapService {
         containerClass,
         iconAnchor = [0, 0],
         iconSize = undefined,
-        interactive = true     // TODO false
+        interactive = false
     }: DivIconDrawOptions
     ): L.Marker {
         let divIcon: L.DivIcon;

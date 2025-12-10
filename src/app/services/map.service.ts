@@ -72,7 +72,6 @@ export class MapService {
             ? this.transportMarkersTrip
             : this.transportMarkersFree;
 
-        // *** NEW: TRIP-nél nézzük meg, hogy a layerGroup üres-e ***
         const layerGroupIsEmpty = Object.keys((layerGroup as any)._layers).length === 0;
 
         transportLocations.forEach(vehicle => {
@@ -84,7 +83,6 @@ export class MapService {
 
             const markerExists = markersMap.has(id);
 
-            // *** TRIP esetén: ha a layerGroup üres, akkor ÚJRA KELL rajzolni, nem smooth update-et futtatni ***
             if (markerExists && !layerGroupIsEmpty) {
                 const marker = markersMap.get(id)!;
                 this.animateMarker(marker, latlng, 500);
@@ -96,7 +94,6 @@ export class MapService {
         });
 
         if (options?.type === 'FREE') {
-            // csak a FREE map-nél tűnhetnek el a járművek
             markersMap.forEach((marker, id) => {
                 if (!transportLocations.find(v => v.vehicleId === id)) {
                     layerGroup.removeLayer(marker);
@@ -266,7 +263,7 @@ export class MapService {
         containerClass,
         iconAnchor = [0, 0],
         iconSize = undefined,
-        interactive = false
+        interactive = true     // TODO false
     }: DivIconDrawOptions
     ): L.Marker {
         let divIcon: L.DivIcon;

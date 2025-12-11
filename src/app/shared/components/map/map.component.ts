@@ -199,7 +199,7 @@ export class MapComponent {
 
     if (this.mapType === 'FREE') {
       this.map.on('moveend zoomend', () => {
-        this.mapFreeService.setBounds(this.map.getBounds());
+        this.mapFreeService.setBounds(this.map.getBounds(), this.map.getZoom());
       });
     }
   }
@@ -260,9 +260,9 @@ export class MapComponent {
         switchMap(autoUpdate =>
           autoUpdate
             ? this.mapFreeService.startFreeMapDataPolling()
-            : this.mapFreeService.freeMapBounds$.pipe(
+            : this.mapFreeService.freeMapPosition$.pipe(
               filter(bounds => !!bounds),
-              switchMap(bounds => this.mapFreeService.getFreeMapData(bounds!))
+              switchMap(bounds => this.mapFreeService.getFreeMapData(bounds.bounds, bounds.zoom))
             )
         ),
         tap(data => this.updateFreeMapData(data)),

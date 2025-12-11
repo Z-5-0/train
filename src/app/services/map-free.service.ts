@@ -15,34 +15,37 @@ export class MapFreeService {
     appSettingsService: AppSettingsService = inject(AppSettingsService);
     restApi: RestApiService = inject(RestApiService);
 
-    private _freeMapBounds$ = new BehaviorSubject<any | null>(null);
-    readonly freeMapBounds$ = this._freeMapBounds$.asObservable();
+    private _freeMapPosition$ = new BehaviorSubject<{ bounds: L.LatLngBounds, zoom: number } | null>(null);
+    readonly freeMapPosition$ = this._freeMapPosition$.asObservable();
 
-    setBounds(bounds: L.LatLngBounds) {
-        // console.log('setBounds: ', bounds);
-        this._freeMapBounds$.next(bounds);
+    setBounds(bounds: L.LatLngBounds, zoom: number) {
+        this._freeMapPosition$.next({ bounds, zoom });
     }
 
     startFreeMapDataPolling() {
-        // console.log('startFreeMapDataPolling: ', this.freeMapBounds$);
-
         return combineLatest([
             this.appSettingsService.appSettings$.pipe(map(settings => settings['updateTime'])),
-            this._freeMapBounds$.pipe(filter(b => !!b))   // bounding box must exist
+            this._freeMapPosition$.pipe(filter(b => !!b))   // bounding box must exist
         ]).pipe(
             switchMap(([ms, bounds]) =>
                 interval(ms).pipe(
                     startWith(0),
-                    switchMap(() => this.getFreeMapData(bounds))
+                    switchMap(() => this.getFreeMapData(bounds.bounds, bounds.zoom))
                 )
             )
         );
     }
 
-    getFreeMapData(bounds: L.LatLngBounds): Observable<MapTransportData[]> {
+    getFreeMapData(bounds: L.LatLngBounds, zoom: number): Observable<MapTransportData[]> {
+        const query = createNearbyVehiclesQuery(bounds, zoom);
+
+        if (!query) {
+            return of([]);
+        }
+
         return this.restApi.getNearbyVehicles({
             body: {
-                query: createNearbyVehiclesQuery(bounds),  // swLat: number, swLon: number, neLat: number, neLon: number
+                query,  // swLat: number, swLon: number, neLat: number, neLon: number
                 variables: {}
             },
             debounceTime: false

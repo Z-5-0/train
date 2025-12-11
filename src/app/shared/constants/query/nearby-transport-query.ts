@@ -2,11 +2,17 @@ import { TRANSPORT_MODE } from "../transport-mode";
 
 export function createNearbyVehiclesQuery(
   bounds: L.LatLngBounds,
-  modes: string[] = Object.keys(TRANSPORT_MODE)
-    .filter(mode => !['WALK', 'GPS', 'ERROR'].includes(mode))
+  zoom: number
 ): string {
   const sw = bounds.getSouthWest();
   const ne = bounds.getNorthEast();
+
+  const modes = Object.entries(TRANSPORT_MODE)
+    .filter(([mode, modeData]) => modeData.minVisibleZoom !== null)
+    .filter(([mode, modeData]) => (modeData.minVisibleZoom as number) <= zoom)
+    .map(([mode, modeData]) => mode);
+
+  if (modes.length === 0) return '';
 
   return `
     {
@@ -15,7 +21,7 @@ export function createNearbyVehiclesQuery(
         swLon: ${sw.lng},
         neLat: ${ne.lat},
         neLon: ${ne.lng},
-        modes: [${modes.join(',')}]
+        ${modes.length ? `modes: [${modes.join(',')}]` : ''}
       ) {
         vehicleId
         lat

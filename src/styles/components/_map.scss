@@ -65,8 +65,8 @@ map {
                 position: absolute;
                 top: -14px;
                 left: 50%;
-                transform: translateX(-50%);
-                display: flex;
+                // transform: translateX(-50%);
+                display: grid;
 
                 .inner-circle {
                     width: 50px;

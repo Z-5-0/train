@@ -264,7 +264,7 @@
 
 <ng-template #currentStopLabelTemplate>
     <div
-        class="inline-grid grid-cols-[auto_1fr] gap-[5px] leading-none items-center bg-[var(--color-light-grey)] p-[5px] rounded-[5px] dark-mode-background dark-mode-border mr-1">
+        class="grid grid-cols-[auto_1fr] gap-[5px] leading-none items-center bg-[var(--color-light-grey)] p-[5px] rounded-[5px] dark-mode-background dark-mode-border mr-1">
         <i [ngClass]="currentTrip.transportInfo?.vehicle?.status | stopStatus:'icon'"
             [ngStyle]="{color: 'var(' + (currentTrip.transportInfo?.vehicle?.status | stopStatus:'color') + ')'}"></i>
         <span>{{currentTrip.transportInfo?.vehicle?.status | stopStatus:'label'}}</span>
@@ -280,7 +280,7 @@
 <ng-template #currentOriginStopLabelTemplate>
     <div>
         <div
-            class="inline-grid gap-x-1 items-center bg-[var(--color-light-grey)] p-[5px] rounded-[5px] dark-mode-background dark-mode-border mr-1">
+            class="grid gap-x-1 items-center bg-[var(--color-light-grey)] p-[5px] rounded-[5px] dark-mode-background dark-mode-border mr-1">
             <div class="text-right">
                 <nz-badge class="status-badge small p-2" [ngStyle]="{'margin-right': '8px'}" [ngClass]="{
                         'success': currentOriginStop?.delay?.status === 'on time',

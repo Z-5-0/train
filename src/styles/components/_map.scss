@@ -44,12 +44,12 @@ map {
 
             .name {
                 position: absolute;
-                top: -40px;
+                top: -33px;
                 left: 50%;
                 transform: translateX(-50%);
                 font-weight: bold;
                 background: color.$map-label-background-color;
-                padding: 2px;
+                padding: 0 4px;
                 border-radius: 5px;
 
                 &.light {
@@ -63,14 +63,14 @@ map {
 
             .direction-container {
                 position: absolute;
-                top: -14px;
+                top: -8px;
                 left: 50%;
                 // transform: translateX(-50%);
                 display: grid;
 
                 .inner-circle {
-                    width: 50px;
-                    height: 50px;
+                    width: 35px;
+                    height: 35px;
                     border-radius: 50%;
                     border-style: solid;
                     border-width: 3px;
@@ -80,7 +80,7 @@ map {
 
                 .arrow {
                     position: absolute;
-                    top: -18px;
+                    top: -17px;
                     left: 50%;
                     transform: translateX(-50%);
                     width: 20px;

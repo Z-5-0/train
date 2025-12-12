@@ -198,8 +198,8 @@ export class MapService {
             {
                 type: 'location',
                 point: [pos.lat, pos.lng],
-                icon: { class: 'fa-fw fa-solid fa-location-arrow', heading: pos.heading, },
-                containerClass: 'text-red-600 text-[24px] user-location',
+                icon: { class: 'fa-fw fa-solid fa-location-arrow text-[24px]', heading: pos.heading, },
+                containerClass: '!flex text-red-600 user-location',
                 iconAnchor: [12, 12],
                 iconSize: [24, 24]
             }
@@ -261,7 +261,7 @@ export class MapService {
         containerClass,
         iconAnchor = [0, 0],
         iconSize = undefined,
-        interactive = false
+        interactive = true      // TODO FALSE
     }: DivIconDrawOptions
     ): L.Marker {
         let divIcon: L.DivIcon;
@@ -339,9 +339,7 @@ export class MapService {
                 divIcon = L.divIcon({
                     ...settings,
                     html: `
-                        <div>
-                            <i class="${icon?.class}" ${icon?.heading ? `style="transform: rotate(${icon.heading}deg);"` : ''}></i>
-                        </div>
+                        <i class="${icon?.class}" ${icon?.heading ? `style="transform: rotate(${icon.heading}deg);"` : ''}></i>
                     `
                 });
                 break;

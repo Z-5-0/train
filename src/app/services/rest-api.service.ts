@@ -100,6 +100,10 @@ export class RestApiService {
         return this.doRequest('post', `${this.apiUrl}get-trip-path/`, event);
     }
 
+    public getVehicleTrip(event: any): Observable<any> {    // TODO TYPES
+        return this.doRequest('post', `${this.apiUrl}get-vehicle-trip/`, event);
+    }
+
     public getVehiclePosition(event: any): Observable<any> {    // TODO TYPES
         return this.doRequest('post', `${this.apiUrl}get-vehicle-position/`, event);
     }

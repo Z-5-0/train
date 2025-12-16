@@ -3,6 +3,7 @@ import * as L from 'leaflet';
 import { CircleMarkerDrawOptions, DivIconDrawOptions, DivIconDrawOptionsData, PolylineDrawOptions } from "../shared/models/map";
 import { TRANSPORT_MODE } from "../shared/constants/transport-mode";
 import { MapTransportData, TransportMode } from "../shared/models/common";
+import polyline from '@mapbox/polyline';
 
 @Injectable({ providedIn: 'root' })
 export class MapService {
@@ -62,8 +63,10 @@ export class MapService {
     updateTransportLayer(
         layerGroup: L.LayerGroup,
         transportLocations: MapTransportData[] | null,
-        options: { type: 'FREE' | 'TRIP' }
+        options: { type: 'FREE' | 'TRIP' },
+        onClick: (vehicle: MapTransportData) => void
     ): L.LayerGroup<L.Marker> | null {
+        console.log('transportLocations: ', transportLocations);
         if (!layerGroup || !transportLocations) return null;
 
         const markersMap = options?.type === 'TRIP'
@@ -84,9 +87,9 @@ export class MapService {
             if (markerExists && !layerGroupIsEmpty) {
                 const marker = markersMap.get(id)!;
                 this.animateMarker(marker, latlng, 500);
-                marker.setIcon(this.createTransportMarker(latlng, vehicle).getIcon());
+                marker.setIcon(this.createTransportMarker(latlng, vehicle, onClick).getIcon());
             } else {
-                const marker = this.createTransportMarker(latlng, vehicle).addTo(layerGroup);
+                const marker = this.createTransportMarker(latlng, vehicle, onClick).addTo(layerGroup);
                 markersMap.set(id, marker);
             }
         });
@@ -103,32 +106,12 @@ export class MapService {
         return layerGroup;
     }
 
-    updateTransportLayerPlus(layerGroup: L.LayerGroup, transportLocations: MapTransportData[] | null): L.LayerGroup<L.Marker> | null {
-        if (!layerGroup) return null;
-        if (!transportLocations) return null;
-
-        layerGroup.clearLayers();
-
-        transportLocations.forEach((vehicle: MapTransportData) => {
-            layerGroup.addLayer(this.drawDivIcon(
-                {
-                    type: 'transport',
-                    point: [vehicle.geometry.coordinates[0], vehicle.geometry.coordinates[1]],
-                    label: { name: vehicle.label },
-                    color: { textColor: vehicle.modeData.color, lightTextColor: TRANSPORT_MODE[vehicle.mode as TransportMode].lightColor },
-                    icon: { class: TRANSPORT_MODE[vehicle.mode as TransportMode].icon, heading: vehicle.heading || null },
-                    containerClass: 'map-vehicle-label',
-                    iconAnchor: [12, 13],
-                    iconSize: [24, 26]
-                }
-            ));
-        });
-
-        return layerGroup;
-    }
-
-    createTransportMarker(latlng: L.LatLngExpression, vehicle: MapTransportData) {
-        return this.drawDivIcon({
+    createTransportMarker(
+        latlng: L.LatLngExpression,
+        vehicle: MapTransportData,
+        onClick: (vehicle: MapTransportData) => void
+    ) {
+        const marker = this.drawDivIcon({
             type: 'transport',
             point: latlng,
             label: { name: vehicle.label },
@@ -142,8 +125,15 @@ export class MapService {
             },
             containerClass: 'map-vehicle-label',
             iconAnchor: [12, 13],
-            iconSize: [24, 26]
-        })
+            iconSize: [24, 26],
+            interactive: true
+        });
+
+        marker.on('click', () => {
+            onClick(vehicle);
+        });
+
+        return marker;
     }
 
     animateMarker(marker: L.Marker, toLatLng: L.LatLngExpression, duration = 500) {
@@ -161,6 +151,44 @@ export class MapService {
         };
 
         requestAnimationFrame(step);
+    }
+
+    createTransportTrip(
+        layerGroup: L.LayerGroup,
+        stops: any,
+            vehicle: MapTransportData) {     // TODO TYPE
+        if (!layerGroup) return;
+
+        console.log('vehicle: ', vehicle);
+
+        layerGroup.clearLayers();
+
+        layerGroup.addLayer(this.drawPolyline({
+            points: vehicle.tripGeometry,
+            color: vehicle.modeData.color,
+            weight: 1,
+            className: 'map-vehicle-polyline'
+        }));
+
+        stops.forEach((stop: any) => {     // TODO TYPE
+            layerGroup.addLayer(this.drawCircleMarker({
+                point: stop.geometry.coordinates,
+                color: vehicle.modeData.color,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: vehicle.modeData.color,
+                weight: 1,
+                radius: 2
+            }));
+
+            layerGroup.addLayer(this.drawDivIcon({
+                type: 'stop',
+                point: stop.geometry.coordinates,
+                label: { name: stop.label },
+                color: { textColor: vehicle.modeData.color, lightTextColor: TRANSPORT_MODE[vehicle.mode].lightColor },
+                containerClass: 'map-rest-stop-label',
+            }));
+        });
     }
 
     clearFreeMapMarkers() {
@@ -261,7 +289,7 @@ export class MapService {
         containerClass,
         iconAnchor = [0, 0],
         iconSize = undefined,
-        interactive = true      // TODO FALSE
+        interactive = true     // TODO false
     }: DivIconDrawOptions
     ): L.Marker {
         let divIcon: L.DivIcon;

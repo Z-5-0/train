@@ -37,6 +37,7 @@ export interface ExtendedVehiclePosition {
     speed: number;
     lastUpdated: number;
     trip: {
+        id: string,
         route: {
             shortName: string | null,
             longName: string | null,

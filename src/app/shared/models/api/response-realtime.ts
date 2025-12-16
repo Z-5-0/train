@@ -24,6 +24,7 @@ export interface RealtimeVehiclePosition {
     lon: number
     speed: number;
     trip: {
+        id: string,
         route: {
             shortName: string | null;
             longName: string | null;

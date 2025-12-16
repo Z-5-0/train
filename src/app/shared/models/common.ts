@@ -72,7 +72,8 @@ export interface MapTransportData {
     speed: number | null;
     mode: TransportMode;
     modeData: ModeData;
-    geometry: PointGeometry,
+    geometry: PointGeometry;
+    tripGtfsId: string;
     tripGeometry: L.LatLngExpression[];
 }
 

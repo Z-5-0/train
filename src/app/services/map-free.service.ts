@@ -75,6 +75,7 @@ export class MapFreeService {
                     type: 'Point',
                     coordinates: [vehicle.lat, vehicle.lon]
                 } as PointGeometry,
+                tripGtfsId: vehicle.trip.id,
                 tripGeometry: polyline.decode(vehicle.trip.tripGeometry.points) as [number, number][]
             }
         });

@@ -4,7 +4,7 @@ import { AppSettingsService } from './app-settings.service';
 import { DateTime, Duration } from 'luxon';
 import { TRANSPORT_MODE } from '../shared/constants/transport-mode';
 import { RestApiService } from "./rest-api.service";
-import { catchError, interval, map, Observable, of, startWith, switchMap, throwError } from "rxjs";
+import { catchError, interval, map, Observable, of, startWith, switchMap, tap, throwError } from "rxjs";
 import { DelayStatus, PointGeometry, TransportMode } from "../shared/models/common";
 import polyline from '@mapbox/polyline';
 import { MessageService } from "./message.service";
@@ -35,6 +35,7 @@ export class RealtimeService {
     }
 
     getRealtimeData(): Observable<TripPath | null> {
+        // console.log('start');
         const ids = this.routeService.getSelectedTripIds();
 
         if (!ids.length) {
@@ -49,6 +50,7 @@ export class RealtimeService {
             debounceTime: false
         }).pipe(
             map((response: RealtimeTripResponse) => this.createRealtimeData(response)),
+            // tap(() => console.log('update')),
             catchError(err => {
                 // TODO MESSAGE
                 return throwError(() => err);       // pushes error towards components
@@ -188,6 +190,7 @@ export class RealtimeService {
                     type: 'Point',
                     coordinates: [vehicle.lat, vehicle.lon]
                 } as PointGeometry,
+                tripGtfsId: vehicle.trip.id,
                 tripGeometry: polyline.decode(vehicle.tripGeometry.points) as [number, number][]
             }
         })

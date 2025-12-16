@@ -5,7 +5,6 @@ export function createTripQuery(gtfsId: string, day: string = DateTime.now().toF
     query {
       trip(id: "${gtfsId}", serviceDay: "${day}") {
         id: gtfsId
-
         alerts(types: [ROUTE, TRIP]) {
           alertHash
           alertUrl

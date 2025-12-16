@@ -1,5 +1,4 @@
 import { DelayStatus } from "./common";
-import { TripPathOriginTransportData } from "./trip-path";
 
 export type MapMode = 'FREE' | 'TRIP';
 
@@ -58,10 +57,11 @@ interface DivIconDrawOptionsLabel {
 }
 
 export interface DivIconDrawOptionsData {
+    label: DivIconDrawOptionsDataLabel,
     class?: string,
     status?: DelayStatus,
     time?: string | null,
-    label: DivIconDrawOptionsDataLabel
+    track?: any     // TODO TYPE
 }
 
 interface DivIconDrawOptionsDataLabel {
@@ -90,7 +90,7 @@ export interface CommonMapLayers {
 
 export interface FreeMapLayers {
     vehicles: L.LayerGroup;
-    // routePreview?: L.LayerGroup;
+    routePreview: L.LayerGroup;
     // ...
 }
 
@@ -101,5 +101,5 @@ export interface TripMapLayers {
         boarding: L.LayerGroup;
     };
     vehicles: L.LayerGroup;
-    // routePreview?: L.LayerGroup;
+    routePreview: L.LayerGroup;
 }

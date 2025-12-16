@@ -37,6 +37,7 @@ export function createTripPathQuery(
           speed
           lastUpdated
           trip {
+            id: gtfsId
             route {
               shortName
               longName

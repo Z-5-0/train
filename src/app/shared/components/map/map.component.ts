@@ -13,6 +13,8 @@ import { RealtimeService } from '../../../services/realtime.service';
 import { TripPath } from '../../models/trip-path';
 import { MapFreeService } from '../../../services/map-free.service';
 import { CommonMapLayers, FreeMapLayers, TripMapLayers } from '../../models/map';
+import { MapTransportData } from '../../models/common';
+import { VehicleService } from '../../../services/vehicle.service';
 
 @Component({
   selector: 'map',
@@ -34,6 +36,7 @@ export class MapComponent {
   private mapTripService: MapTripService = inject(MapTripService);
   private mapFreeService: MapFreeService = inject(MapFreeService);
   private geolocationService: GeolocationService = inject(GeolocationService);
+  private vehicleService: VehicleService = inject(VehicleService);
 
   private map!: L.Map;
 
@@ -211,6 +214,7 @@ export class MapComponent {
       this.map.getZoom(),
       [
         '.map-stop-label',
+        '.map-rest-stop-label',
         '.map-vehicle-label .name',
         '.map-vehicle-label .direction-container'
       ],
@@ -245,6 +249,7 @@ export class MapComponent {
 
     this.freeMapLayers = {
       vehicles: L.layerGroup(),
+      routePreview: L.layerGroup()
     };
 
     this.freeMapLayers.vehicles.addTo(this.map);
@@ -274,7 +279,12 @@ export class MapComponent {
   updateFreeMapData(data: any) {
     if (!data || !this.freeMapLayers) return;
 
-    this.mapService.updateTransportLayer(this.freeMapLayers.vehicles, data || [], { type: 'FREE' });
+    this.mapService.updateTransportLayer(
+      this.freeMapLayers.vehicles,
+      data || [],
+      { type: 'FREE' },
+      (vehicle) => this.onVehicleMarkerClick(vehicle)
+    );
 
     this.updateMapLabelsVisibility();
   }
@@ -305,12 +315,14 @@ export class MapComponent {
         boarding: L.layerGroup()
       },
       vehicles: L.layerGroup(),
+      routePreview: L.layerGroup()
     };
 
     this.tripMapLayers.route.addTo(this.map);
     this.tripMapLayers.stops.intermediate.addTo(this.map);
     this.tripMapLayers.stops.boarding.addTo(this.map);
     this.tripMapLayers.vehicles.addTo(this.map);
+    this.tripMapLayers.routePreview.addTo(this.map);
   }
 
   getTripRouteData() {
@@ -359,10 +371,50 @@ export class MapComponent {
   updateTripMapData(data: TripPath) {
     if (!data || !this.tripMapLayers) return;
 
-    this.mapTripService.updateTripOriginsLayer(this.tripMapLayers.stops.boarding, data.originData || []);
-    this.mapService.updateTransportLayer(this.tripMapLayers.vehicles, data.transportData || [], { type: 'TRIP' });
+    console.log('trip data: ', data);
+
+    this.mapTripService.updateTripOriginsLayer(
+      this.tripMapLayers.stops.boarding,
+      data.originData || []
+    );
+
+    this.mapService.updateTransportLayer(
+      this.tripMapLayers.vehicles,
+      data.transportData || [],
+      { type: 'TRIP' },
+      (vehicle) => this.onVehicleMarkerClick(vehicle)
+    );
 
     this.updateMapLabelsVisibility();
+  }
+
+  onVehicleMarkerClick(vehicle: MapTransportData) {
+    if (!this.tripMapLayers?.routePreview || !vehicle.tripGeometry) return;
+
+    const previewLayer = this.tripMapLayers.routePreview;
+
+    if (vehicle.tripGtfsId === (previewLayer.options as any).tripGtfsId) {
+      previewLayer.clearLayers();
+      (previewLayer.options as any).tripGtfsId = undefined;
+      return;
+    }
+
+    previewLayer.clearLayers();
+    (previewLayer.options as any).tripGtfsId = vehicle.tripGtfsId;
+
+    this.vehicleService.getVehicleTripData(vehicle.tripGtfsId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(tripData => {
+        if (!this.tripMapLayers?.routePreview) return;
+
+        this.mapService.createTransportTrip(previewLayer, tripData, vehicle);
+
+        this.updateMapLabelsVisibility();
+      });
+
+    // + STOP DOTS
+
+    console.log(this.tripMapLayers);
   }
 
   clearTripMapLayers() {
@@ -372,6 +424,7 @@ export class MapComponent {
     this.map.removeLayer(this.tripMapLayers.vehicles);
     this.map.removeLayer(this.tripMapLayers.stops.intermediate);
     this.map.removeLayer(this.tripMapLayers.stops.boarding);
+    this.map.removeLayer(this.tripMapLayers.routePreview);
 
     this.tripMapLayers = null;
   }

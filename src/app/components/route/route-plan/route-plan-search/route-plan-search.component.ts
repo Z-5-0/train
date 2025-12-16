@@ -10,7 +10,7 @@ import { Route } from '../../../../shared/models/route';
 import { RouteService } from '../../../../services/route.service';
 import { TRANSPORT_MODE } from '../../../../shared/constants/transport-mode';
 import { GeolocationService } from '../../../../services/geolocation.service';
-import { map, Subject, take, takeUntil, tap } from 'rxjs';
+import { catchError, map, Subject, take, takeUntil, tap, throwError } from 'rxjs';
 import { MessageService } from '../../../../services/message.service';
 import { GEOLOCATION_ERROR_MESSAGE } from '../../../../shared/constants/error-geolocation';
 import { NzModalModule } from 'ng-zorro-antd/modal';
@@ -173,6 +173,7 @@ export class RoutePlanSearchComponent {
       take(1),
       map((resp: PlaceApiResponse) => this.transformPlaces(resp.features)),
       tap((placesByMode) => {
+        console.log('placesByMode: ', placesByMode);
         this.routeService.setPlaceCollection(streamName, placesByMode);
         this.updatePlaceProperty(streamName, placesByMode);
 
@@ -286,5 +287,64 @@ export class RoutePlanSearchComponent {
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  // TODO !!!
+
+  test() {
+    const test = this.restApi.getVehicleTrip({
+      body: {
+        query: this.createNearbyStopsQuery(47.58276360079046, 19.106094026507236),
+        variables: {}
+      },
+      debounceTime: false
+    }).pipe(
+      map((response: any) => response),      // TODO TYPE
+      // tap(() => console.log('update')),
+      catchError(err => {
+        // TODO MESSAGE
+        return throwError(() => err);       // pushes error towards components
+        // return of({ data: null });       // TODO ?
+      })
+    );
+
+    console.log(test);
+  }
+
+  createNearbyStopsQuery(
+    lat: number,
+    lon: number,
+    radius = 400
+  ) {
+    return `
+    query {
+      stopsByRadius(
+        lat: ${lat}
+        lon: ${lon}
+        radius: ${radius}
+      ) {
+        edges {
+          node {
+            distance
+            stop {
+              gtfsId
+              name
+              lat
+              lon
+              platformCode
+              routes {
+                gtfsId
+                shortName
+                longName
+                mode
+                color
+                textColor
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
   }
 }

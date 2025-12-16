@@ -15,24 +15,9 @@
         <h3>{{tabs[infoIndex].label}}</h3>
         <div class="pb-2">
             <ul>
-                <li>Midnight trips sometimes show as 'Trip has finished' even though the trip is scheduled for the next
-                    day</li>
-                <li>Circles and heading indicators around vehicles sometimes remain visible when 'vehiclePosition' or
-                    'heading' is null</li>
-                <li>When all vehicles reach their final stop, the map does not always indicate 'All trips have been
-                    finished'</li>
-                <li>On initial map load, the circle around a vehicle can occasionally shift slightly to the left</li>
-                <li>Zoom level and map position are not persisted when returning to the map component</li>
-                <li>Error messages do not always appear consistently</li>
-                <li>Mobile layout issues: the URL bar may cause content to overflow</li>
-                <li>On mobile, route list item details can overflow horizontally</li>
-                <li>CORS errors may occur under certain configurations</li>
-                <li>Footer gradient is currently displayed on all views; it should only appear on Route and Transit
-                    views</li>
-                <li>User guide missing</li>
-                <li>API requests are handled by my own server; response times may be slow and occasionally delayed
-                    depending on network and device load</li>
-                <li>Accidental 'upcoming' text appearance at trip starting stop</li>
+                @for (issue of issues; track issue.index) {
+                    <li>{{issue}}</li>
+                }
             </ul>
         </div>
         }

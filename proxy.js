@@ -79,6 +79,7 @@ app.post('/get-route', (req, res) => graphqlProxy(req, res, 'GET routes unsucces
 app.post('/get-train', (req, res) => graphqlProxy(req, res, 'GET train unsuccessful'));
 app.post('/get-trip', (req, res) => graphqlProxy(req, res, 'GET trip unsuccessful'));
 app.post('/get-trip-path', (req, res) => graphqlProxy(req, res, 'GET trip path unsuccessful'));
+app.post('/get-vehicle-trip', (req, res) => graphqlProxy(req, res, 'GET vehicle trip unsuccessful'));
 app.post('/get-vehicle-position', (req, res) => graphqlProxy(req, res, 'GET vehicle location unsuccessful'));
 app.post('/get-route-path', (req, res) => graphqlProxy(req, res, 'GET route path unsuccessful'));
 app.post('/get-nearby-vehicles', (req, res) => graphqlProxy(req, res, 'GET nearby vehicles unsuccessful'));

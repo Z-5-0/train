@@ -41,6 +41,8 @@ export class InfoComponent {
     { index: 11, text: 'API requests are handled by my own server; response times may be slow and occasionally delayed depending on network and device load' },
     { index: 12, text: 'Accidental \'upcoming\' text appearance at trip starting stop' },
     { index: 13, text: 'Wrong intermediate stops text shadow on map (etc. coach, tram)' },
+
+    { index: 15, text: 'Clean code' },
   ];
 
 }

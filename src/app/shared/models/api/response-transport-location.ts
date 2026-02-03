@@ -13,10 +13,10 @@ export interface VehiclePosition {
     vehicleId: string;
     heading: number;
     label: string;
-    lastUpdated: number;
+    speed: number;
     lat: number;
     lon: number;
-    trip: VehiclePositionTrip
+    trip: VehiclePositionTrip;
 }
 
 interface VehiclePositionTrip {
@@ -24,7 +24,11 @@ interface VehiclePositionTrip {
     id: string;
     tripHeadsign: string;
     routeShortName: string;
-    route: VehiclePositionTripRoute
+    route: VehiclePositionTripRoute;
+    tripGeometry: {
+        length: number,
+        points: string,
+    };
 }
 
 interface VehiclePositionTripRoute {

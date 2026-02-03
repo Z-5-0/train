@@ -6,7 +6,7 @@ export const VEHICLE_POSITION_QUERY: string = `
           lon
           heading
           label
-          lastUpdated
+          speed
           trip {
             id
             gtfsId
@@ -17,6 +17,10 @@ export const VEHICLE_POSITION_QUERY: string = `
               shortName
               longName
               color
+            }
+            tripGeometry {
+              points
+              length
             }
           }
         }

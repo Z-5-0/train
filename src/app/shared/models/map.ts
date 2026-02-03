@@ -103,3 +103,13 @@ export interface TripMapLayers {
     vehicles: L.LayerGroup;
     routePreview: L.LayerGroup;
 }
+
+export interface MapLabelRule {
+    selector: string;
+    minZoom: number;
+    styles: Partial<Record<keyof CSSStyleDeclaration, [string, string]>>;
+}
+
+export interface TripPreviewLayerOptions extends L.LayerOptions {
+    tripGtfsId?: string;
+}

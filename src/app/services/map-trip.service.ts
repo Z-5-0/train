@@ -276,48 +276,4 @@ export class MapTripService {
             });
         return layerGroup;
     }
-
-    /* updateTransportLayer(layerGroup: L.LayerGroup, transportLocations: TripPathTransportData[] | null): L.LayerGroup<L.Marker> | null {
-        if (!layerGroup) return null;
-        if (!transportLocations) return null;
-
-        layerGroup.clearLayers();
-
-        transportLocations.forEach((vehicle: TripPathTransportData) => {
-            layerGroup.addLayer(this.mapService.drawDivIcon(
-                {
-                    type: 'transport',
-                    point: [vehicle.geometry.coordinates[0], vehicle.geometry.coordinates[1]],
-                    label: { name: vehicle.label },
-                    color: { textColor: vehicle.modeData.color, lightTextColor: TRANSPORT_MODE[vehicle.mode as TransportMode].lightColor },
-                    icon: { class: TRANSPORT_MODE[vehicle.mode as TransportMode].icon, heading: vehicle.heading || null },
-                    containerClass: 'map-vehicle-label',
-                    iconAnchor: [12, 13],
-                    iconSize: [24, 26]
-                }
-            ));
-        });
-
-        return layerGroup;
-    } */
-
-    /* updateLocationMarker(map: L.Map, marker: L.Marker | null, pos: { lat: number; lng: number; heading: number }): L.Marker {
-        const icon = this.mapService.drawDivIcon(
-            {
-                type: 'location',
-                point: [pos.lat, pos.lng],
-                icon: { class: 'fa-fw fa-solid fa-location-arrow', heading: pos.heading, },
-                containerClass: 'text-red-600 text-[24px] user-location',
-                iconAnchor: [12, 12],
-                iconSize: [24, 24]
-            }
-        )
-        if (marker) {
-            marker.setLatLng([pos.lat, pos.lng]);
-            marker.setIcon(icon.getIcon());
-            return marker;
-        }
-
-        return icon.addTo(map);
-    } */
 }

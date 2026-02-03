@@ -14,7 +14,9 @@ import { TripPath } from '../../models/trip-path';
 import { MapFreeService } from '../../../services/map-free.service';
 import { CommonMapLayers, FreeMapLayers, TripMapLayers } from '../../models/map';
 import { MapTransportData } from '../../models/common';
-import { VehicleService } from '../../../services/vehicle.service';
+import { MapTransportService } from '../../../services/map-transport.service';
+import { MAP_LABEL_RULES } from '../../constants/map-label-selectors';
+import { TransportLocationFreeService } from '../../../services/transport-location-free.service';
 
 @Component({
   selector: 'map',
@@ -35,8 +37,9 @@ export class MapComponent {
   private mapService: MapService = inject(MapService);
   private mapTripService: MapTripService = inject(MapTripService);
   private mapFreeService: MapFreeService = inject(MapFreeService);
+  private mapTransportService: MapTransportService = inject(MapTransportService);
   private geolocationService: GeolocationService = inject(GeolocationService);
-  private vehicleService: VehicleService = inject(VehicleService);
+  private transportLocationFreeService: TransportLocationFreeService = inject(TransportLocationFreeService);
 
   private map!: L.Map;
 
@@ -51,6 +54,7 @@ export class MapComponent {
   private intersectionObserverSub?: Subscription;
   private tripPollingSub: Subscription | null = null;
   private freePollingSub: Subscription | null = null;
+  private markerClickedSubscription: Subscription | null = null;
 
   private freeMapInitialViewSet: boolean = false;
 
@@ -207,20 +211,40 @@ export class MapComponent {
     }
   }
 
+  onVehicleMarkerClick(vehicle: MapTransportData) {
+    const previewLayer =
+      this.mapType$.value === 'FREE'
+        ? this.freeMapLayers?.routePreview
+        : this.tripMapLayers?.routePreview;
+
+    if (!previewLayer) return;
+
+    this.markerClickedSubscription?.unsubscribe();
+
+    this.markerClickedSubscription = this.mapTransportService.handleVehicleClick(previewLayer, vehicle)
+      .pipe(
+        tap(() => {
+          if (this.mapType$.value === 'FREE') {
+            if (this.freeMapLayers?.routePreview.getLayers().length) {
+              this.trackFreeMapVehicle(vehicle);
+            }
+            else {
+              this.trackFreeMapData();
+            }
+          }
+
+          this.updateMapLabelsVisibility();
+        })
+      )
+      .subscribe();
+  }
+
   updateMapLabelsVisibility() {
     if (!this.map) return;
 
     this.mapService.updateMapLabelsVisibility(
       this.map.getZoom(),
-      [
-        '.map-stop-label',
-        '.map-rest-stop-label',
-        '.map-vehicle-label .name',
-        '.map-vehicle-label .direction-container'
-      ],
-      [
-        { display: ['none', 'grid'] }
-      ]
+      MAP_LABEL_RULES,
     );
   }
 
@@ -239,6 +263,7 @@ export class MapComponent {
     }
 
     this.geolocationService.stopTracking();
+    this.markerClickedSubscription?.unsubscribe();
   }
 
   // -------------------- FREE MAP --------------------
@@ -253,6 +278,7 @@ export class MapComponent {
     };
 
     this.freeMapLayers.vehicles.addTo(this.map);
+    this.freeMapLayers.routePreview.addTo(this.map);
   }
 
   trackFreeMapData() {
@@ -276,10 +302,28 @@ export class MapComponent {
       .subscribe();
   }
 
-  updateFreeMapData(data: any) {
+  trackFreeMapVehicle(vehicle: MapTransportData) {
+    this.freePollingSub?.unsubscribe();
+    this.freePollingSub = null;
+
+    this.freePollingSub = this.appSettingsService.appSettings$
+      .pipe(
+        map(settings => !!(settings as CurrentAppSettings).autoUpdate),
+        switchMap(autoUpdate =>
+          autoUpdate
+            ? this.transportLocationFreeService.getTransportLocationPolling(vehicle.tripGtfsId)
+            : this.transportLocationFreeService.getTransportLocation(vehicle.tripGtfsId)
+        ),
+        tap(data => this.updateFreeMapData(data)),
+        takeUntil(this.destroy$)
+      )
+      .subscribe();
+  }
+
+  updateFreeMapData(data: MapTransportData[]) {
     if (!data || !this.freeMapLayers) return;
 
-    this.mapService.updateTransportLayer(
+    this.mapTransportService.updateTransportLayer(
       this.freeMapLayers.vehicles,
       data || [],
       { type: 'FREE' },
@@ -297,7 +341,7 @@ export class MapComponent {
       this.map.removeLayer(group);
     });
 
-    this.mapService.clearFreeMapMarkers();
+    this.mapTransportService.clearTransportMarkersTrip();
 
     this.freeMapLayers = null;
   }
@@ -371,14 +415,12 @@ export class MapComponent {
   updateTripMapData(data: TripPath) {
     if (!data || !this.tripMapLayers) return;
 
-    console.log('trip data: ', data);
-
     this.mapTripService.updateTripOriginsLayer(
       this.tripMapLayers.stops.boarding,
       data.originData || []
     );
 
-    this.mapService.updateTransportLayer(
+    this.mapTransportService.updateTransportLayer(
       this.tripMapLayers.vehicles,
       data.transportData || [],
       { type: 'TRIP' },
@@ -386,35 +428,6 @@ export class MapComponent {
     );
 
     this.updateMapLabelsVisibility();
-  }
-
-  onVehicleMarkerClick(vehicle: MapTransportData) {
-    if (!this.tripMapLayers?.routePreview || !vehicle.tripGeometry) return;
-
-    const previewLayer = this.tripMapLayers.routePreview;
-
-    if (vehicle.tripGtfsId === (previewLayer.options as any).tripGtfsId) {
-      previewLayer.clearLayers();
-      (previewLayer.options as any).tripGtfsId = undefined;
-      return;
-    }
-
-    previewLayer.clearLayers();
-    (previewLayer.options as any).tripGtfsId = vehicle.tripGtfsId;
-
-    this.vehicleService.getVehicleTripData(vehicle.tripGtfsId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(tripData => {
-        if (!this.tripMapLayers?.routePreview) return;
-
-        this.mapService.createTransportTrip(previewLayer, tripData, vehicle);
-
-        this.updateMapLabelsVisibility();
-      });
-
-    // + STOP DOTS
-
-    console.log(this.tripMapLayers);
   }
 
   clearTripMapLayers() {

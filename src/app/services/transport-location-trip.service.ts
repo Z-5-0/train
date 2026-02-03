@@ -1,20 +1,19 @@
 import { inject, Injectable } from "@angular/core";
-import { BehaviorSubject, catchError, EMPTY, from, interval, map, Observable, of, startWith, switchMap, tap, throwError } from "rxjs";
+import { catchError, interval, map, Observable, startWith, switchMap, throwError } from "rxjs";
 import { RouteService } from "./route.service";
 import { AppSettingsService } from "./app-settings.service";
 import { RestApiService } from "./rest-api.service";
 import { VEHICLE_POSITION_QUERY } from "../shared/constants/query/vehicle-location-query";
 import { DateTime } from "luxon";
 import { TransportLocationResponse, VehiclePosition } from "../shared/models/api/response-transport-location";
-import { point } from "leaflet";
 import { TRANSPORT_MODE } from "../shared/constants/transport-mode";
 import { TransportLocation } from "../shared/models/transport-location";
-import { TransportMode } from "../shared/models/common";
 
 @Injectable({
     providedIn: 'root',
 })
-export class TransportLocationService {
+// NOT USED
+export class TransportLocationTripService {
     private restApi: RestApiService = inject(RestApiService);
     private routeService: RouteService = inject(RouteService);
     private appSettingsService: AppSettingsService = inject(AppSettingsService);

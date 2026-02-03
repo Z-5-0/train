@@ -2,11 +2,11 @@ import { TransportMode } from "../common";
 
 export interface NearbyVehicleResponse {
     data: {
-        vehiclePositions: VehiclePosition[];
+        vehiclePositions: VehiclePositionData[];
     };
 }
 
-interface VehiclePosition {
+export interface VehiclePositionData {
     vehicleId: string;
     lat: number;
     lon: number;
@@ -17,10 +17,6 @@ interface VehiclePosition {
     prevOrCurrentStop: PrevOrCurrentStop;
     stopRelationship: StopRelationship;
     trip: Trip;
-    routeShortName: string | null;
-    tripGeometry: TripGeometry;
-    tripHeadsign: string | null;
-    tripShortName: string | null;
     vehicleModel: string | null;
 }
 
@@ -48,10 +44,12 @@ interface Stop {
 interface Trip {
     id: string;
     gtfsId: string;
-
-    routeShortName: string | null;
     pattern: TripPattern;
     route: Route;
+    routeShortName: string | null;
+    tripGeometry: TripGeometry;
+    tripHeadsign: string | null;
+    tripShortName: string | null;
 }
 
 interface TripPattern {

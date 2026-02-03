@@ -4,14 +4,16 @@ import { AppSettingsService } from "./app-settings.service";
 import { BehaviorSubject, catchError, combineLatest, filter, interval, map, Observable, of, startWith, switchMap, tap, throwError } from "rxjs";
 import { RestApiService } from "./rest-api.service";
 import { createNearbyVehiclesQuery } from "../shared/constants/query/nearby-transport-query";
-import { NearbyVehicleResponse } from "../shared/models/api/response-nearby-vehicle";
+import { NearbyVehicleResponse, VehiclePositionData } from "../shared/models/api/response-nearby-vehicle";
 import { MapTransportData, PointGeometry, TransportMode } from "../shared/models/common";
 import { TRANSPORT_MODE } from "../shared/constants/transport-mode";
 import polyline from '@mapbox/polyline';
+import { MapTransportService } from "./map-transport.service";
 
 
 @Injectable({ providedIn: 'root' })
 export class MapFreeService {
+    mapTransportService: MapTransportService = inject(MapTransportService);
     appSettingsService: AppSettingsService = inject(AppSettingsService);
     restApi: RestApiService = inject(RestApiService);
 
@@ -60,7 +62,7 @@ export class MapFreeService {
     }
 
     transformFreeMapResonse(data: NearbyVehicleResponse): MapTransportData[] {
-        return data.data.vehiclePositions.map((vehicle: any) => {
+        return data.data.vehiclePositions.map((vehicle: VehiclePositionData): MapTransportData => {
             const vehicleMode = vehicle.trip.route.mode as TransportMode;
             const labelKey = TRANSPORT_MODE[vehicleMode].name as keyof typeof vehicle.trip.route;
             const vehicleLabel = vehicle.trip.route[labelKey];
@@ -75,7 +77,7 @@ export class MapFreeService {
                     type: 'Point',
                     coordinates: [vehicle.lat, vehicle.lon]
                 } as PointGeometry,
-                tripGtfsId: vehicle.trip.id,
+                tripGtfsId: vehicle.trip.gtfsId,
                 tripGeometry: polyline.decode(vehicle.trip.tripGeometry.points) as [number, number][]
             }
         });

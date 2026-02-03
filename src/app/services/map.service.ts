@@ -1,14 +1,14 @@
 import { Injectable } from "@angular/core";
 import * as L from 'leaflet';
-import { CircleMarkerDrawOptions, DivIconDrawOptions, DivIconDrawOptionsData, PolylineDrawOptions } from "../shared/models/map";
+import { CircleMarkerDrawOptions, DivIconDrawOptions, DivIconDrawOptionsData, MapLabelRule, PolylineDrawOptions } from "../shared/models/map";
 import { TRANSPORT_MODE } from "../shared/constants/transport-mode";
 import { MapTransportData, TransportMode } from "../shared/models/common";
 import polyline from '@mapbox/polyline';
 
+
 @Injectable({ providedIn: 'root' })
 export class MapService {
-    private transportMarkersFree = new Map<string, L.Marker>();
-    private transportMarkersTrip = new Map<string, L.Marker>();
+
 
     tileTheme: { image: string; attribution: string }[] = [
         {
@@ -60,158 +60,18 @@ export class MapService {
         map.removeLayer(layer);
     }
 
-    updateTransportLayer(
-        layerGroup: L.LayerGroup,
-        transportLocations: MapTransportData[] | null,
-        options: { type: 'FREE' | 'TRIP' },
-        onClick: (vehicle: MapTransportData) => void
-    ): L.LayerGroup<L.Marker> | null {
-        console.log('transportLocations: ', transportLocations);
-        if (!layerGroup || !transportLocations) return null;
-
-        const markersMap = options?.type === 'TRIP'
-            ? this.transportMarkersTrip
-            : this.transportMarkersFree;
-
-        const layerGroupIsEmpty = Object.keys((layerGroup as any)._layers).length === 0;
-
-        transportLocations.forEach(vehicle => {
-            const id = vehicle.vehicleId;
-            const latlng: L.LatLngExpression = [
-                vehicle.geometry.coordinates[0],
-                vehicle.geometry.coordinates[1]
-            ];
-
-            const markerExists = markersMap.has(id);
-
-            if (markerExists && !layerGroupIsEmpty) {
-                const marker = markersMap.get(id)!;
-                this.animateMarker(marker, latlng, 500);
-                marker.setIcon(this.createTransportMarker(latlng, vehicle, onClick).getIcon());
-            } else {
-                const marker = this.createTransportMarker(latlng, vehicle, onClick).addTo(layerGroup);
-                markersMap.set(id, marker);
-            }
-        });
-
-        if (options?.type === 'FREE') {
-            markersMap.forEach((marker, id) => {
-                if (!transportLocations.find(v => v.vehicleId === id)) {
-                    layerGroup.removeLayer(marker);
-                    markersMap.delete(id);
-                }
-            });
-        }
-
-        return layerGroup;
-    }
-
-    createTransportMarker(
-        latlng: L.LatLngExpression,
-        vehicle: MapTransportData,
-        onClick: (vehicle: MapTransportData) => void
-    ) {
-        const marker = this.drawDivIcon({
-            type: 'transport',
-            point: latlng,
-            label: { name: vehicle.label },
-            color: {
-                textColor: vehicle.modeData.color,
-                lightTextColor: TRANSPORT_MODE[vehicle.mode as TransportMode].lightColor
-            },
-            icon: {
-                class: TRANSPORT_MODE[vehicle.mode as TransportMode].icon,
-                heading: vehicle.heading || null
-            },
-            containerClass: 'map-vehicle-label',
-            iconAnchor: [12, 13],
-            iconSize: [24, 26],
-            interactive: true
-        });
-
-        marker.on('click', () => {
-            onClick(vehicle);
-        });
-
-        return marker;
-    }
-
-    animateMarker(marker: L.Marker, toLatLng: L.LatLngExpression, duration = 500) {
-        const from = marker.getLatLng();
-        const to = L.latLng(toLatLng);
-        const start = performance.now();
-
-        const step = (now: number) => {
-            const t = Math.min((now - start) / duration, 1);
-            const lat = from.lat + (to.lat - from.lat) * t;
-            const lng = from.lng + (to.lng - from.lng) * t;
-            marker.setLatLng([lat, lng]);
-
-            if (t < 1) requestAnimationFrame(step);
-        };
-
-        requestAnimationFrame(step);
-    }
-
-    createTransportTrip(
-        layerGroup: L.LayerGroup,
-        stops: any,
-            vehicle: MapTransportData) {     // TODO TYPE
-        if (!layerGroup) return;
-
-        console.log('vehicle: ', vehicle);
-
-        layerGroup.clearLayers();
-
-        layerGroup.addLayer(this.drawPolyline({
-            points: vehicle.tripGeometry,
-            color: vehicle.modeData.color,
-            weight: 1,
-            className: 'map-vehicle-polyline'
-        }));
-
-        stops.forEach((stop: any) => {     // TODO TYPE
-            layerGroup.addLayer(this.drawCircleMarker({
-                point: stop.geometry.coordinates,
-                color: vehicle.modeData.color,
-                fill: true,
-                fillOpacity: 1,
-                fillColor: vehicle.modeData.color,
-                weight: 1,
-                radius: 2
-            }));
-
-            layerGroup.addLayer(this.drawDivIcon({
-                type: 'stop',
-                point: stop.geometry.coordinates,
-                label: { name: stop.label },
-                color: { textColor: vehicle.modeData.color, lightTextColor: TRANSPORT_MODE[vehicle.mode].lightColor },
-                containerClass: 'map-rest-stop-label',
-            }));
-        });
-    }
-
-    clearFreeMapMarkers() {
-        this.transportMarkersFree.clear();
-    }
-
     updateMapLabelsVisibility(
-        zoom: number = 0,
-        query: string[],
-        options: Array<Partial<Record<keyof CSSStyleDeclaration, [string, string]>>>
+        currentZoom: number,
+        rules: MapLabelRule[]
     ) {
-        query.forEach((selector: string) => {
-            const elements = document.querySelectorAll<HTMLElement>(selector);
+        rules.forEach(rule => {
+            const active = currentZoom >= rule.minZoom;
+            const elements = document.querySelectorAll<HTMLElement>(rule.selector);
 
-            elements.forEach((el) => {
-                options.forEach((op) => {
-                    (Object.keys(op) as Array<keyof CSSStyleDeclaration>).forEach((cssKey) => {
-                        const values = op[cssKey];
-                        if (!values) return;
-
-                        const value = zoom < 14 ? values[0] : values[1];
-                        el.style.setProperty(cssKey as string, value);
-                    });
+            elements.forEach(el => {
+                Object.entries(rule.styles).forEach(([cssKey, values]) => {
+                    if (!values) return;
+                    el.style.setProperty(cssKey, active ? values[1] : values[0]);
                 });
             });
         });

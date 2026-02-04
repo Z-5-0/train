@@ -10,7 +10,7 @@ import { TRANSPORT_MODE } from "../shared/constants/transport-mode";
 import * as L from 'leaflet';
 import { VehicleTripResponse, VehicleTripResponseData, VehicleTripStoptime } from "../shared/models/api/response-vehicle-trip";
 import { VehicleTripStop } from "../shared/models/vehicle-trip";
-import { RouteSequence, TransportInfo } from "../shared/models/route";
+import { IntermediateStop, RouteSequence, TransportInfo } from "../shared/models/route";
 import { TripPreviewLayerOptions } from "../shared/models/map";
 
 @Injectable({ providedIn: 'root' })
@@ -49,19 +49,27 @@ export class MapTransportService {
 
     collectStops(vehicleTrip: VehicleTripResponseData): VehicleTripStoptime[] {
         const selectedRoute = this.routeService.getSelectedRoute();
-
-        const vehicleTripId = vehicleTrip.id;
-        const vehicleTripStoptimes = vehicleTrip.stoptimes;
-
-        if (!selectedRoute) return vehicleTripStoptimes;
+        if (!selectedRoute) return vehicleTrip.stoptimes;
 
         const selectedTransport = selectedRoute.sequences
             .filter((f): f is RouteSequence & { transportInfo: TransportInfo } => !!f.transportInfo)
-            .find((f: RouteSequence & { transportInfo: TransportInfo }) => f.transportInfo['id'] === vehicleTripId);
+            .find((f: RouteSequence & { transportInfo: TransportInfo }) => f.transportInfo['id'] === vehicleTrip.id);
 
         if (!selectedTransport) return [];
 
+        const unselectedRouteSequences = [...selectedRoute.sequences]
+            .filter(seq => seq.transportInfo?.gtfsId !== vehicleTrip.gtfsId)
+            .filter(seq => seq.mode !== 'WALK')
+            .flatMap(stop => stop.stops);
+
+        const excludedStopIds = new Set(
+            unselectedRouteSequences
+                .map(s => s?.gtfsId)
+                .filter((id): id is string => typeof id === 'string')
+        );
+
         const { origin, destination } = selectedTransport;
+        const vehicleTripStoptimes = vehicleTrip.stoptimes;
         let inside = false;
 
         return vehicleTripStoptimes.filter((stoptime: VehicleTripStoptime) => {
@@ -75,7 +83,7 @@ export class MapTransportService {
                 return false;
             }
 
-            return !inside;
+            return !inside && !excludedStopIds.has(stoptime.stop.gtfsId);
         });
     }
 

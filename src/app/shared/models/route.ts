@@ -52,6 +52,7 @@ export interface TransportInfo {
 
 export interface IntermediateStop {
   id: string;
+  gtfsId: string;
   name: string;
   geometry: PointGeometry;
 }

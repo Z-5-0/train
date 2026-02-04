@@ -64,6 +64,7 @@ export const ROUTE_QUERY: string = `
           }
           intermediateStops {
             id
+            gtfsId
             name
             lat
             lon

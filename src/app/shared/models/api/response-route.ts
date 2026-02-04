@@ -47,6 +47,7 @@ interface Stop {
 
 export interface IntermediateStop {
     id: string;
+    gtfsId: string;
     name: string;
     lat: number;
     lon: number;

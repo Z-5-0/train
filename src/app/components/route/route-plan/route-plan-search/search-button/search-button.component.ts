@@ -167,16 +167,19 @@ export class SearchButtonComponent {
       stops: [
         {
           id: leg.from.stop?.id ?? '',
+          gtfsId: leg.from.stop?.gtfsId ?? '',
           name: leg.from.name,
           geometry: { type: 'Point', coordinates: [leg.from.lat, leg.from.lon] } as PointGeometry,
         },
         ...(leg.intermediateStops ?? []).map((stop: IntermediateStop) => ({
           id: stop.id ?? '',
+          gtfsId: stop.gtfsId,
           name: stop.name,
           geometry: { type: 'Point', coordinates: [stop.lat, stop.lon] } as PointGeometry,
         })),
         {
           id: leg.to.stop?.id ?? '',
+          gtfsId: leg.to.stop?.gtfsId ?? '',
           name: leg.to.name,
           geometry: { type: 'Point', coordinates: [leg.to.lat, leg.to.lon] } as PointGeometry
         }

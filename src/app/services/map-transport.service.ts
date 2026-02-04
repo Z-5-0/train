@@ -49,7 +49,6 @@ export class MapTransportService {
 
     collectStops(vehicleTrip: VehicleTripResponseData): VehicleTripStoptime[] {
         const selectedRoute = this.routeService.getSelectedRoute();
-        // if (!selectedRoute) return [];
 
         const vehicleTripId = vehicleTrip.id;
         const vehicleTripStoptimes = vehicleTrip.stoptimes;

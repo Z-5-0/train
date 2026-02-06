@@ -220,6 +220,7 @@ export class MapComponent {
     if (!previewLayer) return;
 
     this.markerClickedSubscription?.unsubscribe();
+    this.markerClickedSubscription = null;
 
     this.markerClickedSubscription = this.mapTransportService.handleVehicleClick(previewLayer, vehicle)
       .pipe(
@@ -284,6 +285,8 @@ export class MapComponent {
   trackFreeMapData() {
     this.freePollingSub?.unsubscribe();
     this.freePollingSub = null;
+    this.markerClickedSubscription?.unsubscribe();
+    this.markerClickedSubscription = null;
 
     this.freePollingSub = this.appSettingsService.appSettings$
       .pipe(
@@ -303,6 +306,8 @@ export class MapComponent {
   }
 
   trackFreeMapVehicle(vehicle: MapTransportData) {
+    this.markerClickedSubscription?.unsubscribe();
+    this.markerClickedSubscription = null;
     this.freePollingSub?.unsubscribe();
     this.freePollingSub = null;
 

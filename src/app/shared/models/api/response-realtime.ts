@@ -2,6 +2,12 @@ import { PointGeometry, TransportMode } from "../common";
 
 export interface RealtimeTripResponse {
     data: Record<string, RealtimeTripData | null> | null;
+    errors?: {      // TODO common interface
+        message: string;
+        path: string[];
+        extensions?: { classification: string };
+        locations?: { line: number; column: number }[];
+    }[];
 }
 
 export interface RealtimeTripData {
@@ -9,6 +15,15 @@ export interface RealtimeTripData {
     stoptimes: RealtimeStoptime[];
     tripGeometry: RealtimeTripGeometry;
     vehiclePositions: RealtimeVehiclePosition[];
+    route: RealtimeTripDataRoute;
+}
+
+export interface RealtimeTripDataRoute {
+    shortName: string | null;
+    longName: string | null;
+    mode: string;
+    color: string | null;
+    textColor: string | null;
 }
 
 interface RealtimeTripGeometry {

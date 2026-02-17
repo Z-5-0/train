@@ -217,12 +217,14 @@ export class MapComponent {
         ? this.freeMapLayers?.routePreview
         : this.tripMapLayers?.routePreview;
 
+    this.mapTransportService.setMarkerClicked(this.mapType$.value, vehicle);
+
     if (!previewLayer) return;
 
     this.markerClickedSubscription?.unsubscribe();
     this.markerClickedSubscription = null;
 
-    this.markerClickedSubscription = this.mapTransportService.handleVehicleClick(previewLayer, vehicle)
+    this.markerClickedSubscription = this.mapTransportService.handleVehicleClick(previewLayer, vehicle, this.mapType$.value)
       .pipe(
         tap(() => {
           if (this.mapType$.value === 'FREE') {
@@ -288,6 +290,12 @@ export class MapComponent {
     this.markerClickedSubscription?.unsubscribe();
     this.markerClickedSubscription = null;
 
+    const vehicleMarkerClicked = this.mapTransportService.getMarkerClicked('FREE');
+    if (vehicleMarkerClicked) {
+      this.onVehicleMarkerClick(vehicleMarkerClicked);
+      return;
+    }
+
     this.freePollingSub = this.appSettingsService.appSettings$
       .pipe(
         map(settings => !!(settings as CurrentAppSettings).autoUpdate),
@@ -330,9 +338,11 @@ export class MapComponent {
 
     this.mapTransportService.updateTransportLayer(
       this.freeMapLayers.vehicles,
+      this.freeMapLayers.routePreview,
       data || [],
       { type: 'FREE' },
-      (vehicle) => this.onVehicleMarkerClick(vehicle)
+      (vehicle) => this.onVehicleMarkerClick(vehicle),
+      () => this.trackFreeMapData()
     );
 
     this.updateMapLabelsVisibility();
@@ -404,6 +414,11 @@ export class MapComponent {
     this.tripPollingSub?.unsubscribe();
     this.tripPollingSub = null;
 
+    const vehicleMarkerClicked = this.mapTransportService.getMarkerClicked('TRIP');
+    if (vehicleMarkerClicked) {
+      this.onVehicleMarkerClick(vehicleMarkerClicked);
+    }
+
     this.tripPollingSub = this.appSettingsService.appSettings$
       .pipe(
         map(settings => !!settings['autoUpdate']),
@@ -427,6 +442,7 @@ export class MapComponent {
 
     this.mapTransportService.updateTransportLayer(
       this.tripMapLayers.vehicles,
+      this.tripMapLayers.routePreview,
       data.transportData || [],
       { type: 'TRIP' },
       (vehicle) => this.onVehicleMarkerClick(vehicle)

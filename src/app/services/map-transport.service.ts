@@ -1,7 +1,7 @@
 import { inject, Injectable } from "@angular/core";
 import { RestApiService } from "./rest-api.service";
 import { RouteService } from "./route.service";
-import { catchError, filter, map, Observable, of, tap, throwError } from "rxjs";
+import { catchError, filter, map, Observable, of, take, tap, throwError } from "rxjs";
 import { createVehicleTripQuery } from "../shared/constants/query/vehicle-trip-query";
 import { MessageService } from "./message.service";
 import { MapService } from "./map.service";
@@ -10,7 +10,7 @@ import { TRANSPORT_MODE } from "../shared/constants/transport-mode";
 import * as L from 'leaflet';
 import { VehicleTripResponse, VehicleTripResponseData, VehicleTripStoptime } from "../shared/models/api/response-vehicle-trip";
 import { VehicleTripStop } from "../shared/models/vehicle-trip";
-import { IntermediateStop, RouteSequence, TransportInfo } from "../shared/models/route";
+import { RouteSequence, TransportInfo } from "../shared/models/route";
 import { TripPreviewLayerOptions } from "../shared/models/map";
 
 @Injectable({ providedIn: 'root' })
@@ -23,9 +23,50 @@ export class MapTransportService {
     private transportMarkersFree = new Map<string, L.Marker>();
     private transportMarkersTrip = new Map<string, L.Marker>();
 
+    private vehiclePreviewActive: { FREE: MapTransportData | null, TRIP: MapTransportData | null } = { FREE: null, TRIP: null };
     private vehicleTripData$ = new Map<string, Observable<VehicleTripStop[] | null>>();
 
-    getVehicleTripData(gtfsId: string): Observable<VehicleTripStop[] | null> {      // TODO TYPE
+    getVehiclePreviewActive(mapType: 'FREE' | 'TRIP'): MapTransportData | null {
+        return this.vehiclePreviewActive[mapType];
+    }
+
+    getMarkerClicked(type: 'FREE' | 'TRIP'): MapTransportData | null {
+        return this.vehiclePreviewActive[type] ?? null;
+    }
+
+    setMarkerClicked(type: 'FREE' | 'TRIP', vehicle: MapTransportData | null) {
+        this.vehiclePreviewActive[type] = vehicle;
+    }
+
+    handleVehicleClick(
+        layer: L.LayerGroup,
+        vehicle: MapTransportData,
+        mapType: 'FREE' | 'TRIP'
+    ): Observable<void> {
+        if (!vehicle.tripGeometry) return of(void 0);
+
+        const layerOptions = layer.options as TripPreviewLayerOptions;
+        const currentId = layerOptions.tripGtfsId;
+
+        if (currentId === vehicle.tripGtfsId) {
+            layer.clearLayers();
+            layerOptions.tripGtfsId = undefined;
+            this.vehiclePreviewActive[mapType] = null;
+            return of(void 0);
+        }
+
+        layer.clearLayers();
+        layerOptions.tripGtfsId = vehicle.tripGtfsId;
+
+        return this.getVehicleTripData(vehicle.tripGtfsId, mapType)
+            .pipe(
+                filter((tripData): tripData is VehicleTripStop[] => !!tripData),
+                tap(tripData => this.createTransportTrip(layer, [...tripData], vehicle)),
+                map(() => void 0)
+            );
+    }
+
+    getVehicleTripData(gtfsId: string, mapType: 'FREE' | 'TRIP'): Observable<VehicleTripStop[] | null> {      // TODO TYPE
         const cachedVehicleTripData = this.vehicleTripData$.get(gtfsId);
         if (cachedVehicleTripData) return cachedVehicleTripData;
 
@@ -36,7 +77,8 @@ export class MapTransportService {
             },
             debounceTime: false
         }).pipe(
-            map((response: VehicleTripResponse) => this.collectStops(response.data.trip)),
+            take(1),
+            map((response: VehicleTripResponse) => this.collectStops(response.data.trip, mapType)),
             map((data: VehicleTripStoptime[]) => this.createVehicleRestStops(data)),      // TODO TYPE
             tap(stops => this.vehicleTripData$.set(gtfsId, of(stops))),
             catchError(err => {
@@ -47,7 +89,11 @@ export class MapTransportService {
         )
     }
 
-    collectStops(vehicleTrip: VehicleTripResponseData): VehicleTripStoptime[] {
+    collectStops(vehicleTrip: VehicleTripResponseData, mapType: 'FREE' | 'TRIP'): VehicleTripStoptime[] {
+        if (mapType === 'FREE') {
+            return vehicleTrip.stoptimes;
+        }
+
         const selectedRoute = this.routeService.getSelectedRoute();
         if (!selectedRoute) return vehicleTrip.stoptimes;
 
@@ -139,19 +185,29 @@ export class MapTransportService {
         });
     }
 
-    updateTransportLayer(
-        layerGroup: L.LayerGroup,
+    updateTransportLayer(       // not necessary to return with vehicleLayer
+        vehicleLayer: L.LayerGroup,
+        previewLayer: L.LayerGroup,
         transportLocations: MapTransportData[] | null,
         options: { type: 'FREE' | 'TRIP' },
-        onClick: (vehicle: MapTransportData) => void
-    ): L.LayerGroup<L.Marker> | null {
-        if (!layerGroup || !transportLocations) return null;
+        onClick: (vehicle: MapTransportData) => void,
+        onPreviewEnded?: () => void
+    ) {
+        if (!vehicleLayer) return null;
+
+        if (!transportLocations || transportLocations.length === 0) {
+            vehicleLayer.clearLayers();
+            previewLayer.clearLayers();
+            this.vehiclePreviewActive[options.type] = null;
+            onPreviewEnded?.();
+            return vehicleLayer;
+        }
 
         const markersMap = options?.type === 'TRIP'
             ? this.transportMarkersTrip
             : this.transportMarkersFree;
 
-        const layerGroupIsEmpty = layerGroup.getLayers().length === 0;
+        const layerGroupIsEmpty = vehicleLayer.getLayers().length === 0;
 
         transportLocations.forEach(vehicle => {
             const id = vehicle.vehicleId;
@@ -167,21 +223,25 @@ export class MapTransportService {
                 this.animateMarker(marker, latlng, 500);
                 marker.setIcon(this.createTransportMarker(latlng, vehicle, onClick).getIcon());
             } else {
-                const marker = this.createTransportMarker(latlng, vehicle, onClick).addTo(layerGroup);
+                const marker = this.createTransportMarker(latlng, vehicle, onClick).addTo(vehicleLayer);
                 markersMap.set(id, marker);
             }
         });
 
-        if (options?.type === 'FREE') {
-            markersMap.forEach((marker, id) => {
-                if (!transportLocations.find(v => v.vehicleId === id)) {
-                    layerGroup.removeLayer(marker);
-                    markersMap.delete(id);
-                }
-            });
-        }
+        markersMap.forEach((marker, id) => {
+            if (!transportLocations.find(v => v.vehicleId === id)) {
+                vehicleLayer.removeLayer(marker);
+                markersMap.delete(id);
 
-        return layerGroup;
+                if (this.vehiclePreviewActive[options.type]?.vehicleId === id) {
+                    previewLayer.clearLayers();
+                    onPreviewEnded?.();
+                    this.vehiclePreviewActive[options.type] = null;
+                }
+            }
+        });
+
+        return vehicleLayer;
     }
 
     createTransportTrip(
@@ -265,31 +325,6 @@ export class MapTransportService {
         };
 
         requestAnimationFrame(step);
-    }
-
-    handleVehicleClick(layer: L.LayerGroup, vehicle: MapTransportData): Observable<void> {
-        if (!vehicle.tripGeometry) return of(void 0);
-
-        const layerOptions = layer.options as TripPreviewLayerOptions;
-        const currentId = layerOptions.tripGtfsId;
-
-        if (currentId === vehicle.tripGtfsId) {
-            layer.clearLayers();
-            layerOptions.tripGtfsId = undefined;
-            return of(void 0);
-        }
-
-        layer.clearLayers();
-        layerOptions.tripGtfsId = vehicle.tripGtfsId;
-
-        return this.getVehicleTripData(vehicle.tripGtfsId)
-            .pipe(
-                filter((tripData): tripData is VehicleTripStop[] => !!tripData),
-                tap(tripData => {
-                    this.createTransportTrip(layer, [...tripData], vehicle);
-                }),
-                map(() => void 0)
-            );
     }
 
     clearTransportMarkersTrip() {

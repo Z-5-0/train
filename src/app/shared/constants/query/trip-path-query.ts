@@ -29,6 +29,13 @@ export function createTripPathQuery(
           }
         }
         tripGeometry { length points }
+        route {
+            shortName
+            longName
+            mode
+            color
+            textColor
+        }
         vehiclePositions {
           vehicleId
           lat

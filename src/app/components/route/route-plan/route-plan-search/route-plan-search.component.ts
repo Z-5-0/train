@@ -173,7 +173,7 @@ export class RoutePlanSearchComponent {
       take(1),
       map((resp: PlaceApiResponse) => this.transformPlaces(resp.features)),
       tap((placesByMode) => {
-        console.log('placesByMode: ', placesByMode);
+        // console.log('placesByMode: ', placesByMode);
         this.routeService.setPlaceCollection(streamName, placesByMode);
         this.updatePlaceProperty(streamName, placesByMode);
 

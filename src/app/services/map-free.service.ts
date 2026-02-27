@@ -9,6 +9,7 @@ import { MapTransportData, PointGeometry, TransportMode } from "../shared/models
 import { TRANSPORT_MODE } from "../shared/constants/transport-mode";
 import polyline from '@mapbox/polyline';
 import { MapTransportService } from "./map-transport.service";
+import { GraphQLErrorService } from "./graphql-error.service";
 
 
 @Injectable({ providedIn: 'root' })
@@ -16,6 +17,8 @@ export class MapFreeService {
     mapTransportService: MapTransportService = inject(MapTransportService);
     appSettingsService: AppSettingsService = inject(AppSettingsService);
     restApi: RestApiService = inject(RestApiService);
+    private graphQLErrorService: GraphQLErrorService = inject(GraphQLErrorService);
+
 
     private _freeMapPosition$ = new BehaviorSubject<{ bounds: L.LatLngBounds, zoom: number } | null>(null);
     readonly freeMapPosition$ = this._freeMapPosition$.asObservable();
@@ -52,6 +55,7 @@ export class MapFreeService {
             },
             debounceTime: false
         }).pipe(
+            tap((response: NearbyVehicleResponse) => this.graphQLErrorService.handleErrors('getNearbyVehicles', response)),
             map((response: NearbyVehicleResponse) => this.transformFreeMapResonse(response)),
             catchError(err => {
                 // TODO MESSAGE
@@ -63,23 +67,33 @@ export class MapFreeService {
 
     transformFreeMapResonse(data: NearbyVehicleResponse): MapTransportData[] {
         return data.data.vehiclePositions.map((vehicle: VehiclePositionData): MapTransportData => {
-            const vehicleMode = vehicle.trip.route.mode as TransportMode;
-            const labelKey = TRANSPORT_MODE[vehicleMode].name as keyof typeof vehicle.trip.route;
-            const vehicleLabel = vehicle.trip.route[labelKey];
+            const trip = vehicle.trip;
+            const route = trip?.route;
+
+            const vehicleMode = route?.mode ?? '';
+            const modeData = TRANSPORT_MODE[vehicleMode || 'ERROR'];
+
+            const labelKey = route ? (TRANSPORT_MODE[vehicleMode].name as keyof typeof route) : undefined;
+            const vehicleLabel = route && labelKey ? route[labelKey] : '';
+            const label = vehicleLabel?.split(/[\/-]/)[0]?.replace(/\s/g, "")?.slice(0, 5) ?? '';
+
+            const tripGeometryPoints = trip?.tripGeometry?.points ?? '';
+            const tripGeometry = tripGeometryPoints ? polyline.decode(tripGeometryPoints) as [number, number][] : [];
+
             return {
-                vehicleId: vehicle.vehicleId,
-                label: vehicleLabel?.split(/[\/-]/)[0]?.replace(/\s/g, "")?.slice(0, 5) || null,
-                heading: vehicle.heading ?? null,
-                speed: vehicle.speed ?? null,
-                mode: vehicle.trip.route.mode,
-                modeData: TRANSPORT_MODE[vehicleMode],
+                vehicleId: vehicle.vehicleId ?? '',
+                label,
+                heading: vehicle.heading ?? 0,
+                speed: vehicle.speed ?? 0,
+                mode: vehicleMode as TransportMode,
+                modeData,
                 geometry: {
                     type: 'Point',
-                    coordinates: [vehicle.lat, vehicle.lon]
+                    coordinates: [vehicle.lat ?? 0, vehicle.lon ?? 0]
                 } as PointGeometry,
-                tripGtfsId: vehicle.trip.gtfsId,
-                tripGeometry: polyline.decode(vehicle.trip.tripGeometry.points) as [number, number][]
-            }
+                tripGtfsId: trip?.gtfsId ?? '',
+                tripGeometry
+            };
         });
     }
 }

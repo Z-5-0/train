@@ -9,10 +9,11 @@ import { DateTime, Duration } from 'luxon';
 import { TRANSPORT_MODE } from '../../../../../shared/constants/transport-mode';
 import { finalize, map, take, tap } from 'rxjs';
 import { IntermediateStop, Itinerary, Leg, RouteApiResponse } from '../../../../../shared/models/api/response-route';
-import { PointGeometry } from '../../../../../shared/models/common';
+import { PointGeometry, TransportMode } from '../../../../../shared/models/common';
 import { Route, RouteSequence } from '../../../../../shared/models/route';
 import { AppSettingsService } from '../../../../../services/app-settings.service';
 import polyline from '@mapbox/polyline';
+import { GraphQLErrorService } from '../../../../../services/graphql-error.service';
 
 @Component({
   selector: 'search-button',
@@ -36,6 +37,7 @@ export class SearchButtonComponent {
   private restApi: RestApiService = inject(RestApiService);
   private routeService: RouteService = inject(RouteService);
   private appSettingsService: AppSettingsService = inject(AppSettingsService);
+  private graphQLErrorService: GraphQLErrorService = inject(GraphQLErrorService);
 
   routeQuery = ROUTE_QUERY;
   transportMode = TRANSPORT_MODE;
@@ -84,6 +86,7 @@ export class SearchButtonComponent {
       useDebounce: false
     }).pipe(
       take(1),
+      tap((response: RouteApiResponse) => this.graphQLErrorService.handleErrors('getRoute', response)),
       map((response: RouteApiResponse) => {
         return this.transformRouteResponse(response.data.plan.itineraries);
       }),
@@ -102,26 +105,30 @@ export class SearchButtonComponent {
     return itineraries.map((itinerary, index) => ({
       index,
       numberOfTransfers: itinerary.numberOfTransfers,
-      duration: Math.ceil(Duration.fromObject({ seconds: itinerary.duration }).as('minutes')),
-      startTime: DateTime.fromMillis(itinerary.startTime, { zone: 'utc' }).setZone('Europe/Budapest').toFormat('HH:mm'),
-      startTimestamp: itinerary.startTime,
-      endTime: DateTime.fromMillis(itinerary.endTime, { zone: 'utc' }).setZone('Europe/Budapest').toFormat('HH:mm'),
-      endTimeTimestamp: itinerary.endTime,
-      walkTime: Math.ceil(Duration.fromObject({ seconds: itinerary.walkTime }).as('minutes')),
-      walkTimeInSeconds: itinerary.walkTime,
-      waitingTime: Math.ceil(Duration.fromObject({ seconds: itinerary.waitingTime }).as('minutes')),
-      sequences: itinerary.legs.map(leg => this.transformLeg(leg))
+      duration: Math.ceil(Duration.fromObject({ seconds: itinerary.duration ?? 0 }).as('minutes')),
+      startTime: itinerary.startTime
+        ? DateTime.fromMillis(itinerary.startTime, { zone: 'utc' }).setZone('Europe/Budapest').toFormat('HH:mm')
+        : '--:--',
+      startTimestamp: itinerary.startTime ?? 0,
+      endTime: itinerary.endTime
+        ? DateTime.fromMillis(itinerary.endTime, { zone: 'utc' }).setZone('Europe/Budapest').toFormat('HH:mm')
+        : '--:--',
+      endTimeTimestamp: itinerary.endTime ?? 0,
+      walkTime: Math.ceil(Duration.fromObject({ seconds: itinerary.walkTime ?? 0 }).as('minutes')),
+      walkTimeInSeconds: itinerary.walkTime ?? 0,
+      waitingTime: Math.ceil(Duration.fromObject({ seconds: itinerary.waitingTime ?? 0 }).as('minutes')),
+      sequences: (itinerary.legs ?? []).map(leg => this.transformLeg(leg))
     }));
   }
 
   private transformLeg(leg: Leg): RouteSequence {
     return {
-      realTime: leg.realTime,
-      mode: leg.mode,
+      realTime: leg.realTime ?? false,
+      mode: (leg.mode ?? 'ERROR') as TransportMode,
       origin: {
-        gtfsId: leg.from.stop?.gtfsId,
-        name: leg.from.name,
-        geometry: { type: 'Point', coordinates: [leg.from.lat, leg.from.lon] } as PointGeometry,
+        gtfsId: leg.from.stop?.gtfsId ?? '',
+        name: leg.from.name ?? '',
+        geometry: { type: 'Point', coordinates: [leg.from.lat ?? 0, leg.from.lon ?? 0] } as PointGeometry,
         scheduledStartTime: leg.realTime
           ? DateTime.fromMillis(leg.startTime - leg.departureDelay * 1000, { zone: 'utc' }).setZone('Europe/Budapest').toFormat('HH:mm')
           : DateTime.fromMillis(leg.startTime, { zone: 'utc' }).setZone('Europe/Budapest').toFormat('HH:mm'),
@@ -146,15 +153,15 @@ export class SearchButtonComponent {
           : null
       },
       destination: {
-        gtfsId: leg.to.stop?.gtfsId,
-        name: leg.to.name,
-        geometry: { type: 'Point', coordinates: [leg.to.lat, leg.to.lon] } as PointGeometry
+        gtfsId: leg.to.stop?.gtfsId ?? '',
+        name: leg.to.name ?? '',
+        geometry: { type: 'Point', coordinates: [leg.to.lat ?? 0, leg.to.lon ?? 0] } as PointGeometry
       },
       transportInfo: {
-        id: leg.trip?.id,
-        gtfsId: leg.trip?.gtfsId,
-        headSign: leg.trip?.tripHeadsign,
-        name: leg.trip?.tripShortName?.replace(/\s+/g, ' ').trim(),
+        id: leg.trip?.id ?? '',
+        gtfsId: leg.trip?.gtfsId ?? '',
+        headSign: leg.trip?.tripHeadsign ?? '',
+        name: leg.trip?.tripShortName?.replace(/\s+/g, ' ').trim() ?? '',
         shortName: leg.mode !== 'WALK' && (this.transportMode[leg.mode].name === 'shortName' || this.transportMode[leg.mode].name === 'longName')
           ? leg.route?.[this.transportMode[leg.mode].name as 'shortName' | 'longName']?.replace(/\s/g, "")?.slice(0, 5) ?? null
           : null,
@@ -168,25 +175,26 @@ export class SearchButtonComponent {
         {
           id: leg.from.stop?.id ?? '',
           gtfsId: leg.from.stop?.gtfsId ?? '',
-          name: leg.from.name,
-          geometry: { type: 'Point', coordinates: [leg.from.lat, leg.from.lon] } as PointGeometry,
+          name: leg.from.name ?? '',
+          geometry: { type: 'Point', coordinates: [leg.from.lat ?? 0, leg.from.lon ?? 0] } as PointGeometry,
         },
         ...(leg.intermediateStops ?? []).map((stop: IntermediateStop) => ({
           id: stop.id ?? '',
-          gtfsId: stop.gtfsId,
-          name: stop.name,
-          geometry: { type: 'Point', coordinates: [stop.lat, stop.lon] } as PointGeometry,
+          gtfsId: stop.gtfsId ?? '',
+          name: stop.name ?? '',
+          geometry: { type: 'Point', coordinates: [stop.lat ?? 0, stop.lon ?? 0] } as PointGeometry,
         })),
         {
           id: leg.to.stop?.id ?? '',
           gtfsId: leg.to.stop?.gtfsId ?? '',
-          name: leg.to.name,
-          geometry: { type: 'Point', coordinates: [leg.to.lat, leg.to.lon] } as PointGeometry
+          name: leg.to.name ?? '',
+          geometry: { type: 'Point', coordinates: [leg.to.lat ?? 0, leg.to.lon ?? 0] } as PointGeometry
         }
       ],
       sequenceGeometry: {
-        length: leg.legGeometry.length,
-        points: polyline.decode(leg.legGeometry.points) as [number, number][]}
+        length: leg.legGeometry?.length ?? 0,
+        points: leg.legGeometry?.points ? polyline.decode(leg.legGeometry.points) as [number, number][] : []
+      }
     }
   }
 }

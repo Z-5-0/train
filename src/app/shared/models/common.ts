@@ -85,3 +85,10 @@ type Geometry =
     | PolygonGeometry
     | MultiPolygonGeometry
     | GeometryCollection;
+
+export interface GraphQLResponseError {
+    extensions: { classification: string };
+    locations: { line: number, column: number }[];
+    message: string;
+    path: string[];
+}

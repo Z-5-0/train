@@ -12,6 +12,7 @@ import { VehicleTripResponse, VehicleTripResponseData, VehicleTripStoptime } fro
 import { VehicleTripStop } from "../shared/models/vehicle-trip";
 import { RouteSequence, TransportInfo } from "../shared/models/route";
 import { TripPreviewLayerOptions } from "../shared/models/map";
+import { GraphQLErrorService } from "./graphql-error.service";
 
 @Injectable({ providedIn: 'root' })
 export class MapTransportService {
@@ -19,6 +20,7 @@ export class MapTransportService {
     private routeService: RouteService = inject(RouteService);
     private mapService: MapService = inject(MapService);
     private messageService: MessageService = inject(MessageService);
+    private graphQLErrorService: GraphQLErrorService = inject(GraphQLErrorService);
 
     private transportMarkersFree = new Map<string, L.Marker>();
     private transportMarkersTrip = new Map<string, L.Marker>();
@@ -66,7 +68,7 @@ export class MapTransportService {
             );
     }
 
-    getVehicleTripData(gtfsId: string, mapType: 'FREE' | 'TRIP'): Observable<VehicleTripStop[] | null> {      // TODO TYPE
+    getVehicleTripData(gtfsId: string, mapType: 'FREE' | 'TRIP'): Observable<VehicleTripStop[] | null> {
         const cachedVehicleTripData = this.vehicleTripData$.get(gtfsId);
         if (cachedVehicleTripData) return cachedVehicleTripData;
 
@@ -78,8 +80,9 @@ export class MapTransportService {
             debounceTime: false
         }).pipe(
             take(1),
+            tap((response: VehicleTripResponse) => this.graphQLErrorService.handleErrors('getVehicleTrip', response)),
             map((response: VehicleTripResponse) => this.collectStops(response.data.trip, mapType)),
-            map((data: VehicleTripStoptime[]) => this.createVehicleRestStops(data)),      // TODO TYPE
+            map((data: VehicleTripStoptime[]) => this.createVehicleRestStops(data)),
             tap(stops => this.vehicleTripData$.set(gtfsId, of(stops))),
             catchError(err => {
                 // TODO MESSAGE
@@ -136,12 +139,12 @@ export class MapTransportService {
     createVehicleRestStops(restStops: VehicleTripStoptime[]): VehicleTripStop[] {
         return restStops.map((stop: VehicleTripStoptime): VehicleTripStop => {
             return {
-                gtfsId: stop.stop.gtfsId,
+                gtfsId: stop.stop.gtfsId ?? '',
                 geometry: {
                     type: 'Point',
-                    coordinates: [stop.stop.lat, stop.stop.lon]
+                    coordinates: [stop.stop.lat ?? 0, stop.stop.lon ?? 0]
                 },
-                label: stop.stop.name,
+                label: stop.stop.name ?? '',
 
                 // FOR POTENTIOAL FUTURE UPDATES
 

@@ -1,8 +1,8 @@
-import { TransportMode } from "../common";
+import { GraphQLResponseError, TransportMode } from "../common";
 
 export interface TransportLocationResponse {
     data: VehiclePositionsForTrips;
-    errors?: TransportLocationError[];
+    errors?: GraphQLResponseError[];
 }
 
 interface VehiclePositionsForTrips {
@@ -36,13 +36,4 @@ interface VehiclePositionTripRoute {
     mode: TransportMode;
     shortName: string;
     longName: string;
-}
-
-interface TransportLocationError {
-    extensions: {
-        classification: string,
-    };
-    locations: { line: number; column: number }[];
-    message: string;
-    path: string[];
 }

@@ -1,4 +1,4 @@
-import { TransportMode } from "../common";
+import { GraphQLResponseError, TransportMode } from "../common";
 
 export interface RouteApiResponse {
     data: {
@@ -6,6 +6,7 @@ export interface RouteApiResponse {
             itineraries: Itinerary[];
         };
     };
+    errors?: GraphQLResponseError[];
 }
 
 export interface Itinerary {

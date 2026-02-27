@@ -12,6 +12,7 @@ import { OriginOrDestination, Route, RouteSequence } from "../shared/models/rout
 import { createTripPathQuery } from "../shared/constants/query/trip-path-query";
 import { RealtimeStoptime, RealtimeTripData, RealtimeTripDataRoute, RealtimeTripResponse } from "../shared/models/api/response-realtime";
 import { ArrivalInfo, DepartureInfo, ExtendedVehiclePosition, TripPath, TripPathOriginData } from "../shared/models/trip-path";
+import { GraphQLErrorService } from "./graphql-error.service";
 
 @Injectable({
     providedIn: 'root',
@@ -20,6 +21,7 @@ export class RealtimeService {
     private restApi: RestApiService = inject(RestApiService);
     private routeService: RouteService = inject(RouteService);
     private appSettingsService: AppSettingsService = inject(AppSettingsService);
+    private graphQLErrorService: GraphQLErrorService = inject(GraphQLErrorService);
     private messageService: MessageService = inject(MessageService);
 
     startRealtimeDataPolling() {
@@ -48,50 +50,8 @@ export class RealtimeService {
             },
             debounceTime: false
         }).pipe(
-            map((response: RealtimeTripResponse) => {
-                let tripsData = response.data || {};
-
-                /* response.errors = [      // for testing purpose
-                    {
-                        message: "Exception while fetching data (/trip_0/vehiclePositions) : null",
-                        path: ["trip_0", "vehiclePositions"],
-                        extensions: { classification: "DataFetchingException" }
-                    },
-                    {
-                        message: "Exception while fetching data (/trip_1/vehiclePositions) : null",
-                        path: ["trip_1", "vehiclePositions"],
-                        extensions: { classification: "DataFetchingException" }
-                    }
-                ] */
-
-                if (response.errors) {
-                    const tripErrors = Object.fromEntries(
-                        response.errors.map(e => {
-                            const tripKey = e.path[0];
-                            const route = tripsData[tripKey]?.route ?? null;
-
-                            if (!route) {
-                                return [tripKey, null];
-                            }
-                            const mode = route.mode as TransportMode;
-                            const label = route[TRANSPORT_MODE[mode].name as keyof RealtimeTripDataRoute];
-                            const color = route.textColor;
-                            const background = route.color;
-
-                            return [
-                                tripKey,
-                                route
-                                    ? { label, color, background }
-                                    : null
-                            ];
-                        })
-                    );
-                    console.log(Object.values(tripErrors));
-                    this.messageService.showWarning('Transport data not available at the moment: ' + Object.values(tripErrors).map(err => err?.label).toString());
-                }
-
-                return this.createRealtimeData({ data: tripsData })
-            }),
+            tap((response: RealtimeTripResponse) => this.graphQLErrorService.handleErrors('getTripPath', response)),
+            map((response: RealtimeTripResponse) => this.createRealtimeData(response)),
             catchError(err => {
                 // TODO MESSAGE
                 return throwError(() => err);       // pushes error towards components

@@ -5,7 +5,6 @@ export type TransportLocation = {
     heading: number;
     id: string;
     label: string;
-    lastUpdated: string;
     mode: TransportMode;
     modeData: ModeData;
     point: L.LatLngExpression; 

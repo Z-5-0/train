@@ -1,9 +1,10 @@
-import { TransportMode } from "../common";
+import { GraphQLResponseError, TransportMode } from "../common";
 
 export interface NearbyVehicleResponse {
     data: {
         vehiclePositions: VehiclePositionData[];
     };
+    errors?: GraphQLResponseError[];
 }
 
 export interface VehiclePositionData {
@@ -45,7 +46,7 @@ interface Trip {
     id: string;
     gtfsId: string;
     pattern: TripPattern;
-    route: Route;
+    route: NearbyRoute;
     routeShortName: string | null;
     tripGeometry: TripGeometry;
     tripHeadsign: string | null;
@@ -56,7 +57,7 @@ interface TripPattern {
     id: string;
 }
 
-interface Route {
+export interface NearbyRoute {
     mode: TransportMode;
     shortName: string | null;
     longName: string | null;

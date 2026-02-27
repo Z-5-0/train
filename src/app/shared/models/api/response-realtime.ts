@@ -1,13 +1,8 @@
-import { PointGeometry, TransportMode } from "../common";
+import { GraphQLResponseError, PointGeometry, TransportMode } from "../common";
 
 export interface RealtimeTripResponse {
     data: Record<string, RealtimeTripData | null> | null;
-    errors?: {      // TODO common interface
-        message: string;
-        path: string[];
-        extensions?: { classification: string };
-        locations?: { line: number; column: number }[];
-    }[];
+    errors?: GraphQLResponseError[];
 }
 
 export interface RealtimeTripData {

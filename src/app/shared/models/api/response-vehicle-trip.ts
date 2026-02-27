@@ -1,9 +1,10 @@
-import { PointGeometry } from "../common";
+import { GraphQLResponseError, PointGeometry } from "../common";
 
 export interface VehicleTripResponse {
     data: {
         trip: VehicleTripResponseData,
-    }
+    };
+    errors?: GraphQLResponseError[];
 }
 
 export interface VehicleTripResponseData {

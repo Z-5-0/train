@@ -1,5 +1,5 @@
 import { inject, Injectable } from "@angular/core";
-import { catchError, debounceTime, distinctUntilChanged, EMPTY, interval, map, Observable, of, shareReplay, startWith, switchMap, takeUntil, tap, throwError } from "rxjs";
+import { catchError, EMPTY, interval, map, Observable, startWith, switchMap, take, tap, throwError } from "rxjs";
 import { createTripQuery } from "../shared/constants/query/trip-query";
 import { Trip, TripResponse } from "../shared/models/api/response-trip";
 import { CurrentTrip, ServiceStatusKey, StopStatus } from "../shared/models/trip";
@@ -10,6 +10,7 @@ import { RestApiService } from "./rest-api.service";
 import { AppSettingsService } from "./app-settings.service";
 import { SERVICE_CODE } from "../shared/constants/service-code";
 import { SERVICE_STATUS } from "../shared/constants/service.status";
+import { GraphQLErrorService } from "./graphql-error.service";
 
 @Injectable({
     providedIn: 'root',
@@ -17,6 +18,7 @@ import { SERVICE_STATUS } from "../shared/constants/service.status";
 export class TripService {
     private restApi: RestApiService = inject(RestApiService);
     private appSettingsService: AppSettingsService = inject(AppSettingsService);
+    private graphQLErrorService: GraphQLErrorService = inject(GraphQLErrorService);
 
     public transportMode = TRANSPORT_MODE as Record<string, { name: string; icon: string }>;
 
@@ -45,6 +47,7 @@ export class TripService {
             },
             debounceTime: false
         }).pipe(
+            tap((response: TripResponse) => this.graphQLErrorService.handleErrors('getTrip', response)),
             map((response: TripResponse) => this.transformTripResponse(response.data.trip)),
             catchError(err => {     // does not run due to retry in rest-api service
                 // return EMPTY;

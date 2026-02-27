@@ -1,9 +1,8 @@
-import { PointGeometry } from "../common";
+import { GraphQLResponseError, PointGeometry, TransportMode } from "../common";
 
 export interface TripResponse {
-    data: {
-        trip: Trip;
-    };
+    data: { trip: Trip };
+    errors?: GraphQLResponseError[];
 }
 
 export interface Trip {
@@ -74,7 +73,7 @@ interface StopReference {
 
 interface Route {
     id: string;
-    mode: string;
+    mode: TransportMode;
     alerts?: Alert[];
     agency: Agency;
     shortName?: string;

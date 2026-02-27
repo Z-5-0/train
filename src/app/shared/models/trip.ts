@@ -89,4 +89,4 @@ export type AlertSeverityLevel = 'INFO' | 'WARNING' | 'SEVERE' | 'UNKNOWN_SEVERI
 export type StopStatus = 'STOPPED_AT' | 'IN_TRANSIT_TO' | 'UNKNOWN';
 // export type BikesAllowed = 'NOT_ALLOWED' | 'ALLOWED' | 'UNKNOWN';
 // export type WheelchairAccessible = 'NOT_POSSIBLE' | 'POSSIBLE' | 'UNKNOWN';
-export type ServiceStatusKey = 'NOT_ALLOWED' | 'ALLOWED' | 'NOT_POSSIBLE' | 'POSSIBLE' | 'UNKNOWN';
+export type ServiceStatusKey = 'NOT_ALLOWED' | 'ALLOWED' | 'NOT_POSSIBLE' | 'POSSIBLE' | 'NO_INFORMATION' | 'UNKNOWN';

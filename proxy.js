@@ -3,10 +3,10 @@ const axios = require('axios');
 const cors = require('cors');
 
 const app = express();
-const PORT = 5001;
+const PORT = 5001;    // PROD: 8443
 
 app.use(cors({
-  origin: 'http://localhost:5000',    // allowed only for the Angular frontend
+  origin: 'http://localhost:5000',    // PROD: https://z-5-0.github.io/
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Accept']
 }));
@@ -86,23 +86,20 @@ app.post('/get-nearby-vehicles', (req, res) => graphqlProxy(req, res, 'GET nearb
 
 app.get('/get-location', async (req, res) => {
   try {
-    const mavResponse = await axios.get(
-      'https://nominatim.openstreetmap.org/reverse',
-      {
-        params: {
-          lat: req.query.lat,
-          lon: req.query.lon,
-          format: req.query.format || 'json'
-        }
+    const { lat, lon, format } = req.query;
+
+    const mavResponse = await axios.get('https://nominatim.openstreetmap.org/reverse', {
+      params: {
+        lat,
+        lon,
+        format: format || 'json'
       },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "*/*",
-          "User-Agent": "Mozilla/5.0"
-        }
-      }
-    );
+      headers: {
+        "Accept": "application/json",
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+      },
+    });
 
     res.json(mavResponse.data);
   } catch (err) {

@@ -9,6 +9,12 @@ import { RestRequestOptions } from '../shared/models/api/request';
 import { getErrorMessage } from '../shared/constants/error-code';
 import { MessageService } from './message.service';
 import { PlaceApiResponse } from '../shared/models/api/response-place';
+import { RouteApiResponse } from '../shared/models/api/response-route';
+import { RealtimeTripResponse } from '../shared/models/api/response-realtime';
+import { TripResponse } from '../shared/models/api/response-trip';
+import { VehicleTripResponse } from '../shared/models/api/response-vehicle-trip';
+import { TransportLocationResponse } from '../shared/models/api/response-transport-location';
+import { NearbyVehicleResponse } from '../shared/models/api/response-nearby-vehicle';
 
 @Injectable({
     providedIn: 'root',
@@ -84,39 +90,43 @@ export class RestApiService {
         // return throwError(() => error);
     }
 
-    public getPlaces(event: any): Observable<PlaceApiResponse> {    // TODO EVENT TYPE
-        return this.doRequest('get', `${this.apiUrl}get-places/`, event);
+    public getPlaces(options: RestRequestOptions): Observable<PlaceApiResponse> {
+        return this.doRequest('get', `${this.apiUrl}get-places/`, options);
     }
 
-    public getRoute(event: any): Observable<any> {    // TODO TYPES
-        return this.doRequest('post', `${this.apiUrl}get-route/`, event);
+    public getRoute(options: RestRequestOptions): Observable<RouteApiResponse> {
+        return this.doRequest('post', `${this.apiUrl}get-route/`, options);
     }
 
-    public getTrip(event: any): Observable<any> {    // TODO TYPES
-        return this.doRequest('post', `${this.apiUrl}get-trip/`, event);
+    public getTrip(options: RestRequestOptions): Observable<TripResponse> {
+        return this.doRequest('post', `${this.apiUrl}get-trip/`, options);
     }
 
-    public getTripPath(event: any): Observable<any> {    // TODO TYPES
-        return this.doRequest('post', `${this.apiUrl}get-trip-path/`, event);
+    public getTripPath(options: RestRequestOptions): Observable<RealtimeTripResponse> {
+        return this.doRequest('post', `${this.apiUrl}get-trip-path/`, options);
     }
 
-    public getVehicleTrip(event: any): Observable<any> {    // TODO TYPES
-        return this.doRequest('post', `${this.apiUrl}get-vehicle-trip/`, event);
+    public getVehicleTrip(options: RestRequestOptions): Observable<VehicleTripResponse> {
+        return this.doRequest('post', `${this.apiUrl}get-vehicle-trip/`, options);
     }
 
-    public getVehiclePosition(event: any): Observable<any> {    // TODO TYPES
-        return this.doRequest('post', `${this.apiUrl}get-vehicle-position/`, event);
+    public getVehiclePosition(options: RestRequestOptions): Observable<TransportLocationResponse> {
+        return this.doRequest('post', `${this.apiUrl}get-vehicle-position/`, options);
     }
 
-    public getRoutePath(event: any): Observable<any> {    // TODO TYPES // Ununsed
-        return this.doRequest('post', `${this.apiUrl}get-route-path/`, event);
+    public getNearbyVehicles(options: RestRequestOptions): Observable<NearbyVehicleResponse> {
+        return this.doRequest('post', `${this.apiUrl}get-nearby-vehicles/`, options);
     }
 
-    public getNearbyVehicles(event: any): Observable<any> {    // TODO TYPES
-        return this.doRequest('post', `${this.apiUrl}get-nearby-vehicles/`, event);
+    public getLocation(options: any): Observable<any> {    // TODO TYPES
+        console.log('getLocation e: ', options);
+        return this.doRequest('get', `${this.apiUrl}get-location`, options);
     }
 
-    public getLocation(event: any): Observable<any> {    // TODO TYPES
-        return this.doRequest('get', `${this.apiUrl}get-location`, event);
+    // ----- UNUSED ----- //
+
+    public getRoutePath(options: RestRequestOptions): Observable<any> {
+        console.log('getRoutePath e: ', options);
+        return this.doRequest('post', `${this.apiUrl}get-route-path/`, options);
     }
 }

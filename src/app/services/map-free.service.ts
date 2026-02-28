@@ -53,7 +53,7 @@ export class MapFreeService {
                 query,  // swLat: number, swLon: number, neLat: number, neLon: number
                 variables: {}
             },
-            debounceTime: false
+            useDebounce: false
         }).pipe(
             tap((response: NearbyVehicleResponse) => this.graphQLErrorService.handleErrors('getNearbyVehicles', response)),
             map((response: NearbyVehicleResponse) => this.transformFreeMapResonse(response)),

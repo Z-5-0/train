@@ -48,7 +48,7 @@ export class RealtimeService {
                 query: createTripPathQuery(ids),
                 variables: {}
             },
-            debounceTime: false
+            useDebounce: false
         }).pipe(
             tap((response: RealtimeTripResponse) => this.graphQLErrorService.handleErrors('getTripPath', response)),
             map((response: RealtimeTripResponse) => this.createRealtimeData(response)),

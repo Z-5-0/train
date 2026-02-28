@@ -77,7 +77,7 @@ export class MapTransportService {
                 query: createVehicleTripQuery(gtfsId),
                 variables: {}
             },
-            debounceTime: false
+            useDebounce: false
         }).pipe(
             take(1),
             tap((response: VehicleTripResponse) => this.graphQLErrorService.handleErrors('getVehicleTrip', response)),

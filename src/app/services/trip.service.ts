@@ -45,7 +45,7 @@ export class TripService {
                 query: createTripQuery(gtfsId),
                 variables: {}
             },
-            debounceTime: false
+            useDebounce: false
         }).pipe(
             tap((response: TripResponse) => this.graphQLErrorService.handleErrors('getTrip', response)),
             map((response: TripResponse) => this.transformTripResponse(response.data.trip)),

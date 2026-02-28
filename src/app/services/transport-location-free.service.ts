@@ -41,7 +41,7 @@ export class TransportLocationFreeService {
                 query: VEHICLE_POSITION_QUERY,
                 variables: variables
             },
-            debounceTime: false
+            useDebounce: false
         }).pipe(
             tap((response: TransportLocationResponse) => this.graphQLErrorService.handleErrors('getVehiclePosition', response)),
             map((response: TransportLocationResponse) => this.createTransportLocationData(response)),

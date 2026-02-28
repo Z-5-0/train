@@ -92,3 +92,11 @@ export interface GraphQLResponseError {
     message: string;
     path: string[];
 }
+
+export interface LocationOptions {
+    params: {
+        lat: number;
+        lon: number;
+        format: string;
+    };
+}

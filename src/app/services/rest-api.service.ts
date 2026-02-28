@@ -1,10 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { EMPTY, Observable, ObservableInput, of, Subject, throwError, timer } from 'rxjs';
-import { debounceTime, switchMap, catchError, retryWhen, tap, delay, shareReplay, retry } from 'rxjs/operators';
+import { Observable, Subject, timer } from 'rxjs';
+import { debounceTime, switchMap, tap, retry } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { RestRequestOptions } from '../shared/models/api/request';
-
 
 import { getErrorMessage } from '../shared/constants/error-code';
 import { MessageService } from './message.service';
@@ -15,6 +14,8 @@ import { TripResponse } from '../shared/models/api/response-trip';
 import { VehicleTripResponse } from '../shared/models/api/response-vehicle-trip';
 import { TransportLocationResponse } from '../shared/models/api/response-transport-location';
 import { NearbyVehicleResponse } from '../shared/models/api/response-nearby-vehicle';
+import { LocationOptions } from '../shared/models/common';
+import { LocationApiResponse } from '../shared/models/api/response-location';
 
 @Injectable({
     providedIn: 'root',
@@ -118,8 +119,7 @@ export class RestApiService {
         return this.doRequest('post', `${this.apiUrl}get-nearby-vehicles/`, options);
     }
 
-    public getLocation(options: any): Observable<any> {    // TODO TYPES
-        console.log('getLocation e: ', options);
+    public getLocation(options: LocationOptions): Observable<LocationApiResponse> {
         return this.doRequest('get', `${this.apiUrl}get-location`, options);
     }
 

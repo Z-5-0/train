@@ -90,6 +90,8 @@ export class GraphQLErrorService {
     handleErrors<K extends keyof APIResponseMap>(context: K, response: APIResponseMap[K]) {
         if (!response?.errors?.length) return;
 
+        console.warn('GraphQLErrorService:', context, response.errors);
+
         const handler = this.handlers[context];
 
         if (handler) {

@@ -10,7 +10,7 @@ import { Route } from '../../../../shared/models/route';
 import { RouteService } from '../../../../services/route.service';
 import { TRANSPORT_MODE } from '../../../../shared/constants/transport-mode';
 import { GeolocationService } from '../../../../services/geolocation.service';
-import { catchError, map, Subject, take, takeUntil, tap, throwError } from 'rxjs';
+import { map, Subject, take, takeUntil, tap } from 'rxjs';
 import { MessageService } from '../../../../services/message.service';
 import { GEOLOCATION_ERROR_MESSAGE } from '../../../../shared/constants/error-geolocation';
 import { NzModalModule } from 'ng-zorro-antd/modal';
@@ -92,29 +92,36 @@ export class RoutePlanSearchComponent {
         this.setPlaceFieldPostButtons();
 
         this.messageService.showWarning(this.geolocationError(error.code));
-      }
+      }, {
+      enableHighAccuracy: false
+    }
     );
   }
 
   getGpsPosition() {
-    // console.log('getGps');
     this.gpsIsLoading = true;
     this.originIsCurrentLocation = true;
-    this.geolocationService.getCurrentLocationInfo$().subscribe(data => {
-      if (!data) return;
 
-      this.currentLocation.set(data.currentLocation);
-      this.originPlace.set(data.originPlace);
-      this.originPlaces = {};
-      this.setPlaceFieldPostButtons();
-      this.routeService.setSelectedPlace({ 'originPlace': this.originPlace() ?? null });
-      this.originIsCurrentLocation = true;
-      this.gpsIsLoading = false;
+    this.geolocationService.getCurrentLocationInfo$()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(data => {
+        if (!data) return;
 
-      this.routeIsFavourite = this.favouriteRouteService.isFavouriteRoute();
-      this.favouriteFillStep = this.routeIsFavourite ? 100 : 0;
-    })
-  };
+        this.currentLocation.set(data.currentLocation);
+        this.originPlace.set(data.originPlace);
+
+        this.originPlaces = {};
+        this.routeService.setSelectedPlace({ originPlace: this.originPlace() ?? null });
+        this.originIsCurrentLocation = true;
+        this.gpsIsLoading = false;
+
+        this.routeIsFavourite = this.favouriteRouteService.isFavouriteRoute();
+        this.favouriteFillStep = this.routeIsFavourite ? 100 : 0;
+
+        this.gpsEnabled = true;
+        this.setPlaceFieldPostButtons();
+      });
+  }
 
   loadPlaceCollection() {
     const { originPlaces, destinationPlaces } = this.routeService.getPlaceCollection();
@@ -173,7 +180,6 @@ export class RoutePlanSearchComponent {
       take(1),
       map((resp: PlaceApiResponse) => this.transformPlaces(resp.features)),
       tap((placesByMode) => {
-        // console.log('placesByMode: ', placesByMode);
         this.routeService.setPlaceCollection(streamName, placesByMode);
         this.updatePlaceProperty(streamName, placesByMode);
 

@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { catchError, map, switchMap, take } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, map, switchMap, take } from 'rxjs/operators';
 import { RestApiService } from './rest-api.service';
 import { MessageService } from './message.service';
 import { GEOLOCATION_ERROR_MESSAGE } from '../shared/constants/error-geolocation';
@@ -14,6 +14,10 @@ export class GeolocationService {
     readonly currentLocation$ = this._currentLocation$.asObservable();
 
     private watchId: number | null = null;
+
+    ngOnInit() {
+        // navigator.geolocation.getCurrentPosition(() => { });
+    }
 
     startTracking() {
         if (!navigator.geolocation) {
@@ -59,7 +63,6 @@ export class GeolocationService {
     }
 
     getCurrentLocationInfo$(): Observable<{ currentLocation: string; originPlace: any } | null> {
-
         return new Observable<GeolocationPosition | null>((observer) => {
             if (!navigator.geolocation) {
                 observer.next(null);
@@ -68,23 +71,49 @@ export class GeolocationService {
                 return;
             }
 
+            const timeoutId = setTimeout(() => observer.complete(), 10000);
+
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     observer.next(position);
-                    observer.complete();
+                    // observer.complete();
                 },
                 (error: GeolocationPositionError) => {
                     this.messageService.showWarning(GEOLOCATION_ERROR_MESSAGE(error.code));
 
                     observer.next(null);
                     observer.complete();
-                }
+                }, {
+                enableHighAccuracy: false,
+                maximumAge: Infinity,
+                timeout: 1000
+            });
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    observer.next(position);
+                    clearTimeout(timeoutId);
+                    observer.complete();
+                },
+                (error: GeolocationPositionError) => {
+                    this.messageService.showWarning(GEOLOCATION_ERROR_MESSAGE(error.code));
+
+                    observer.next(null);
+                    clearTimeout(timeoutId);
+                    observer.complete();
+                }, {
+                enableHighAccuracy: true,
+            }
                 /* (error: GeolocationPositionError) => {
                     observer.error(error)       // pass error to component
                 } */
             );
         }).pipe(
-            take(1),
+            // take(1),
+            distinctUntilChanged((a, b) =>
+                a?.coords.latitude === b?.coords.latitude &&
+                a?.coords.longitude === b?.coords.longitude
+            ),
             switchMap(position => {
                 if (!position) return of(null);
 

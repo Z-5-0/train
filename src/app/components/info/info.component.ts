@@ -1,8 +1,46 @@
-import { Component } from '@angular/core';
+import { Component, TemplateRef } from '@angular/core';
 import { TRANSPORT_MODE } from '../../shared/constants/transport-mode';
-import { CommonModule, KeyValuePipe } from '@angular/common';
+import { CommonModule, KeyValue, KeyValuePipe } from '@angular/common';
 import { NzSegmentedModule } from 'ng-zorro-antd/segmented';
 import { FormsModule } from '@angular/forms';
+import { TransportMode, TransportModeOptions } from '../../shared/models/common';
+import { NzBadgeModule } from 'ng-zorro-antd/badge';
+
+type TabItem = {
+  value: number;
+  label: string;
+}
+
+type IssueItem = {
+  index: number;
+  description: string;
+}
+
+type IconLegendItem = {
+  index: number;
+  description: string;
+  icon: string;
+}
+
+interface BaseLegendItem {
+  index: number;
+  description: string;
+}
+
+export interface DurationLegendItem extends BaseLegendItem {
+  type: 'duration';
+  value: string;
+}
+
+export interface StatusLegendItem extends BaseLegendItem {
+  type: 'status';
+  label: string;
+  badgeClass: 'success' | 'warning' | 'error';
+  sup?: boolean;
+  countTemplate?: TemplateRef<unknown>;
+}
+
+export type CustomLegendItem = DurationLegendItem | StatusLegendItem;
 
 @Component({
   selector: 'info',
@@ -11,38 +49,91 @@ import { FormsModule } from '@angular/forms';
     KeyValuePipe,
     NzSegmentedModule,
     FormsModule,
+    NzBadgeModule,
   ],
   templateUrl: './info.component.html',
   styleUrl: './info.component.scss'
 })
 export class InfoComponent {
-  public transportMode = TRANSPORT_MODE as Record<string, { name: string; label: string, icon: string }>;
+  public transportMode = TRANSPORT_MODE
+  // public transportMode =  Object.fromEntries(Object.entries(TRANSPORT_MODE).filter(([key]) => !key.includes('ERROR')));
 
   infoIndex: string | number = 0;
 
-  tabs = [    // TODO INTERFACE
+  tabs: TabItem[] = [
     { value: 0, label: 'User guide' },
     { value: 1, label: 'Known issues' },
     { value: 2, label: 'Legend' },
   ];
 
-  issues = [    // TODO INTERFACE
-    { index: 0, text: 'Midnight trips sometimes show as \'Trip has finished\' even though the trip is scheduled for the next day' },
-    { index: 1, text: 'Circles and heading indicators around vehicles sometimes remain visible when \'vehiclePosition\' or \'heading\' is null' },
-    { index: 2, text: 'When all vehicles reach their final stop, the map does not always indicate \'All trips have been finished\'' },
-    { index: 3, text: 'On initial map load, the circle around a vehicle can occasionally shift slightly to the left' },
-    { index: 4, text: 'Zoom level and map position are not persisted when returning to the map component' },
-    { index: 5, text: 'Error messages do not always appear consistently' },
-    { index: 6, text: 'Mobile layout issues: the URL bar may cause content to overflow' },
-    { index: 7, text: 'On mobile, route list item details can overflow horizontally' },
-    { index: 8, text: 'CORS errors may occur under certain configurations' },
-    { index: 9, text: 'Footer gradient is currently displayed on all views; it should only appear on Route and Transit views' },
-    { index: 10, text: 'User guide missing' },
-    { index: 11, text: 'API requests are handled by my own server; response times may be slow and occasionally delayed depending on network and device load' },
-    { index: 12, text: 'Accidental \'upcoming\' text appearance at trip starting stop' },
-    { index: 13, text: 'Wrong intermediate stops text shadow on map (etc. coach, tram)' },
-
-    { index: 15, text: 'Clean code' },
+  issues: IssueItem[] = [
+    { index: 0, description: 'Midnight trips sometimes show as \'Trip has finished\' even though the trip is scheduled for the next day' },
+    { index: 1, description: 'Circles and heading indicators around vehicles sometimes remain visible when position or heading is missing' },
+    { index: 2, description: 'When all vehicles reach their final stop, the map does not indicate \'All trips have been finished\'' },
+    { index: 3, description: 'Error messages do not always appear consistently' },
+    { index: 4, description: 'The URL bar may cause content to overflow on mobile' },
+    { index: 5, description: 'Route list item details can overflow horizontally on mobile' },
+    { index: 6, description: 'CORS errors may occur under certain configurations' },
+    { index: 7, description: 'Footer gradient is currently displayed on all views; it should only appear on Route and Transit views' },
+    { index: 8, description: 'User guide missing' },
+    { index: 9, description: 'API requests are handled by my own server; response times may be slow and occasionally delayed depending on network and device load' },
+    { index: 10, description: 'Accidental \'upcoming\' text appearance at trip starting stop' },
+    { index: 11, description: 'Wrong intermediate stops text shadow on map (etc. coach, tram)' },
+    { index: 12, description: 'Card navigation (swipe / keyboard) is currently in an early stage of implementation' },
   ];
 
+  iconLegends: IconLegendItem[] = [
+    { index: 0, description: 'Favourites', icon: 'fa-fw fa-solid fa-heart' },
+    { index: 1, description: 'Favourite route selected', icon: 'fa-fw fa-solid fa-heart text-error' },
+    { index: 2, description: 'Get GPS position', icon: 'fa-fw fa-solid fa-location-crosshairs text-success' },
+    { index: 3, description: 'GPS position not available', icon: 'fa-fw fa-solid fa-location-crosshairs text-error' },
+    { index: 4, description: 'Swap origin and destination place', icon: 'fa-fw fa-solid fa-retweet text-success' },
+    { index: 5, description: 'Cannot swap origin and destination place', icon: 'fa-fw fa-solid fa-retweet text-error' },
+    { index: 6, description: 'Origin position', icon: 'fa-fw fa-solid fa-map-marker-alt text-emerald-500' },
+    { index: 7, description: 'Destination position', icon: 'fa-fw fa-solid fa-flag-checkered text-rose-500' },
+    { index: 8, description: 'Clear field', icon: 'fa-solid fa-circle-xmark' },
+    { index: 9, description: 'Hovered on clear field', icon: 'fa-solid fa-circle-xmark text-error' },
+    { index: 10, description: 'Current position', icon: 'fa-fw fa-solid fa-location-arrow text-red-600' },
+    { index: 11, description: 'Point of change transport mode during trip', icon: 'fa-regular fa-circle text-[#828282]' },
+  ];
+
+  customLegendItems: CustomLegendItem[] = [
+    {
+      index: 0,
+      type: 'duration',
+      value: 'X',
+      description: 'Total trip duration'
+    },
+    {
+      index: 1,
+      type: 'status',
+      label: 'on time',
+      badgeClass: 'success',
+      sup: false,
+      description: 'Transport is on time'
+    },
+    {
+      index: 2,
+      type: 'status',
+      label: 'early',
+      badgeClass: 'warning',
+      sup: true,
+      description: 'Transport is early by X minutes'
+    },
+    {
+      index: 3,
+      type: 'status',
+      label: 'late',
+      badgeClass: 'error',
+      sup: true,
+      description: 'Transport is late by X minutes'
+    }
+  ];
+
+  compareFn(
+    a: KeyValue<TransportMode, TransportModeOptions>,
+    b: KeyValue<TransportMode, TransportModeOptions>
+  ): number {
+    return (a.value.index ?? 0) - (b.value.index ?? 0);
+  }
 }

@@ -19,7 +19,7 @@ export const HOME_CARDS: HomeCard[] = [
     details: 'selectedRoute',
     mapMode: 'TRIP',
     footer: {
-      text: 'beta v0.1',
+      text: 'beta v0.2',
       alignment: 'right',
       gradient: true
     }
@@ -30,7 +30,7 @@ export const HOME_CARDS: HomeCard[] = [
     details: '',
     mapMode: 'FREE',
     footer: {
-      text: 'beta v0.1',
+      text: 'beta v0.2',
       alignment: 'right',
       gradient: false
     }
@@ -41,7 +41,7 @@ export const HOME_CARDS: HomeCard[] = [
     details: '',
     mapMode: null,
     footer: {
-      text: 'beta v0.1',
+      text: 'beta v0.2',
       alignment: 'right',
       gradient: false
     }
@@ -52,7 +52,7 @@ export const HOME_CARDS: HomeCard[] = [
     details: '',
     mapMode: null,
     footer: {
-      text: 'beta v0.1',
+      text: 'beta v0.2',
       alignment: 'right',
       gradient: false
     }
@@ -63,9 +63,9 @@ export const HOME_CARDS: HomeCard[] = [
     details: '',
     mapMode: null,
     footer: {
-      text: 'beta v0.1',
+      text: 'beta v0.2',
       alignment: 'right',
-      gradient: false
+      gradient: true
     }
   },
 ]

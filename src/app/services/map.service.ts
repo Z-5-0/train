@@ -1,9 +1,6 @@
 import { Injectable } from "@angular/core";
 import * as L from 'leaflet';
 import { CircleMarkerDrawOptions, DivIconDrawOptions, DivIconDrawOptionsData, MapLabelRule, PolylineDrawOptions } from "../shared/models/map";
-import { TRANSPORT_MODE } from "../shared/constants/transport-mode";
-import { MapTransportData, TransportMode } from "../shared/models/common";
-import polyline from '@mapbox/polyline';
 
 
 @Injectable({ providedIn: 'root' })

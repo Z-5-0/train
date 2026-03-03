@@ -15,6 +15,17 @@ export type TransportMode =
     | "GPS"                   // 
     | "ERROR"                 // 
 
+export interface TransportModeOptions {
+    index: number;
+    name: string;
+    label: string;
+    icon: string;
+    color: string;
+    lightColor: boolean;
+    minVisibleZoom: number | null;
+    showLine: boolean;
+}
+
 export type DelayStatus = 'on time' | 'late' | 'early' | null;
 
 export type ModeData = {

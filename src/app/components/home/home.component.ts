@@ -8,14 +8,12 @@ import { SettingsComponent } from '../settings/settings.component';
 import { RouteService } from '../../services/route.service';
 import { TransportModePipe } from '../../shared/pipes/transport-mode.pipe';
 import { TransportMode } from '../../shared/models/common';
-import { DateTime } from 'luxon';
-import { filter, map, Observable, of, Subject, Subscription, take, takeUntil, tap } from 'rxjs';
+import { filter, map, Observable, of, Subject, takeUntil } from 'rxjs';
 import { MapComponent } from '../../shared/components/map/map.component';
 import { AppSettingsService } from '../../services/app-settings.service';
 import { NzConfigService } from 'ng-zorro-antd/core/config';
 import { InfoComponent } from '../info/info.component';
 import { Route } from '../../shared/models/route';
-import { MapMode } from '../../shared/models/map';
 
 @Component({
   selector: 'app-home',

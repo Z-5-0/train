@@ -47,7 +47,7 @@ export interface TransportInfo {
   longName?: string | null;
   textColor?: string | null;
   backgroundColor?: string | null;
-  [key: string]: string | null | undefined;
+  [key: string]: string | null | undefined;   //  inappropriate way of definition
 }
 
 export interface IntermediateStop {

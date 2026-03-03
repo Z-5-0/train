@@ -1,5 +1,5 @@
 import { inject, Injectable } from "@angular/core";
-import { catchError, EMPTY, interval, map, Observable, startWith, switchMap, take, tap, throwError } from "rxjs";
+import { catchError, EMPTY, interval, map, Observable, startWith, switchMap, tap, throwError } from "rxjs";
 import { createTripQuery } from "../shared/constants/query/trip-query";
 import { Trip, TripResponse } from "../shared/models/api/response-trip";
 import { CurrentTrip, ServiceStatusKey, StopStatus } from "../shared/models/trip";
@@ -20,7 +20,7 @@ export class TripService {
     private appSettingsService: AppSettingsService = inject(AppSettingsService);
     private graphQLErrorService: GraphQLErrorService = inject(GraphQLErrorService);
 
-    public transportMode = TRANSPORT_MODE as Record<string, { name: string; icon: string }>;
+    public transportMode = TRANSPORT_MODE;
 
     getTripPolling(gtfsId: string): Observable<CurrentTrip> {
         return this.appSettingsService.appSettings$.pipe(

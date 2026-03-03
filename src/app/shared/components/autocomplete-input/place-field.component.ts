@@ -1,15 +1,16 @@
-import { CommonModule, KeyValue } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Component, ElementRef, EventEmitter, inject, Input, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NzAutocompleteModule } from 'ng-zorro-antd/auto-complete';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { Place, PlaceGroup } from '../../models/place';
-import { debounceTime, filter, of, Subject, switchMap, tap, withLatestFrom } from 'rxjs';
+import { debounceTime, Subject, switchMap, tap } from 'rxjs';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { PlaceFieldPostButton } from '../../models/place-field-post-button';
 import { TRANSPORT_MODE } from '../../constants/transport-mode';
 import { AppSettingsService } from '../../../services/app-settings.service';
+import { TransportModeOptions } from '../../models/common';
 
 @Component({
   selector: 'place-field',
@@ -39,7 +40,7 @@ export class PlaceFieldComponent {
 
   @ViewChild('input', { static: true }) inputElement!: ElementRef<HTMLInputElement>;
 
-  public transportMode = TRANSPORT_MODE as Record<string, { name: string; icon: string }>;
+  public transportMode = TRANSPORT_MODE as Record<string, TransportModeOptions>;    // not an ideal type assertion
 
   appSettingsService: AppSettingsService = inject(AppSettingsService);
 

@@ -22,6 +22,7 @@ import { CurrentTrip, StopTime } from '../../../shared/models/trip';
 import { KmPipe } from '../../../shared/pipes/km.pipe';
 import { SafeHtmlPipe } from '../../../shared/pipes/safe-html-pipe';
 import { StopStatusPipe } from '../../../shared/pipes/stop-status.pipe';
+import { TransportMode, TransportModeOptions } from '../../../shared/models/common';
 
 
 @Component({
@@ -58,7 +59,7 @@ export class RouteTransitComponent {
   tripService: TripService = inject(TripService);
   appSettingsService: AppSettingsService = inject(AppSettingsService);
 
-  public transportMode = TRANSPORT_MODE as Record<string, { name: string; icon: string }>;
+  public transportMode = TRANSPORT_MODE as Record<string, TransportModeOptions>;    // not an ideal type assertion
   public tripAlert = TRIP_ALERT;
 
   currentRoute: Route | null = null;
@@ -285,7 +286,7 @@ export class RouteTransitComponent {
 
   public getModeName(sequence: any): string | null {
     const mode = sequence?.mode;
-    const modeConfig = this.transportMode?.[mode];
+    const modeConfig = this.transportMode?.[mode as TransportMode];
 
     if (!modeConfig?.name) return null;
 

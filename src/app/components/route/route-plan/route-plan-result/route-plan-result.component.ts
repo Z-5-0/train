@@ -9,7 +9,6 @@ import { RouteService } from '../../../../services/route.service';
 import { Route } from '../../../../shared/models/route';
 import { TRANSPORT_MODE } from '../../../../shared/constants/transport-mode';
 import { LocalStorageService } from '../../../../services/local-storage.service';
-import { TripMapState } from '../../../../shared/models/map';
 import { MapTripService } from '../../../../services/map-trip.service';
 
 
@@ -33,7 +32,7 @@ export class RoutePlanResultComponent {
   localStorageService: LocalStorageService = inject(LocalStorageService);
   mapTripService: MapTripService = inject(MapTripService);
 
-  public transportMode = TRANSPORT_MODE as Record<string, { name: string; icon: string }>;
+  public transportMode = TRANSPORT_MODE;
 
   public selectedRoute: Route | null = null;
 

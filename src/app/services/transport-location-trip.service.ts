@@ -5,7 +5,7 @@ import { AppSettingsService } from "./app-settings.service";
 import { RestApiService } from "./rest-api.service";
 import { VEHICLE_POSITION_QUERY } from "../shared/constants/query/vehicle-location-query";
 import { DateTime } from "luxon";
-import { TransportLocationResponse, VehiclePosition } from "../shared/models/api/response-transport-location";
+import { TransportLocationResponse } from "../shared/models/api/response-transport-location";
 import { TRANSPORT_MODE } from "../shared/constants/transport-mode";
 import { TransportLocation } from "../shared/models/transport-location";
 import { GraphQLErrorService } from "./graphql-error.service";

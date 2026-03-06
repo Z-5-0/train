@@ -1,11 +1,10 @@
 import { inject, Injectable } from "@angular/core";
 import { BehaviorSubject } from "rxjs";
-import { Route } from "../shared/models/route";
-import { Place } from "../shared/models/place";
 import { LocalStorageService } from "./local-storage.service";
 import { RouteService } from "./route.service";
 import { SelectableRoute } from "../shared/models/common";
 import { MessageService } from "./message.service";
+import { favouriteRouteLimit } from "../shared/constants/common";
 
 
 @Injectable({
@@ -39,8 +38,8 @@ export class FavouriteRouteService {
     setFavouriteRoute(route: SelectableRoute): boolean {
         const previousRoutes = this.getFavouriteRoutes();
 
-        if (previousRoutes.length > 20) {
-            this.messageService.showWarning('Favourite route limit (20) reached.')
+        if (previousRoutes.length > favouriteRouteLimit) {
+            this.messageService.showWarning(`Favourite route limit (${favouriteRouteLimit}) reached.`)
             return false;
         }
 

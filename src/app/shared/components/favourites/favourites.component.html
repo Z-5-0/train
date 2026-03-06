@@ -16,7 +16,7 @@
     <div class="grow overflow-y-auto p-4">
         <nz-list [nzLoading]="false" cdkDropList (cdkDropListDropped)="dropped($event)">
             @for (fav of favouriteRoutes; track fav; let index = $index) {
-            <nz-list-item cdkDrag [cdkDragDisabled]="isSortable">
+            <nz-list-item cdkDrag [cdkDragDisabled]="isSortable" class="cursor-pointer" (click)="selectFavourite(index)">
                 <div class="w-full grid gap-x-2 items-center"
                     [class]="data.rowSelection ? 'grid-cols-[auto_1fr_auto]' : 'grid-cols-[1fr_auto]'">
                     @if (data.rowSelection) {
@@ -40,8 +40,7 @@
                     </small>
                     @if (data.favouriteSelection) {
                     <div>
-                        <button nz-button nzType="primary" nzSize="large" nzShape="circle"
-                            (click)="selectFavourite(index)">
+                        <button nz-button nzType="primary" nzSize="large" nzShape="circle">
                             <i class="fa-solid fa-star"
                                 [ngClass]="{ 'text-[var(--color-warning)]': currentFavourite === index }"></i>
                         </button>

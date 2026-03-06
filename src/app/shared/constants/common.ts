@@ -1,0 +1,1 @@
+export const favouriteRouteLimit: number = 20;

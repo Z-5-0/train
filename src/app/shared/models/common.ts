@@ -111,3 +111,19 @@ export interface LocationOptions {
         format: string;
     };
 }
+
+export type MessageTemplate = 'general' | 'transport';
+export type MessagePriority = 'success' | 'info' | 'warning' | 'error' | 'blank';
+
+export interface MessageItem {
+    text: string;
+    icon: MessageTransportIcon | null;
+}
+
+export interface MessageTransportIcon {
+    mode: TransportMode;
+    modeData: TransportModeOptions;
+    color: string;
+    textColor: string;
+    name: string;
+}

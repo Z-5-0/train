@@ -1,0 +1,43 @@
+<!-- ----- TITLE ----- -->
+
+<ng-template #title let-data let-priority="priority">
+    <h3 [ngClass]="{
+            'text-[var(--color-success)]': data.priority === 'success',
+            'text-[var(--color-error)]': data.priority === 'error',
+            'text-[var(--color-warning)]': data.priority === 'warning',
+            'text-[var(--color-info)]': data.priority === 'info',
+            'text-[var(--color-blank)]': data.priority === 'blank'
+        }">{{ data.title }}</h3>
+</ng-template>
+
+<!-- ----- CONTENT ----- -->
+
+<ng-template #general let-notification let-data="data">
+    <div>
+        <ng-container *ngTemplateOutlet="title; context: { $implicit: data, priority: data.priority }"></ng-container>
+        <ul>
+            @for (elem of data.content; track $index) {
+            <li>{{ elem.text }}</li>
+            }
+        </ul>
+    </div>
+</ng-template>
+
+<ng-template #transport let-notification let-data="data">
+    <div>
+        <ng-container *ngTemplateOutlet="title; context: { $implicit: data, priority: data.priority }"></ng-container>
+        <ul>
+            @for (elem of data.content; track $index) {
+            <li>
+                <div class="flex items-center gap-x-[5px]" [ngClass]="{ 'pt-1': elem.icon, 'pb-1': elem.icon }">
+                    @if (elem.icon) {
+                    <span class="transport-number-badge border" [style.color]="elem.icon.color"
+                        [style.backgroundColor]="elem.icon.background">{{elem.icon.name}}</span>
+                    }
+                    <span>{{ elem.text }}</span>
+                </div>
+            </li>
+            }
+        </ul>
+    </div>
+</ng-template>

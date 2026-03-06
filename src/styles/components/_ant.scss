@@ -292,10 +292,14 @@ nz-notification-container {
                 align-items: center;
                 width: 100%;
                 max-width: 100%;
+                max-height: calc(100vh - 75px);
+                align-items: baseline;
                 margin: 0;
                 border-width: 3px;
                 border-style: solid;
                 border-radius: 5px;
+                overflow: auto;
+                opacity: 0.9 !important;
 
                 &.success {
                     border-color: #52c41a;

@@ -10,7 +10,7 @@ import polyline from '@mapbox/polyline';
 import { MessageService } from "./message.service";
 import { OriginOrDestination, Route, RouteSequence } from "../shared/models/route";
 import { createTripPathQuery } from "../shared/constants/query/trip-path-query";
-import { RealtimeStoptime, RealtimeTripData, RealtimeTripDataRoute, RealtimeTripResponse } from "../shared/models/api/response-realtime";
+import { RealtimeStoptime, RealtimeTripData, RealtimeTripResponse } from "../shared/models/api/response-realtime";
 import { ArrivalInfo, DepartureInfo, ExtendedVehiclePosition, TripPath, TripPathOriginData } from "../shared/models/trip-path";
 import { GraphQLErrorService } from "./graphql-error.service";
 

@@ -4,7 +4,6 @@ import { Observable, Subject, timer } from 'rxjs';
 import { debounceTime, switchMap, tap, retry } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { RestRequestOptions } from '../shared/models/api/request';
-
 import { getErrorMessage } from '../shared/constants/error-code';
 import { MessageService } from './message.service';
 import { PlaceApiResponse } from '../shared/models/api/response-place';
@@ -26,7 +25,7 @@ export class RestApiService {
     private http: HttpClient = inject(HttpClient);
     private messageService: MessageService = inject(MessageService);
 
-    // rivate subjectMap = new Map<string, { input: Subject<any>, output: Subject<any> }>();
+    // private subjectMap = new Map<string, { input: Subject<any>, output: Subject<any> }>();
     // private subjectMap = new Map<string, { input: Subject<RestRequestOptions>; output: Observable<any> }>();
     private subjectMap = new Map<string, { input: Subject<RestRequestOptions>; output: Subject<any> }>();
 

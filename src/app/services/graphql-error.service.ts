@@ -1,6 +1,6 @@
 import { inject, Injectable } from "@angular/core";
 import { MessageService } from "./message.service";
-import { GraphQLResponseError, TransportMode } from "../shared/models/common";
+import { GraphQLResponseError, MessageItem, MessageTemplate, MessageTransportIcon, TransportMode } from "../shared/models/common";
 import { TripResponse } from "../shared/models/api/response-trip";
 import { RealtimeTripData, RealtimeTripDataRoute, RealtimeTripResponse } from "../shared/models/api/response-realtime";
 import { TRANSPORT_MODE } from "../shared/constants/transport-mode";
@@ -21,7 +21,7 @@ type APIResponseMap = {
 type LabeledHandlerDataType =
     VehiclePositionData[] |
     Record<string, RealtimeTripData | null> |
-    null
+    null;
 
 @Injectable({
     providedIn: 'root',
@@ -46,13 +46,14 @@ export class GraphQLErrorService {
         'trip_.tripGeometry': 'Full route path for trip {{label}} is currently unavailable.',
         'trip_.route': 'Route information is not available for trip {{label}}.',
         'trip_.stoptimes': 'Stop time information is not available for trip {{label}}.',
-        'vehiclePositionsForTrips': 'Vehicle position could not be loaded.',
+        'vehiclePositionsForTrips': 'Full route path for the vehicle is currently unavailable.',
         'vehiclePositions': 'No vehicles found in the selected area.',
         'vehiclePositions.*': 'Vehicle {{label}} has no data available.',
         'vehiclePositions.*.trip': 'Vehicle {{label}} has no trip assigned.',
         'vehiclePositions.*.trip.route': 'Trip {{label}} has no route information.',
         'vehiclePositions.*.trip.tripGeometry': 'Trip {{label}} has no geometry data for the route.',
         'undefined': 'Failed to retrieve all required data.',
+        'unknown': 'Unknown API call error.',
     };
 
     private handlers: {
@@ -99,7 +100,10 @@ export class GraphQLErrorService {
             return;
         };
 
-        this.showMessage('Unknown API call error.');
+        this.callMessageService('general', [{
+            text: this.errorMessages['unknown'],
+            icon: null
+        }]);
     }
 
     private createErrorKeysSet(errors: GraphQLResponseError[]): string[] {
@@ -110,29 +114,35 @@ export class GraphQLErrorService {
         )]
     }
 
-    private showMessage(message: string) {
-        this.messageService.showError(message);
+    private callMessageService(template: MessageTemplate, message: MessageItem[]) {
+        this.messageService.showMessage(
+            template,
+            'error',
+            Array.isArray(message) ? message : [message]
+        );
     }
 
     private handleSimpleErrors(errors?: GraphQLResponseError[]) {
         const errorKeys = this.createErrorKeysSet(errors ?? []);
-        const message = errorKeys
-            .map(key => this.errorMessages[key] ?? this.errorMessages[this.defaultErrorKey])
-            .join('\n');
-        this.showMessage(message);
+        const messages: MessageItem[] = errorKeys.map((key: string) => ({
+            text: this.errorMessages[key] ?? this.errorMessages[this.defaultErrorKey],
+            icon: null
+        }));
+        this.callMessageService('general', messages);
     }
 
-    private handleIndexedErrors(errors?: GraphQLResponseError[]) {
+    private handleIndexedErrors(errors?: GraphQLResponseError[]): void {
         const errorKeys = this.createErrorKeysSet(errors ?? []);
-        const message = errorKeys
-            .map(key => {
-                const parts = key.split('.');
-                const label = parts.length === 3 ? `#${Number(parts[2]) + 1}` : '';
-                const normalizedKey = parts.length === 3 ? 'plan.itineraries.*' : key;
-                return (this.errorMessages[normalizedKey] ?? this.errorMessages[this.defaultErrorKey]).replace('{{label}}', label);
-            })
-            .join('\n');
-        this.showMessage(message);
+        const messages: MessageItem[] = errorKeys.map((key: string) => {
+            const parts = key.split('.');
+            const label = parts.length === 3 ? `#${Number(parts[2]) + 1}` : '';
+            const normalizedKey = parts.length === 3 ? 'plan.itineraries.*' : key;
+            return {
+                text: (this.errorMessages[normalizedKey] ?? this.errorMessages[this.defaultErrorKey]).replace('{{label}}', label),
+                icon: null
+            };
+        });
+        this.callMessageService('general', messages);
     }
 
     private handleLabeledErrors(data: LabeledHandlerDataType, errors?: readonly GraphQLResponseError[]) {
@@ -140,75 +150,121 @@ export class GraphQLErrorService {
         const isObject = !isArray && typeof data === 'object' && data !== null;
 
         if (!isArray && !isObject) {
-            this.showMessage(this.errorMessages[this.defaultErrorKey]);
+            this.callMessageService('general', [{
+                text: this.errorMessages[this.defaultErrorKey],
+                icon: null
+            }]);
             return;
         }
 
-        const message = (errors ?? [])
-            .map((err: GraphQLResponseError) => {
-                const segments = err.path ?? [];
+        if (!errors?.[0]?.path?.length) {
+            this.callMessageService('general', [{
+                text: this.errorMessages[this.defaultErrorKey],
+                icon: null
+            }]);
+            return;
+        }
 
-                if (!segments[0]) {
-                    this.showMessage(this.errorMessages[this.defaultErrorKey]);
-                    return;
-                }
+        const message: MessageItem[] = errors.map((err: GraphQLResponseError) => {
+            const { errorKey, label, icon } = this.processErrorKeyAndLabel(data, err.path ?? []);
+            const baseMessage = this.errorMessages[errorKey] ?? this.errorMessages[this.defaultErrorKey];
+            return { text: baseMessage.replace('{{label}}', label ?? ''), icon };
+        });
 
-                const { errorKey, label } = this.processErrorKeyAndLabel(data, segments);
-
-                const baseMessage =
-                    this.errorMessages[errorKey] ??
-                    this.errorMessages[this.defaultErrorKey];
-
-                return baseMessage.replace('{{label}}', label ?? '');
-            })
-            .join('\n');
-
-        this.showMessage(message);
+        this.callMessageService('transport', message);
     }
 
     private processErrorKeyAndLabel(
-        data: Record<string, any> | any[],
-        [firstSegment, secondSegment, thirdSegment]: string[]
-    ): { errorKey: string; label: string } {
+        data: LabeledHandlerDataType,
+        [firstSegment, secondSegment, thirdSegment, fourthSegment]: string[],
+    ): { errorKey: string; label: string, icon: MessageTransportIcon | null } {
         const isArray = Array.isArray(data) && data.length > 0;
         const isObject = !Array.isArray(data) && typeof data === 'object' && data !== null;
 
         let errorKey = '';
         let label = '';
+        let icon = null;
 
         if (isObject) {
-            ({ errorKey, label } = this.getErrorKeyAndLabelForObject(data, [firstSegment, secondSegment, thirdSegment]));
+            ({ errorKey, label, icon } = this.getErrorKeyAndLabelForObject(
+                data,
+                [firstSegment, secondSegment, thirdSegment, fourthSegment]
+            ));
         };
         if (isArray) {
-            ({ errorKey, label } = this.getErrorKeyAndLabelForArray(data, [firstSegment, secondSegment, thirdSegment]));
+            ({ errorKey, label, icon } = this.getErrorKeyAndLabelForArray(
+                data,
+                [firstSegment, secondSegment, thirdSegment, fourthSegment]
+            ));
         };
 
-        return { errorKey, label };
+        return { errorKey, label, icon };
     }
 
-    private getErrorKeyAndLabelForObject(data: Record<string, any>, segments: string[]): { errorKey: string; label: string } {
-        const [firstSegment, secondSegment, thirdSegment] = segments;
-        const route = data[firstSegment]?.route;
-        const mode = route?.mode as TransportMode;
-        const tm = TRANSPORT_MODE[mode] ?? TRANSPORT_MODE['ERROR'];
-        const key = tm.name as keyof RealtimeTripDataRoute;
-        const label = route?.[key] ?? '-';
-        const normalizedTrip = firstSegment.replace(/\d+$/, '');
-        const errorKey = `${normalizedTrip}${secondSegment ? '.' + secondSegment : ''}`;
-        return { errorKey, label };
-    }
+    private getErrorKeyAndLabelForObject(
+        data: Record<string, RealtimeTripData | null>,
+        segments: string[]
+    ): { errorKey: string; label: string; icon: MessageTransportIcon | null } {
+        const [firstSegment, ...restSegments] = segments;
 
-    private getErrorKeyAndLabelForArray(data: any[], segments: string[]): { errorKey: string; label: string } {
-        const [firstSegment, secondSegment, thirdSegment] = segments;
-        let vehicle: any;
-        if (secondSegment !== undefined) {
-            const idx = parseInt(secondSegment, 10);
-            vehicle = Number.isInteger(idx) ? data[idx] : undefined;
+        const normalizedFirst = firstSegment.replace(/\d+$/, '');
+        const errorKey = [normalizedFirst, ...restSegments].filter((s: string) => !!s).join('.');
+
+        const trip = data[firstSegment];
+        const route = trip?.route;
+
+        if (!route) {
+            return {
+                errorKey,
+                label: '—',
+                icon: null
+            };
         }
-        const label = vehicle?.trip?.routeShortName ?? vehicle?.label ?? '-';
-        let errorKey = firstSegment;
-        if (secondSegment !== undefined) errorKey += '.*';
-        if (thirdSegment) errorKey += '.' + thirdSegment;
-        return { errorKey, label };
+
+        const modeData = TRANSPORT_MODE[route.mode as TransportMode];
+        const key = modeData.name as keyof RealtimeTripDataRoute;
+
+        const label = route[key] ?? '—';
+        const icon: MessageTransportIcon | null = route
+            ? {
+                mode: route.mode as TransportMode,
+                modeData: TRANSPORT_MODE[route.mode as TransportMode] ?? TRANSPORT_MODE['ERROR'],
+                color: `#${route.color}`,
+                textColor: `#${route.textColor}`,
+                name: route[key] ?? '—'
+            }
+            : null;
+
+        return { errorKey, label, icon };
+    }
+
+    private getErrorKeyAndLabelForArray(
+        data: VehiclePositionData[],
+        segments: string[]
+    ): { errorKey: string; label: string; icon: MessageTransportIcon | null } {
+        const [_, indexSegment] = segments;
+
+        const idx = Number(indexSegment);
+        const vehicle = Number.isInteger(idx) ? data[idx] : undefined;
+
+        const trip = vehicle?.trip;
+        const route = trip?.route;
+
+        const label = trip?.routeShortName ?? vehicle?.label ?? '-';
+
+        const icon: MessageTransportIcon | null = route ? {
+            mode: route.mode,
+            modeData: TRANSPORT_MODE[route.mode as TransportMode],
+            color: `#${route.color}`,
+            textColor: `#${route.textColor}`,
+            name: trip?.routeShortName ?? '—'
+        } : null;
+
+        const errorKey: string = segments
+            .map((seg: string, i: number) => (i === 1 && seg ? '*' : seg))
+            .filter((s: string): s is string => !!s)
+            .join('.');
+
+        return { errorKey, label, icon };
     }
 }

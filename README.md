@@ -9,7 +9,7 @@ A realtime transit route monitoring application built with modern Angular (v19) 
 <p align="center">
   <img src="https://z-5-0.github.io/train/imgs/app/app.png"
        alt="Screenshot"
-       style="height: 500px;">
+       style="width=50%">
 </p>
 
 <br>

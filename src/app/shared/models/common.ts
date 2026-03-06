@@ -112,7 +112,7 @@ export interface LocationOptions {
     };
 }
 
-export type MessageTemplate = 'general' | 'transport';
+export type MessageTemplate = 'general' | 'transport' | 'html';
 export type MessagePriority = 'success' | 'info' | 'warning' | 'error' | 'blank';
 
 export interface MessageItem {

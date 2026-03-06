@@ -41,3 +41,12 @@
         </ul>
     </div>
 </ng-template>
+
+<ng-template #html let-notification let-data="data">
+    <div>
+        <ng-container *ngTemplateOutlet="title; context: { $implicit: data, priority: data.priority }"></ng-container>
+        @for (elem of data.content; track $index) {
+        <div [innerHTML]="elem.text"></div>
+        }
+    </div>
+</ng-template>

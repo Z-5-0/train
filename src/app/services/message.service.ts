@@ -50,7 +50,7 @@ export class MessageService {
                     nzKey: 'unique-key',
                     nzClass: priority,
                     nzStyle: { whiteSpace: 'pre-wrap' },
-                    nzDuration: 6000,
+                    nzDuration: 600000,
                     nzPlacement: 'top',
                     nzData: {
                         priority,
@@ -105,5 +105,9 @@ export class MessageService {
 
     public showBlank(message: MessageInput): void {
         this.showMessage('general', 'blank', message);
+    }
+
+    public showHTML( priority: MessagePriority, message: string): void {
+        this.showMessage('html', priority, message);
     }
 }

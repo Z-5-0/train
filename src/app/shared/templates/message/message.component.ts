@@ -18,10 +18,14 @@ export class MessageComponent {
   @ViewChild('transport', { static: true })
   transportMessage!: TemplateRef<{ $implicit: NzNotificationComponent; data: MessageItem[] }>;
 
+  @ViewChild('html', { static: true })
+  htmlMessage!: TemplateRef<{ $implicit: NzNotificationComponent; data: MessageItem[] }>;
+
   private messageService: MessageService = inject(MessageService);
 
   ngAfterViewInit() {
     this.messageService.registerTemplate('general', this.generalMessage);
     this.messageService.registerTemplate('transport', this.transportMessage);
+    this.messageService.registerTemplate('html', this.htmlMessage);
   }
 }

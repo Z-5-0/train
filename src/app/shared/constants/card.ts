@@ -48,13 +48,13 @@ export const HOME_CARDS: HomeCard[] = [
   },
   {
     index: 3,
-    header: 'Welcome',
+    header: 'Project: Train',
     details: '',
     mapMode: null,
     footer: {
       text: 'beta v0.2',
       alignment: 'right',
-      gradient: false
+      gradient: true
     }
   },
   {

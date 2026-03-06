@@ -125,7 +125,6 @@ export class RestApiService {
     // ----- UNUSED ----- //
 
     public getRoutePath(options: RestRequestOptions): Observable<any> {
-        console.log('getRoutePath e: ', options);
         return this.doRequest('post', `${this.apiUrl}get-route-path/`, options);
     }
 }

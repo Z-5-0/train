@@ -82,7 +82,7 @@ export class RoutePlanSearchComponent {
         this.setPlaceFieldPostButtons();
       },
       (error: GeolocationPositionError) => {
-        console.log('GeolocationPositionError');
+        console.warn('GeolocationPositionError: ', error.code, error.message);
 
         this.originPlace.set(null);
         this.gpsEnabled = false;

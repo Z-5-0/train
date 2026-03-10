@@ -1,46 +1,47 @@
 <nz-collapse [nzExpandIconPosition]="'start'" class="dark-mode-background">
     @for (route of routeOptions; track route.index; let routeIndex = $index) {
     <ng-template #headerTemplate let-index=index>
-        <div
-            class="absolute text-[20px] top-0 bottom-0 flex items-center text-[var(--color-mid-opacity-black)] blur-[1px]">
-            {{routeIndex+1}}
-        </div>
-
-        <div class="flex gap-x-2 items-center justify-between ml-[32px]">
-            <div class="flex gap-x-4 items-center">
-                <div
-                    class="flex gap-x-1 items-center px-1 text-white rounded-[5px] bg-[var(--color-mid-opacity-black)]">
-                    <i class="fa-solid fa-clock"></i>
-                    <span>{{route.duration}}</span>
+        <div class="px-[6px] py-[12px] sm:px-[12px]"
+            (click)="$event.stopPropagation(); $event.preventDefault(); onSelectRoute($event, route)">
+            <div class="grid grid-cols-[auto_1fr_auto] gap-x-3 items-center">
+                <div class="flex">
+                    <div
+                        class="flex gap-x-1 items-center px-1 text-white rounded-[5px] bg-[var(--color-mid-opacity-black)]">
+                        <i class="fa-solid fa-clock"></i>
+                        <span>{{route.duration}}</span>
+                    </div>
                 </div>
                 <div class="flex flex-wrap gap-y-4">
-                    @for (sequence of route.sequences; track sequence; let index = $index; let last = $last) {
+                    @for (sequence of route.sequences; track $index; let index = $index; let last = $last) {
                     <span class="relative">
                         <i [ngClass]="transportMode[sequence.mode].icon"></i>
-                        <small class="absolute top-[-10%] left-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap">
+                        <span
+                            class="absolute top-[-10%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-[10px] whitespace-nowrap">
                             {{ sequence.transportInfo?.shortName}}
-                        </small>
+                        </span>
                     </span>
                     @if (!last) {
                     <span class="text-[var(--color-mid-opacity-black)] dark-mode-text">.....</span>
                     }
                     }
                 </div>
-            </div>
-            <div class="post-button dark-mode-text" [ngClass]="selectedRoute?.index === routeIndex
+                <div class=" dark-mode-text" [ngClass]="selectedRoute?.index === routeIndex
                     ? '!text-[var(--color-success)]'
-                    : 'text-[var(--color-mid-opacity-black)]'" (click)="onSelectRoute($event, route)">
-                <i class="fa-solid"
-                    [ngClass]="selectedRoute?.index === routeIndex ? 'fa-circle-check' : 'fa-circle'"></i>
+                    : 'text-[var(--color-mid-opacity-black)]'">
+                    <i class="fa-solid"
+                        [ngClass]="selectedRoute?.index === routeIndex ? 'fa-circle-check' : 'fa-circle'"></i>
+                </div>
             </div>
         </div>
     </ng-template>
 
-    <nz-collapse-panel [nzHeader]="headerTemplate" [nzShowArrow]="true">
+    <nz-collapse-panel #panel [nzHeader]="headerTemplate" [nzExpandedIcon]="expandIconTemplate" [nzShowArrow]="true"
+        [nzActive]="panel.nzActive"
+        [ngClass]="{'shadow-[inset_0_0_20px_-10px_var(--color-success)]': selectedRoute?.index === routeIndex}"
+        (click)="$event.stopPropagation(); $event.preventDefault();">
         @if (route.sequences.length === 1) {
         <nz-timeline [nzMode]="'left'" [ngClass]="'label-aligned-left wide-label'">
-            <nz-timeline-item [nzDot]="dotTemplate2" [nzLabel]="route.startTime + ' - ' + route.endTime"
-                [ngClass]="'test'">
+            <nz-timeline-item [nzDot]="dotTemplate2" [nzLabel]="route.startTime + ' - ' + route.endTime">
                 <div class="flex gap-x-1 items-start justify-between">
                     <div>
                         <div>{{route.sequences[0].destination.name}}</div>
@@ -69,9 +70,8 @@
         </nz-timeline>
         }
         @if (route.sequences.length > 1) {
-
         <nz-timeline [nzMode]="'left'" [ngClass]="'label-aligned-left'">
-            @for (sequence of route.sequences; track sequence; let first = $first; let last = $last) {
+            @for (sequence of route.sequences; track $index; let first = $first; let last = $last) {
             @if (first) {
             <nz-timeline-item [nzDot]="dotTemplate" [nzLabel]="route.startTime">
                 <div class="flex gap-x-1 items-start justify-between">
@@ -97,9 +97,6 @@
                         <span>{{sequence.origin.status}}</span>
                     </nz-badge>
                     }
-                    @if (last === first) {
-                    HELLO
-                    }
                 </div>
 
             </nz-timeline-item>
@@ -107,7 +104,7 @@
 
             @if (last) {
             <nz-timeline-item [nzDot]="dotTemplate" [nzLabel]="route.endTime">
-                <div class="flex gap-x-1 items-sart justify-between">
+                <div class="flex gap-x-1 items-start justify-between">
                     <div>
                         <div>{{sequence.destination.name}}</div>
                         @if ((sequence?.transportInfo?.longName?.length ?? 0) > 5) {
@@ -197,5 +194,29 @@
         }
     </ng-template>
 
+    <ng-template #expandIconTemplate>
+        <div class="flex items-center h-full pl-[6px] pr-[6px] sm:pl-[12px] sm:pr-[12px]"
+            (click)="switch.writeValue(!switch.isChecked)">
+            <nz-switch #switch [nzCheckedChildren]="checkedTemplate" [nzUnCheckedChildren]="uncheckedTemplate"
+                class="pointer-events-none"></nz-switch>
+            <span
+                class="absolute w-[18px] h-[18px] top-1/2 -translate-y-1/2 flex items-center justify-center text-[10px] font-bold text-black rounded-full transition-all duration-200 pointer-events-none"
+                [ngClass]="{
+                    'left-[8px] sm:left-[14px]': !switch.isChecked,
+                    'left-[30px] sm:left-[36px]': switch.isChecked
+                    }">
+                {{ routeIndex + 1 }}
+            </span>
+        </div>
+    </ng-template>
     }
+
+    <ng-template #checkedTemplate>
+        <i class="fa-solid fa-angle-up"></i>
+    </ng-template>
+
+    <ng-template #uncheckedTemplate>
+        <i class="fa-solid fa-angle-down"></i>
+    </ng-template>
+
 </nz-collapse>

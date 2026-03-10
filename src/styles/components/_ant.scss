@@ -126,16 +126,17 @@ nz-timeline {
                 }
 
                 .ant-timeline-item-head {
-                    left: 15%;
+                    left: 70px;
                 }
 
                 .ant-timeline-item-tail {
-                    left: 15%;
+                    left: 70px;
                 }
 
                 .ant-timeline-item-content {
-                    left: calc(15% + 10px);
-                    width: calc(70% + 35px);
+                    left: 110px;
+                    width: calc(100% - 110px);
+                    margin: 0;
                 }
             }
         }
@@ -163,8 +164,6 @@ nz-tabset {
             }
 
             .ant-tabs-nav-wrap {
-                // flex: unset;
-                // width: max-content;
                 justify-content: flex-end;
             }
         }
@@ -222,40 +221,50 @@ nz-badge {
 
 // ----- ----- COLLAPSE ----- ----- //
 
-nz-collapse-panel {
-    .ant-collapse-header {
-        align-items: center !important;
+nz-collapse {
+    border-radius: 6px !important;
 
-        .anticon {
-            margin-right: 4px !important;
-        }
+    nz-collapse-panel {
+        .ant-collapse-header {
+            display: grid !important;
+            grid-template-columns: auto 1fr;
+            height: 100%;
+            align-items: center !important;
+            padding: 0 !important;
 
-        .ant-collapse-header-text {
-            margin-right: 22px;
-            flex: 1 !important;
+            >div {
+                height: 100%;
+            }
 
-            .post-button {
-                position: absolute;
-                right: 0;
-                top: 50%;
-                transform: translateY(-50%);
-                width: 40px;
-                height: 40px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 12px;
-                border-radius: 50%;
-                box-shadow: inset 0px 0px 15px 0px color.$light-grey-color, 0px 0px 10px 0px color.$light-grey-color;
-                transition: box-shadow .3s;
+            .anticon {
+                margin-right: 4px !important;
+            }
 
-                &:hover {
-                    box-shadow: inset 0px 0px 15px 0px color.$mid-opacity-black-color, 0px 0px 10px 0px color.$mid-opacity-black-color;
+            .ant-collapse-header-text {
+                .post-button {
+                    right: 0;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 4px;
+                    border-radius: 50%;
+                    box-shadow: inset 0px 0px 15px 0px color.$light-grey-color, 0px 0px 10px 0px color.$light-grey-color;
                     transition: box-shadow .3s;
                 }
             }
         }
 
+        .ant-collapse-content {
+            margin: 0 8px 0 8px;
+            border-top: none;
+            border-radius: 6px;
+
+            .ant-collapse-content-box {
+                padding: 20px 4px 0 4px;
+            }
+        }
     }
 }
 

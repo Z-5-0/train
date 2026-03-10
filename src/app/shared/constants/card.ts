@@ -1,3 +1,7 @@
+import { environment } from "../../../environments/environment";
+
+const appVersion = environment.appVersion;
+
 type HomeCard = {
   index: number;
   header: string;
@@ -19,7 +23,7 @@ export const HOME_CARDS: HomeCard[] = [
     details: 'selectedRoute',
     mapMode: 'TRIP',
     footer: {
-      text: 'beta v0.2',
+      text: appVersion,
       alignment: 'right',
       gradient: true
     }
@@ -30,7 +34,7 @@ export const HOME_CARDS: HomeCard[] = [
     details: '',
     mapMode: 'FREE',
     footer: {
-      text: 'beta v0.2',
+      text: appVersion,
       alignment: 'right',
       gradient: false
     }
@@ -41,7 +45,7 @@ export const HOME_CARDS: HomeCard[] = [
     details: '',
     mapMode: null,
     footer: {
-      text: 'beta v0.2',
+      text: appVersion,
       alignment: 'right',
       gradient: false
     }
@@ -52,7 +56,7 @@ export const HOME_CARDS: HomeCard[] = [
     details: '',
     mapMode: null,
     footer: {
-      text: 'beta v0.2',
+      text: appVersion,
       alignment: 'right',
       gradient: true
     }
@@ -63,7 +67,7 @@ export const HOME_CARDS: HomeCard[] = [
     details: '',
     mapMode: null,
     footer: {
-      text: 'beta v0.2',
+      text: appVersion,
       alignment: 'right',
       gradient: true
     }

@@ -93,7 +93,8 @@ export class PlaceFieldComponent {
 
   onSelectPlace(place: Place): void {
     this.selectedValue = place;
-    this.selectionChanged.next({ name: this.name.substring(0, this.name.length - 1), field: this.field, place })
+    this.selectionChanged.next({ name: this.name.substring(0, this.name.length - 1), field: this.field, place });
+    this.inputElement.nativeElement.blur();
   }
 
   onSelectionCheck(value: string, input: any) {

@@ -68,18 +68,15 @@ export class InfoComponent {
 
   issues: IssueItem[] = [
     { index: 0, description: 'Midnight trips sometimes show as \'Trip has finished\' even though the trip is scheduled for the next day' },
-    { index: 1, description: 'Circles and heading indicators around vehicles sometimes remain visible when position or heading is missing' },
+    { index: 1, description: 'Circles and heading indicators around vehicles sometimes may remain visible when position or heading is missing' },
     { index: 2, description: 'When all vehicles reach their final stop, the map does not indicate \'All trips have been finished\'' },
-    { index: 3, description: 'Error messages do not always appear consistently' },
-    { index: 4, description: 'The URL bar may cause content to overflow on mobile' },
-    { index: 5, description: 'Route list item details can overflow horizontally on mobile' },
-    { index: 6, description: 'CORS errors may occur under certain configurations' },
-    { index: 7, description: 'Footer gradient is currently displayed on all views; it should only appear on Route and Transit views' },
-    { index: 8, description: 'User guide missing' },
-    { index: 9, description: 'API requests are handled by my own server; response times may be slow and occasionally delayed depending on network and device load' },
-    { index: 10, description: 'Accidental \'upcoming\' text appearance at trip starting stop' },
-    { index: 11, description: 'Wrong intermediate stops text shadow on map (etc. coach, tram)' },
-    { index: 12, description: 'Card navigation (swipe / keyboard) is currently in an early stage of implementation' },
+    { index: 3, description: 'The URL bar may cause content to overflow on mobile' },
+    { index: 4, description: 'CORS errors may occur under certain configurations' },
+    { index: 5, description: 'User guide missing' },
+    { index: 6, description: 'Accidental \'upcoming\' text appearance at trip starting stop' },
+    { index: 7, description: 'Wrong intermediate stops text shadow on map (etc. coach, tram)' },
+    { index: 8, description: 'Card navigation (swipe / keyboard) is currently in an early stage of implementation' },
+    { index: 9, description: 'API requests are handled by my own server; response times may be slow and occasionally delayed depending on network and device load' }
   ];
 
   iconLegends: IconLegendItem[] = [

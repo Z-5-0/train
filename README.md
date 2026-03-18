@@ -72,10 +72,9 @@ node proxy.js
 - Update font-family
 - Fix route-planning anomalies around midnight
 - Add more contextual info messages
-- Maintain a list of known issues
 - Create a full user manual
-- Option to show the entire trip path on the map for each vehicle
-- Integrate a free/open map 
+- Speed up API requests
+- Swipe implementation
 
 <br>
 

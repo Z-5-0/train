@@ -1,4 +1,4 @@
-# Real-Time Transit Viewer
+# Train
 
 A realtime transit route monitoring application built with modern Angular (v19) which visualizes planned routes, realtime vehicle positions, and trip origins using data from the OpenTripPlanner GraphQL API.
 
